@@ -222,6 +222,7 @@
       case 'crowd': return { ...base, kind: 'crowd', plat: true, active: true, x: bx, y: by - 16, w: 16, h: 16, look: d.x % 4, dx: 0, dy: 0 };
       case 'cut': return { ...base, kind: 'cut', plat: true, active: true, x: bx, y: d.y * T, w: 32, h: 8, off: d.off || 0, period: 200, dx: 0, dy: 0, ghost: false };
       case 'npc': return { ...base, kind: 'npc', active: true, who: d.who, say: d.say, x: bx, y: by - 16, w: 16, h: 16, met: 0, done: false, face: -1 };
+      case 'kiss': return { ...base, kind: 'kiss', active: true, x: bx, y: by - 16, w: 16, h: 16, phase: 'wait', bx: bx, mx: bx + 40 };
       case 'boss2': return { ...base, kind: 'boss', b2: true, active: true, x: bx - 12, y: -60, w: 40, h: 40, hp: 12, maxHp: 12, state: 'intro', face: -1, inv: 0, landed: false, last: '', baseY: 52 };
       case 'k': return { ...base, kind: 'k', x: bx + 1, y: by - 15, w: 14, h: 15, enemy: true, state: 'walk', shellT: 0, kickT: 0 };
       case 'f': return { ...base, kind: 'f', x: bx + 1, y: by - 12, w: 14, h: 12, enemy: true, baseY: by - 12 };
@@ -266,6 +267,7 @@
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
   function newGame(idx) {
+    G.kissSeen = false;
     G.score = 0; G.coins = 0; G.lives = 5; G.power = 0; G.check = null;
     loadLevel(idx, false);
     toState('intro');
@@ -630,6 +632,11 @@
       }
     } else if (e.kind === 'G') {
       if (G.state === 'play' && P.x + P.w > e.x + 6 && P.y + P.h > e.y) levelClear();
+    } else if (e.kind === 'kiss') {
+      if (e.phase === 'wait' && !G.kissSeen && P.onGround && P.x + P.w > e.x - 70 && P.x < e.x) {
+        e.phase = 'run'; e.t = 0; G.scene = e; G.kissSeen = true; P.vx = 0; P.face = 1; toState('scene');
+      }
+      if (e.phase === 'done' && G.t % 40 === 0) G.parts.push({ type: 'heart', x: (e.bx + e.mx) / 2 + 8, y: e.y - 2, vx: 0, vy: -0.4, life: 50 });
     } else if (e.kind === 'npc') {
       e.vy = Math.min(e.vy + 0.35, 6); const pb = e.y + e.h; e.y += e.vy; collideY(e, pb);
       e.face = P.x < e.x ? -1 : 1;
@@ -910,6 +917,7 @@
       if (q.type === 'debris') { q.vy += 0.3; q.x += q.vx; q.y += q.vy; }
       else if (q.type === 'coin') { q.vy += 0.35; q.y += q.vy; if (q.life === 1) pop(200, q.x, q.y); }
       else if (q.type === 'boom') q.r += 1.2;
+      else if (q.type === 'tear') { q.vy += 0.15; q.x += q.vx; q.y += q.vy; }
       else if (q.type === 'confetti') { q.vy = Math.min(q.vy + 0.05, 1.5); q.x += q.vx + Math.sin(q.life * 0.1) * 0.4; q.y += q.vy; if (q.y > H) { q.y = -4; q.life = 400; } }
       else { q.x += q.vx || 0; q.y += q.vy || 0; }
     }
@@ -1054,6 +1062,20 @@
         G.t++;
         updateMap();
         break;
+      case 'scene': {
+        G.t++;
+        const e = G.scene; e.t++;
+        updateParts();
+        P.vx = 0; P.vy = Math.min(P.vy + 0.42, 6); { const pb = P.y + P.h; P.y += P.vy; collideY(P, pb); }
+        if (e.t > 50 && e.t <= 85) { e.bx = Math.min(e.bx + 0.35, e.x + 12); e.mx = Math.max(e.mx - 0.35, e.x + 26); }
+        if (e.t === 88) { AUDIO.sfx('kiss'); for (let i = 0; i < 6; i++) G.parts.push({ type: 'heart', x: (e.bx + e.mx) / 2 + 8 + (Math.random() - 0.5) * 16, y: e.y + 2, vx: (Math.random() - 0.5) * 0.6, vy: -0.5 - Math.random() * 0.5, life: 70 }); }
+        if (e.t > 88 && e.t < 150 && e.t % 10 === 0) G.parts.push({ type: 'heart', x: (e.bx + e.mx) / 2 + 8, y: e.y, vx: (Math.random() - 0.5) * 0.4, vy: -0.6, life: 60 });
+        if (e.t === 160) AUDIO.sfx('cry');
+        if (e.t > 160 && e.t % 5 === 0) G.parts.push({ type: 'tear', x: P.x + P.w / 2 + (e.t % 10 ? 4 : -2), y: P.y + P.h - 9, vx: (e.t % 10 ? 0.6 : -0.6), vy: -0.6, life: 26 });
+        G.dialog = e.t > 165 ? { who: 'matheus', name: 'MATHEUS', txt: 'Eu sou carente... :(' } : null;
+        if (e.t > 340 || (e.t > 190 && (I.selP || I.runP))) { e.phase = 'done'; e.bx = e.x + 12; e.mx = e.x + 26; G.scene = null; G.dialog = null; toState('play'); }
+        break;
+      }
       case 'ending':
         G.t++;
         updateParts();
@@ -1111,6 +1133,10 @@
     if (G.freeze > 0 && G.freezeKind === 'flash' && (G.freeze >> 1) % 2) { ctx.globalAlpha = 0.5; }
     img(s, p.x - 2, p.y + p.h - s.height);
     ctx.globalAlpha = 1;
+    if (G.state === 'scene' && G.scene && G.scene.t > 155) {
+      const fy = p.y + p.h - s.height + (p.power > 0 ? 9 : 7), drip = (G.t >> 2) % 3;
+      rect('#5ec8ff', p.x + 6, fy + drip, 1, 2); rect('#5ec8ff', p.x + 10, fy + drip, 1, 2);
+    }
   }
 
   function drawTiles() {
@@ -1226,6 +1252,13 @@
       const x = R(e.x), y = R(e.y);
       rect('#1a1020', x, y, 32, 10); rect('#9b4dff', x + 1, y + 1, 30, 8); rect('#c8a0ff', x + 1, y + 1, 30, 1);
       for (let i = 3; i < 30; i += 5) { rect('#1a1020', x + i, y + 2, 2, 1); rect('#1a1020', x + i, y + 7, 2, 1); }
+    } else if (e.kind === 'kiss') {
+      img(ART.NPC.babs.r, e.bx, e.y);
+      img(ART.NPC.miguel.l, e.mx, e.y);
+      if (e.phase !== 'wait') {
+        text('BABS MARY', R(e.bx + 12), R(e.y - 9), { size: 6, align: 'right', color: '#ff8fd8' });
+        text('MIGUEL', R(e.mx + 4), R(e.y - 9), { size: 6, color: '#7cf0ff' });
+      }
     } else if (e.kind === 'npc') {
       const spr = ART.NPC[e.who][e.face > 0 ? 'l' : 'r'];
       img(spr, e.x, e.y + (e.who === 'axo' ? Math.round(Math.sin(G.t * 0.1)) : 0));
@@ -1379,6 +1412,8 @@
       else if (q.type === 'coin') img(ITEM.coin[(q.life >> 1) % 4], q.x, q.y);
       else if (q.type === 'dust') { const r = q.life > 8 ? 2 : 1; rect('#f4f6ff', q.x - r, q.y - r, r * 2, r * 2); }
       else if (q.type === 'spark' || q.type === 'confetti') rect(q.color, q.x, q.y, q.type === 'confetti' ? 3 : 2, 2);
+      else if (q.type === 'heart') { const x = R(q.x), y = R(q.y); rect('#ff5ab4', x - 2, y, 2, 2); rect('#ff5ab4', x + 1, y, 2, 2); rect('#ff5ab4', x - 2, y + 1, 5, 2); rect('#ff5ab4', x - 1, y + 3, 3, 1); rect('#ff5ab4', x, y + 4, 1, 1); rect('#ffffff', x - 1, y, 1, 1); }
+      else if (q.type === 'tear') { rect('#5ec8ff', q.x, q.y, 2, 2); }
       else if (q.type === 'bubble') { rect('rgba(220,240,255,0.85)', q.x - 1, q.y - 1, 3, 3); rect('rgba(255,255,255,0.9)', q.x - 1, q.y - 1, 1, 1); }
       else if (q.type === 'boom') {
         ctx.fillStyle = q.life > 12 ? '#ffffff' : q.life > 6 ? '#ffd23f' : '#ff5a1f';
@@ -1427,7 +1462,7 @@
     ctx.restore();
     if (G.flash > 0) { ctx.fillStyle = `rgba(255,255,255,${G.flash / 20})`; ctx.fillRect(0, 0, W, H); }
     drawHUD();
-    if (G.dialog && G.state === 'play') drawDialog(G.dialog);
+    if (G.dialog && (G.state === 'play' || G.state === 'scene')) drawDialog(G.dialog);
     const b = G.boss;
     if (b && b.state === 'intro' && b.landed) {
       rect('rgba(10,3,24,0.7)', 0, 74, W, 52);
@@ -1447,7 +1482,7 @@
     const x = 10, y = 34, w = W - 20, h = 44;
     rect('#1a1020', x - 2, y - 2, w + 4, h + 4); rect('#0b1033', x, y, w, h); rect('#ffd23f', x, y, w, 1);
     rect('#ffd23f', x + 4, y + 4, 36, 36); rect('#5ec8ff', x + 5, y + 5, 34, 34);
-    ctx.drawImage(ART.NPC[d.who].r, x + 6, y + 6, 32, 32);
+    ctx.drawImage(d.who === 'matheus' ? HERO.n.s.idle.r : ART.NPC[d.who].r, x + 6, y + 6, 32, 32);
     text(d.name, x + 46, y + 5, { color: '#ffd23f' });
     wrap(d.txt, 40).slice(0, 3).forEach((l, i) => text(l, x + 46, y + 16 + i * 9, { color: '#ffffff', size: 8 }));
   }

@@ -80,6 +80,8 @@ window.AUDIO = (() => {
     powerup() { seq(['C5', 'E5', 'G5', 'C6', 'D5', 'F#5', 'A5', 'D6', 'E5', 'G#5', 'B5', 'E6'], 0.035, { wave: 'p25', vol: 0.11 }); },
     powerdown() { seq(['A5', 'E5', 'A4', 'E5', 'A4', 'E4'], 0.06, { wave: 'p25', vol: 0.11 }); },
     oneup() { seq(['E6', 'G6', 'E7', 'C7', 'D7', 'G7'], 0.08, { wave: 'p25', vol: 0.1 }); },
+    kiss() { seq(['E6', 'G6', null, 'C7'], 0.07, { wave: 'p25', vol: 0.08 }); },
+    cry() { const t = ctx.currentTime; for (let i = 0; i < 4; i++) tone(520 - i * 40, t + i * 0.22, 0.2, { wave: 'p12', slide: 380 - i * 40, vol: 0.07 }); },
     swim() { const t = ctx.currentTime; tone(420, t, 0.09, { wave: 'p12', slide: 620, vol: 0.07 }); },
     kick() { const t = ctx.currentTime; tone(700, t, 0.06, { slide: 300, vol: 0.15 }); },
     cd() { const t = ctx.currentTime; tone(1400, t, 0.07, { wave: 'p12', slide: 500, vol: 0.12 }); },

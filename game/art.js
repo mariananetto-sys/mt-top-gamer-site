@@ -300,24 +300,44 @@ window.ART = (() => {
     '...kkkk..kkkk...',
     '................',
   ], { ...BASE, v: '#8a5aff', V: '#5a2ab0', g: '#3bd16f', G: '#1f8a3a', m: '#ff5ab4', M: '#c02a80', c: '#2fe0ff', C: '#1a8ab0' }, 16);
+  // Babs Mary: cabelo laranja, moletom roxo com capuz e olhos verdes
   const BABS = fromRows([
-    '................',
     '.....kkkkkk.....',
-    '....kddddddk....',
+    '....kvvvvvvk....',
+    '...kvoooooovk...',
+    '..kvoooooooovk..',
+    '..kvossssssovk..',
+    '..kvoswLswLsvk..',
+    '..kvossssSssvk..',
+    '..kvoosrrssovk..',
+    '...kvoossssovk..',
+    '...kvvvyyvvvk...',
+    '..kvvvvyyvvvvk..',
+    '..ksvvvvvvvvsk..',
+    '...kvvvvvvvvk...',
+    '...kPPPkkPPPk...',
+    '...kPPk..kPPk...',
+    '...knnk..knnk...',
+  ], { ...BASE, v: '#8a3ad6', o: '#ff8a2a', L: '#2fc85a', y: '#ffd23f', P: '#2a1f55' }, 16);
+  // Miguel: gorro azul-esverdeado, barba castanha e camisa laranja
+  const MIGUEL = fromRows([
+    '.....kkkkkk.....',
+    '....kccccccck...',
+    '...kcCcCcCcCk...',
     '...kddddddddk...',
     '...kdssssssdk...',
     '...kdskssksdk...',
-    '...kdsssSssdk...',
-    '...kddsrrsddk...',
-    '...kddkkkkddk...',
-    '...kdkmmmmkdk...',
-    '....kmmMMmmk....',
-    '...ksmmmmmmsk...',
-    '....kmmmmmmk....',
-    '...kmmmmmmmmk...',
-    '....kssk.kssk...',
-    '....knnk.knnk...',
-  ], { ...BASE, m: '#ff5ab4', M: '#ffffff' }, 16);
+    '...kdssssSsdk...',
+    '...kdddrrdddk...',
+    '....kddddddk....',
+    '...kooOooOook...',
+    '..kooooooooook..',
+    '..ksoooooooosk..',
+    '...kuuuuuuuuk...',
+    '...kuuukkuuuk...',
+    '...kuuk..kuuk...',
+    '...knnk..knnk...',
+  ], { ...BASE, c: '#2fb8c8', C: '#1a7a8a', o: '#ff8a3d', O: '#c95a1a', u: '#2f5ab0', d: '#5a3418' }, 16);
   const AXO = fromRows(pad([
     '.m.m........m.m.',
     '..mmm.kkkk.mmm..',
@@ -346,7 +366,7 @@ window.ART = (() => {
     '..kk........kk..',
   ], 16), BASE, 16);
   const NPC = {
-    axo: both(AXO), ps2: both(PS2), babs: both(BABS),
+    axo: both(AXO), ps2: both(PS2), babs: both(BABS), miguel: both(MIGUEL),
     discord: both(PERSON('d', 'v', 'V')),
     inscrito: both(PERSON('n', 'g', 'G')),
     crowd: ['v', 'g', 'm', 'c'].map((c) => both(PERSON(c === 'm' ? 'd' : 'n', c, c.toUpperCase()))),
