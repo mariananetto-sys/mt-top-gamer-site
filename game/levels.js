@@ -23,6 +23,14 @@ window.LEVELS = (() => {
     L.stairs = (x, hs, base = 12) => hs.forEach((h, i) => { for (let j = 0; j < h; j++) L.set(x + i, base - 1 - j, 'X'); });
     L.lava = (x0, x1) => L.fill(x0, 12, x1, 13, '~');
     L.e = (type, x, y, o = {}) => { L.ents.push({ type, x, y, ...o }); if (type === 'fb') L.set(x, y, 'F'); };
+    // casinha com porta secreta (a parede da direita é falsa) e um amigo do Discord dentro
+    L.secret = (x, base = 12) => {
+      L.fill(x, base - 3, x + 5, base - 3, 'X');
+      L.fill(x, base - 2, x, base - 1, 'X');
+      L.fill(x + 5, base - 2, x + 5, base - 1, 'W');
+      L.put(x + 3, base - 2, 'oo');
+      L.e('npc', x + 2, base - 1, { who: 'discord' });
+    };
     return L;
   }
 
@@ -31,6 +39,7 @@ window.LEVELS = (() => {
     const L = builder(212, 'tropical', 'COLINAS TROPICAIS', 'grass');
     L.intro = 'O BUGSOFT espalhou bugs pelo Universo 100% Gamer!';
     L.ground(0, 68); L.ground(72, 90); L.ground(94, 140); L.ground(144, 211);
+    L.secret(8);
     L.put(16, 8, '?');
     L.put(20, 8, 'BMB?B'); L.put(22, 4, '?');
     L.e('g', 23, 11);
@@ -167,7 +176,7 @@ window.LEVELS = (() => {
   function chefe() {
     const L = builder(24, 'boss', 'BUGSOFT, O BUG SUPREMO', 'boss');
     L.intro = 'Derrote o BUGSOFT e salve a gameplay!';
-    L.boss = true;
+    L.boss = true; L.bossName = 'BUGSOFT'; L.bossSub = 'O BUG SUPREMO';
     L.fill(0, 0, 23, 1, 'X'); L.ground(0, 23);
     L.fill(0, 2, 0, 11, 'X'); L.fill(23, 2, 23, 11, 'X');
     L.put(3, 8, '===='); L.put(17, 8, '====');
@@ -177,7 +186,124 @@ window.LEVELS = (() => {
     return L;
   }
 
-  const list = [fase1, fase2, fase3, fase4, chefe];
-  const labels = ['1', '2', '3', '4', 'CHEFE'];
+  // ================================================= MUNDO 2
+  function fase5() {
+    const L = builder(200, 'beach', 'PRAIA DO PIXEL', 'beach');
+    L.intro = 'Mundo 2! Areia, sol, caranguejo... e muito lag.';
+    L.ground(0, 40); L.ground(44, 80); L.ground(84, 124); L.ground(128, 199);
+    L.e('npc', 5, 11, { who: 'axo', say: 'Oi, Matheus! Eu sou o Axolote. As ondas te empurram, e os caranguejos com garra pra cima nao podem ser pisados!' });
+    L.put(10, 8, '?M?');
+    L.e('c', 18, 11);
+    L.fill(22, 10, 30, 11, 'w'); L.e('c', 27, 11);
+    L.put(32, 8, '==='); L.put(36, 6, '==='); L.put(36, 5, 'ooo');
+    L.put(41, 9, 'ooo');
+    L.e('n', 50, 6); L.e('c', 55, 11);
+    L.put(58, 8, 'B?B');
+    L.e('npc', 64, 11, { who: 'babs' });
+    L.e('c', 70, 11); L.fill(72, 10, 79, 11, 'w');
+    L.put(81, 8, 'ooo');
+    L.e('K', 86, 11);
+    L.stairs(92, [1, 2, 3]);
+    L.e('h', 100, 4); L.e('c', 104, 11);
+    L.put(106, 8, '?1?'); L.e('B', 110, 11);
+    L.secret(114);
+    L.put(125, 9, 'ooo');
+    L.e('c', 134, 11); L.e('n', 140, 6); L.put(144, 8, '?M?'); L.e('c', 150, 11);
+    L.fill(154, 10, 162, 11, 'w'); L.e('B', 160, 11);
+    L.e('h', 168, 4);
+    L.stairs(176, [1, 2, 3, 4, 4]);
+    L.e('G', 190, 11);
+    return L;
+  }
+
+  function fase6() {
+    const L = builder(210, 'fair', 'FEIRA GAMER', 'fair');
+    L.intro = 'A maior feira de games do Universo 100% Gamer! Cuidado com a fila...';
+    L.ground(0, 30); L.ground(34, 70); L.ground(74, 110); L.ground(114, 150); L.ground(154, 209);
+    L.e('npc', 5, 11, { who: 'inscrito' });
+    L.put(10, 8, '?M?');
+    L.fill(14, 12, 24, 12, '>'); L.e('w', 20, 11);
+    L.e('crowd', 26, 11); L.e('crowd', 27, 11); L.e('crowd', 28, 11);
+    L.put(31, 9, 'ooo');
+    L.e('n', 40, 6); L.put(44, 8, 'B?B?B'); L.e('g', 46, 11); L.e('w', 52, 11);
+    L.fill(56, 12, 64, 12, '<'); L.e('crowd', 60, 11); L.e('crowd', 61, 11);
+    L.put(66, 7, 'oooo'); L.put(71, 9, 'ooo');
+    L.e('K', 76, 11);
+    L.e('npc', 80, 11, { who: 'ps2' });
+    L.e('h', 90, 4); L.e('w', 94, 11);
+    L.secret(97); L.e('B', 106, 11);
+    L.put(111, 9, 'ooo');
+    L.fill(116, 12, 126, 12, '>'); L.e('crowd', 120, 11); L.e('crowd', 121, 11); L.e('crowd', 122, 11); L.e('crowd', 123, 11);
+    L.put(128, 8, '?*?'); L.e('g', 132, 11); L.e('n', 138, 6); L.e('w', 142, 11); L.e('s', 146, 11);
+    L.put(151, 9, 'ooo');
+    L.e('h', 160, 4); L.e('B', 166, 11);
+    L.fill(170, 12, 178, 12, '<'); L.e('crowd', 174, 11);
+    L.stairs(184, [1, 2, 3, 4]);
+    L.e('G', 198, 11);
+    return L;
+  }
+
+  function fase7() {
+    const L = builder(190, 'sea', 'FUNDO DO MAR DIGITAL', 'sea');
+    L.intro = 'Aperte pular pra nadar! Blub blub.';
+    L.water = true;
+    L.ground(0, 50); L.ground(55, 95); L.ground(100, 140); L.ground(146, 189);
+    L.e('npc', 5, 11, { who: 'axo', say: 'Aqui embaixo e so apertar pular pra dar uma bracada! Cuidado com os buracos no fundo.' });
+    L.put(10, 6, '?M?');
+    L.e('p', 20, 6); L.put(18, 4, 'ooooo');
+    L.fill(26, 7, 27, 11, 'X'); L.fill(34, 2, 35, 6, 'X');
+    L.e('c', 30, 11); L.e('p', 40, 8); L.fill(44, 8, 45, 11, 'X'); L.e('p', 48, 4);
+    L.put(51, 9, 'oooo');
+    L.e('K', 58, 11);
+    L.fill(64, 2, 66, 7, 'X'); L.e('p', 70, 9); L.e('c', 74, 11); L.put(76, 6, '?1?'); L.fill(82, 6, 83, 11, 'X'); L.e('p', 86, 5);
+    L.secret(88);
+    L.put(96, 8, 'oooo');
+    L.e('p', 105, 7); L.e('c', 110, 11); L.fill(114, 2, 115, 8, 'X'); L.e('n', 120, 5); L.e('p', 126, 9);
+    L.fill(130, 7, 131, 11, 'X'); L.put(134, 6, '?*?'); L.e('p', 138, 4);
+    L.put(141, 9, 'ooooo');
+    L.e('c', 150, 11); L.e('p', 156, 6); L.fill(160, 2, 161, 7, 'X'); L.e('p', 166, 9);
+    L.stairs(174, [1, 2, 3]);
+    L.e('G', 182, 11);
+    return L;
+  }
+
+  function fase8() {
+    const L = builder(200, 'edit', 'ILHA DE EDIÇÃO', 'edit');
+    L.intro = 'Bem-vindo a linha do tempo! Cuidado com os cortes secos.';
+    L.ground(0, 24); L.ground(37, 70); L.ground(83, 120); L.ground(132, 199);
+    L.e('npc', 4, 11, { who: 'babs' });
+    L.put(10, 8, '?M?'); L.e('w', 18, 11);
+    L.e('cut', 26, 10, { off: 0 }); L.e('cut', 30, 9, { off: 160 }); L.e('cut', 34, 10, { off: 120 });
+    L.put(29, 6, 'ooo');
+    L.e('h', 44, 4); L.e('s', 50, 11); L.put(54, 8, 'B?B'); L.e('B', 60, 11); L.fill(62, 12, 68, 12, '>');
+    L.e('cut', 72, 9, { off: 0 }); L.e('cut', 76, 8, { off: 160 }); L.e('cut', 80, 9, { off: 120 });
+    L.e('K', 85, 11); L.e('npc', 88, 11, { who: 'ps2' });
+    L.e('w', 96, 11); L.e('n', 100, 6);
+    L.secret(104);
+    L.e('s', 113, 11); L.e('g', 117, 11);
+    L.e('cut', 122, 10, { off: 0 }); L.e('cut', 126, 9, { off: 160 }); L.e('cut', 129, 10, { off: 120 });
+    L.e('h', 138, 4); L.e('B', 144, 11); L.put(148, 8, '?*?');
+    L.fill(152, 12, 160, 12, '<'); L.e('w', 156, 11); L.e('s', 164, 11);
+    L.e('npc', 170, 11, { who: 'inscrito', say: 'Falta pouco, Matheus! O BUFFERAO ta travando tudo la na frente!' });
+    L.stairs(176, [1, 2, 3, 4, 5]);
+    L.e('G', 190, 11);
+    return L;
+  }
+
+  function chefe2() {
+    const L = builder(24, 'buffer', 'BUFFERÃO, O CARREGAMENTO ETERNO', 'boss2');
+    L.intro = 'O BUFFERAO travou o Universo 100% Gamer! Pise nele quando ele cair tonto.';
+    L.boss = true; L.bossName = 'BUFFERAO'; L.bossSub = 'O CARREGAMENTO ETERNO';
+    L.fill(0, 0, 23, 1, 'X'); L.ground(0, 23);
+    L.fill(0, 2, 0, 11, 'X'); L.fill(23, 2, 23, 11, 'X');
+    L.put(3, 8, '===='); L.put(17, 8, '====');
+    L.put(11, 8, 'M');
+    L.start = { x: 3, y: 11 };
+    L.e('boss2', 13, 11);
+    return L;
+  }
+
+  const list = [fase1, fase2, fase3, fase4, chefe, fase5, fase6, fase7, fase8, chefe2];
+  const labels = ['1', '2', '3', '4', 'CHEFE', '5', '6', '7', '8', 'CHEFE 2'];
   return { list, labels };
 })();

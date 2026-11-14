@@ -265,6 +265,93 @@ window.ART = (() => {
     return c;
   });
 
+  // Caranguejo pixel (garras para cima: não dá pra pisar)
+  const CRAB_BODY = [
+    '...kRkkkkkkRk...',
+    '...kRRRRRRRRk...',
+    '..kRRRwkRwkRRk..',
+    '..kRRRRRRRRRRk..',
+    '...kRRRRRRRRk...',
+    '..k.k.k..k.k.k..',
+    '.k..k.k..k.k..k.',
+  ];
+  ENEMY.crab = [
+    both(fromRows(pad(['..k..........k..', '.kRk........kRk.', '.kRRk.k..k.kRRk.', '..kRk.w..w.kRk..', ...CRAB_BODY], 16), BASE, 16)),
+    both(fromRows(pad(['.kk..........kk.', 'kRRk........kRRk', 'kRRk........kRRk', '.kRk........kRk.', '..kRk.k..k.kRk..', '..kRkkw..wkkRk..', ...CRAB_BODY.slice(1)], 16), BASE, 16)),
+  ];
+  ENEMY.fish = both(fromRows(PAD, { ...BASE, c: '#2f7bff', C: '#1a4ab0', y: '#ffd23f', u: '#ff5ab4' }, 16));
+
+  // Amigos (NPCs)
+  const PERSON = (hair, shirt, shirt2) => fromRows([
+    '.....kkkkkk.....',
+    '....k' + hair.repeat(6) + 'k....',
+    '...k' + hair.repeat(8) + 'k...',
+    '...k' + hair + 'ssssss' + hair + 'k...',
+    '...k' + hair + 'skssks' + hair + 'k...',
+    '....ksssSssk....',
+    '.....kssssk.....',
+    '....k' + shirt.repeat(6) + 'k....',
+    '...k' + shirt + shirt + shirt2 + shirt + shirt + shirt2 + shirt + shirt + 'k...',
+    '...ks' + shirt.repeat(6) + 'sk...',
+    '....k' + shirt.repeat(6) + 'k....',
+    '....kppkkppk....',
+    '....kppk.kppk...',
+    '...knnk..knnk...',
+    '...kkkk..kkkk...',
+    '................',
+  ], { ...BASE, v: '#8a5aff', V: '#5a2ab0', g: '#3bd16f', G: '#1f8a3a', m: '#ff5ab4', M: '#c02a80', c: '#2fe0ff', C: '#1a8ab0' }, 16);
+  const BABS = fromRows([
+    '................',
+    '.....kkkkkk.....',
+    '....kddddddk....',
+    '...kddddddddk...',
+    '...kdssssssdk...',
+    '...kdskssksdk...',
+    '...kdsssSssdk...',
+    '...kddsrrsddk...',
+    '...kddkkkkddk...',
+    '...kdkmmmmkdk...',
+    '....kmmMMmmk....',
+    '...ksmmmmmmsk...',
+    '....kmmmmmmk....',
+    '...kmmmmmmmmk...',
+    '....kssk.kssk...',
+    '....knnk.knnk...',
+  ], { ...BASE, m: '#ff5ab4', M: '#ffffff' }, 16);
+  const AXO = fromRows(pad([
+    '.m.m........m.m.',
+    '..mmm.kkkk.mmm..',
+    '...mkPPPPPPkm...',
+    '....kPkPPkPk....',
+    '...kPPPPPPPPk...',
+    '...kPPPmmPPPk...',
+    '....kPPPPPPk....',
+    '...kPPPPPPPPkk..',
+    '..kPPPPPPPPPPPk.',
+    '..kPPkPPPPkPPk..',
+    '...kk.kkkk.kk...',
+  ], 16), { ...BASE, P: '#ffaacc', m: '#ff5ab4' }, 16);
+  const PS2 = fromRows(pad([
+    '..kkkkkkkkkkkk..',
+    '.kGGGGGGGGGGGGk.',
+    '.kqqqqqqqqqqqqk.',
+    '.kqwkqqqqqwkqqk.',
+    '.kqqqqqqqqqqqqk.',
+    '.kqqqkkkkkqqqqk.',
+    '.kQQQQQQQQQQQQk.',
+    '.kqqqqqqqqqqqqk.',
+    '.kqeqqqqqqqqqqk.',
+    '.kqqqqqqqqqqqqk.',
+    '..kkkkkkkkkkkk..',
+    '..kk........kk..',
+  ], 16), BASE, 16);
+  const NPC = {
+    axo: both(AXO), ps2: both(PS2), babs: both(BABS),
+    discord: both(PERSON('d', 'v', 'V')),
+    inscrito: both(PERSON('n', 'g', 'G')),
+    crowd: ['v', 'g', 'm', 'c'].map((c) => both(PERSON(c === 'm' ? 'd' : 'n', c, c.toUpperCase()))),
+  };
+
   // ----------------------------------------------------------------- ITENS
   const HEART = [
     '..kkkk....kkkk..',
@@ -369,6 +456,11 @@ window.ART = (() => {
 
   // ----------------------------------------------------------------- TILES
   const THEMES = {
+    beach: { g1: '#f2d38a', g2: '#d9b26a', g3: '#fff0c0', t1: '#ffe9a8', t2: '#e8c27a', tL: '#ffffff', br: '#e07a4a', brL: '#ffb08a', brD: '#9a4a2a', mo: '#5a2a14', hd: '#d9a05a', hdL: '#ffd9a0', hdD: '#8a5a2a', semi: 'palm', style: 'sand' },
+    fair: { g1: '#2a2f5a', g2: '#1a1d3a', g3: '#3a4078', t1: '#2fe0ff', t2: '#1a8ab0', tL: '#c0f8ff', br: '#5a3aa0', brL: '#8a6ae0', brD: '#2e1a60', mo: '#0c0a20', hd: '#4a4f80', hdL: '#8a90c8', hdD: '#22264a', semi: 'metal', style: 'plate' },
+    sea: { g1: '#c9a86a', g2: '#a08050', g3: '#e8cc90', t1: '#ff7aa8', t2: '#c94a7a', tL: '#ffc0d8', br: '#4a8ab0', brL: '#8ac8e8', brD: '#24506a', mo: '#0c2030', hd: '#5a7a9a', hdL: '#9ab8d8', hdD: '#2a4060', semi: 'wood', style: 'sand' },
+    edit: { g1: '#2b2b33', g2: '#1c1c22', g3: '#3a3a46', t1: '#7a5cff', t2: '#4a2ab0', tL: '#c0b0ff', br: '#3a8aff', brL: '#8ab8ff', brD: '#1a4ab0', mo: '#0c0c14', hd: '#44444f', hdL: '#7a7a8a', hdD: '#22222a', semi: 'metal', style: 'plate' },
+    buffer: { g1: '#22222c', g2: '#14141a', g3: '#34343f', t1: '#ffffff', t2: '#9aa0b8', tL: '#ffffff', br: '#44444f', brL: '#7a7a8a', brD: '#22222a', mo: '#0c0c14', hd: '#3a3a46', hdL: '#7a7a8a', hdD: '#1c1c22', semi: 'metal', style: 'plate' },
     tropical: { g1: '#c4691f', g2: '#8e4513', g3: '#e8913f', t1: '#3fd04a', t2: '#1f9a34', tL: '#b8f78a', br: '#d0632a', brL: '#f7a064', brD: '#8a3812', mo: '#3e1606', hd: '#c27a3e', hdL: '#f0b070', hdD: '#7a4418', semi: 'wood', style: 'bands' },
     grass: { g1: '#c66a2c', g2: '#9a4818', g3: '#e48a48', t1: '#46c84f', t2: '#2c9338', tL: '#a4f27c', br: '#d0632a', brL: '#f7a064', brD: '#8a3812', mo: '#3e1606', hd: '#c27a3e', hdL: '#f0b070', hdD: '#7a4418', semi: 'wood', style: 'dirt' },
     cave: { g1: '#3a4c88', g2: '#24315e', g3: '#5468aa', t1: '#5fd6ff', t2: '#2f8fc0', tL: '#c8f6ff', br: '#3f74d4', brL: '#7fb0ff', brD: '#1e3f8a', mo: '#0b1430', hd: '#4f62a0', hdL: '#8a9ee0', hdD: '#26336a', semi: 'wood', style: 'dirt' },
@@ -403,6 +495,11 @@ window.ART = (() => {
           x.fillStyle = th.tL; x.fillRect(0, 0, 16, 1);
           for (let i = 2; i < 16; i += 5) x.fillRect(i, 1, 1, 1);
         }
+      } else if (th.style === 'sand') {
+        x.fillStyle = th.g1; x.fillRect(0, 0, 16, 16);
+        const r = rng(23);
+        for (let i = 0; i < 14; i++) { x.fillStyle = i % 3 ? th.g2 : th.g3; x.fillRect((r() * 15) | 0, (r() * 15) | 0, 1, 1); }
+        if (top) { x.fillStyle = th.t2; x.fillRect(0, 3, 16, 2); x.fillStyle = th.t1; x.fillRect(0, 0, 16, 3); x.fillStyle = th.tL; x.fillRect(0, 0, 16, 1); for (let i = 3; i < 16; i += 6) x.fillRect(i, 1, 2, 1); }
       } else if (th.style === 'bands') {
         for (let j = 0; j < 16; j++) { x.fillStyle = Math.floor(j / 4) % 2 ? th.g2 : th.g1; x.fillRect(0, j, 16, 1); }
         x.fillStyle = th.g3; [[3, 1], [11, 2], [7, 9], [14, 10], [1, 13]].forEach(([a, b]) => x.fillRect(a, b, 2, 1));
@@ -499,6 +596,11 @@ window.ART = (() => {
         x.fillStyle = '#f0c080'; x.fillRect(0, 1, 16, 1);
         x.fillStyle = '#7a4a20'; x.fillRect(7, 1, 1, 4); x.fillRect(15, 1, 1, 4);
         x.fillStyle = '#5a3418'; x.fillRect(2, 6, 2, 3); x.fillRect(11, 6, 2, 3);
+      } else if (th.semi === 'palm') {
+        x.fillStyle = '#1a1020'; x.fillRect(0, 0, 16, 5);
+        x.fillStyle = '#2fbf3a'; x.fillRect(0, 1, 16, 3);
+        x.fillStyle = '#8ef06a'; x.fillRect(0, 1, 16, 1);
+        x.fillStyle = '#1f8a2a'; for (let i = 1; i < 16; i += 4) x.fillRect(i, 4, 2, 3);
       } else if (th.semi === 'cloud') {
         const blob = (cx, cy, r, col) => { x.fillStyle = col; for (let j = -r; j <= r; j++) { const w = Math.round(Math.sqrt(r * r - j * j)); x.fillRect(cx - w, cy + j, w * 2, 1); } };
         blob(4, 5, 4, '#ffd6ec'); blob(12, 5, 4, '#ffd6ec');
@@ -572,6 +674,23 @@ window.ART = (() => {
         return c;
       });
     }
+    // esteiras rolantes (4 quadros de animação)
+    S.conv = [0, 1, 2, 3].map((f) => {
+      const c = mk(16, 16), x = c.getContext('2d');
+      x.fillStyle = '#1a1020'; x.fillRect(0, 0, 16, 16);
+      x.fillStyle = '#5a6078'; x.fillRect(0, 1, 16, 6);
+      x.fillStyle = '#9aa3bd'; x.fillRect(0, 1, 16, 1);
+      x.fillStyle = '#ffd23f'; for (let i = -4; i < 16; i += 4) { const ox = i + f; x.fillRect(ox, 3, 2, 1); x.fillRect(ox + 1, 4, 2, 1); x.fillRect(ox, 5, 2, 1); }
+      x.fillStyle = th.g1; x.fillRect(0, 8, 16, 8);
+      x.fillStyle = '#3a3f52'; [3, 12].forEach((cx) => { x.fillRect(cx - 2, 10, 4, 4); });
+      return c;
+    });
+    S.water = [0, 1].map((f) => {
+      const c = mk(16, 16), x = c.getContext('2d');
+      x.fillStyle = 'rgba(30,150,235,0.82)'; x.fillRect(0, 3, 16, 13); x.fillStyle = 'rgba(200,240,255,0.5)'; x.fillRect((f * 5 + 3) % 14, 9, 3, 1); x.fillRect((f * 7 + 9) % 14, 13, 2, 1);
+      for (let i = 0; i < 16; i++) { const wy = 2 + Math.round(Math.sin((i + f * 8) / 16 * Math.PI * 2)); x.fillStyle = '#e0f6ff'; x.fillRect(i, wy, 1, 1); x.fillStyle = 'rgba(120,200,255,0.7)'; x.fillRect(i, wy + 1, 1, 2); }
+      return c;
+    });
     tileCache[name] = S;
     return S;
   }
@@ -602,6 +721,15 @@ window.ART = (() => {
   function cloud(x, cx, cy, s, main, shade) {
     blob(x, cx - 10 * s, cy + 2, 8 * s, shade); blob(x, cx + 10 * s, cy + 2, 8 * s, shade);
     blob(x, cx - 10 * s, cy, 8 * s, main); blob(x, cx + 10 * s, cy, 8 * s, main); blob(x, cx, cy - 5 * s, 11 * s, main);
+  }
+
+  function palmTree(x, px, py, h) {
+    for (let i = 0; i < h; i += 3) { x.fillStyle = (i / 3) % 2 ? '#8a5a2a' : '#b07a3a'; x.fillRect(px + Math.round(Math.sin(i / 10) * 3), py - i, 4, 3); }
+    const tx = px + Math.round(Math.sin(h / 10) * 3) + 2, ty = py - h;
+    x.fillStyle = '#1f9a34';
+    [[-1, 0], [1, 0], [-1, 0.6], [1, 0.6], [0, -1]].forEach(([dx, dy]) => { for (let k = 0; k < 14; k++) x.fillRect(tx + dx * k - 1, ty + Math.round(dy * k + (k * k) / 16), 3, 2); });
+    x.fillStyle = '#3fd04a'; [-1, 1].forEach((dx) => { for (let k = 0; k < 10; k++) x.fillRect(tx + dx * k, ty - 1 + Math.round((k * k) / 16), 2, 1); });
+    x.fillStyle = '#6b3a1e'; x.fillRect(tx - 2, ty + 2, 3, 3); x.fillRect(tx + 1, ty + 3, 3, 3);
   }
 
   const bgCache = {};
@@ -688,6 +816,51 @@ window.ART = (() => {
         }
       }
       layers = [[wall, 0.25, 0], [cols, 0.5, 0]];
+    } else if (name === 'beach') {
+      sky = gradient(W, H, [[0, '#ff7a59'], [0.45, '#ffc46b'], [0.6, '#ffe7a8'], [0.61, '#2a8ff0'], [1, '#1f6ad8']]);
+      extra = mk(W, H); {
+        const x = extra.getContext('2d'); const cx = W * 0.3, cy = H * 0.6, r = 34;
+        for (let j = -r; j <= 0; j++) { const w = Math.round(Math.sqrt(r * r - j * j)); if (j < -6 || Math.floor(-j / 4) % 2 === 0) { x.fillStyle = '#fff3b0'; x.fillRect(Math.round(cx - w), Math.round(cy + j), w * 2, 1); } }
+        const rr = rng(8); for (let i = 0; i < 46; i++) { x.fillStyle = rr() > 0.5 ? '#ffe0a0' : '#8ac8ff'; x.fillRect((rr() * W) | 0, (H * 0.62 + rr() * H * 0.38) | 0, 3 + ((rr() * 9) | 0), 1); }
+      }
+      const clouds = mk(LW, H); { const x = clouds.getContext('2d'); [[80, 40, 1], [300, 26, 1.2], [450, 60, 0.7]].forEach(([cx, cy, s]) => cloud(x, cx, cy, s, '#ffd6b0', '#ffb88a')); }
+      const isl = ridge(LW, H, '#e8a86a', 70, [[10, 2, 0.4], [6, 5, 1.2]]);
+      { const x = isl.getContext('2d'); x.globalCompositeOperation = 'source-atop'; x.fillStyle = '#f2c88a'; x.fillRect(0, H - 70, LW, 8); }
+      const palms = mk(LW, H); { const x = palms.getContext('2d'); [[30, 60], [190, 70], [340, 54], [470, 66]].forEach(([px, h]) => palmTree(x, px, H - 2, h)); }
+      layers = [[clouds, 0.06, 0.08], [isl, 0.15, 0], [palms, 0.45, 0]];
+    } else if (name === 'fair') {
+      sky = gradient(W, H, [[0, '#0a0620'], [1, '#2a1450']]);
+      const stands = mk(LW, H); {
+        const x = stands.getContext('2d'); const r = rng(14);
+        for (let sx = 0; sx < LW; sx += 64) {
+          const h = 70 + ((r() * 40) | 0); x.fillStyle = '#16122e'; x.fillRect(sx + 4, H - h, 56, h);
+          x.fillStyle = ['#e8402e', '#2f7bff', '#ffd23f', '#3bd16f', '#ff5ab4'][(sx / 64) % 5]; x.fillRect(sx + 4, H - h, 56, 8);
+          const g = x.createLinearGradient(0, H - h + 14, 0, H - h + 44); g.addColorStop(0, '#5a8aff'); g.addColorStop(1, '#2a3a8a');
+          x.fillStyle = '#05040c'; x.fillRect(sx + 12, H - h + 12, 40, 30); x.fillStyle = g; x.fillRect(sx + 14, H - h + 14, 36, 26);
+          x.fillStyle = 'rgba(255,255,255,0.5)'; x.fillRect(sx + 18, H - h + 20, 10, 2); x.fillRect(sx + 18, H - h + 26, 22, 2);
+        }
+      }
+      const crowd = mk(LW, H); { const x = crowd.getContext('2d'); const r = rng(77); for (let i = 0; i < LW; i += 7) { const h = 14 + ((r() * 8) | 0); x.fillStyle = '#0c0a1c'; x.fillRect(i, H - h, 6, h); x.fillRect(i + 1, H - h - 4, 4, 4); } }
+      layers = [[stands, 0.2, 0], [crowd, 0.45, 0]];
+    } else if (name === 'sea') {
+      sky = gradient(W, H, [[0, '#2a8fe0'], [0.5, '#1a5ab0'], [1, '#0c2a6a']]);
+      const weed = ridge(LW, H, '#1a4a8a', 60, [[20, 3, 0.2], [12, 11, 1.4], [8, 29, 0.8]]);
+      const coral = mk(LW, H); { const x = coral.getContext('2d'); const r = rng(31); for (let i = 0; i < 16; i++) { const cx = (r() * LW) | 0, h = 20 + ((r() * 30) | 0); x.fillStyle = r() > 0.5 ? '#ff7aa8' : '#ffb04a'; for (let j = 0; j < h; j++) x.fillRect(cx + Math.round(Math.sin(j / 5) * 3), H - j, 3, 1); x.fillRect(cx - 4, H - h, 11, 3); } }
+      layers = [[weed, 0.15, 0], [coral, 0.4, 0]];
+    } else if (name === 'edit') {
+      sky = gradient(W, H, [[0, '#101018'], [1, '#1c1c28']]);
+      extra = mk(W, H); {
+        const x = extra.getContext('2d');
+        x.fillStyle = '#05050a'; x.fillRect(W / 2 - 90, 34, 180, 90); x.fillStyle = '#2a2a3a'; x.fillRect(W / 2 - 92, 32, 184, 2);
+        ['#e8402e', '#ffd23f', '#3bd16f', '#2fe0ff', '#2f7bff', '#ff5ab4', '#ffffff'].forEach((c, i) => { x.fillStyle = c; x.fillRect(W / 2 - 86 + i * 25, 38, 25, 60); });
+        x.fillStyle = '#1a1a24'; x.fillRect(W / 2 - 86, 98, 175, 22);
+      }
+      const tracks = mk(LW, H); { const x = tracks.getContext('2d'); const r = rng(5); const cols = ['#3a8aff', '#3bd16f', '#9b4dff', '#ff8a3d'];
+        for (let tr = 0; tr < 4; tr++) { const y = H - 92 + tr * 18; x.fillStyle = '#16161e'; x.fillRect(0, y, LW, 14); for (let cx = 0; cx < LW;) { const w = 30 + ((r() * 60) | 0); x.fillStyle = cols[tr]; x.fillRect(cx + 2, y + 2, w - 4, 10); x.fillStyle = 'rgba(255,255,255,0.35)'; x.fillRect(cx + 2, y + 2, w - 4, 2); cx += w + ((r() * 14) | 0); } } }
+      { const x = tracks.getContext('2d'); x.globalCompositeOperation = 'source-atop'; x.fillStyle = 'rgba(14,14,22,0.68)'; x.fillRect(0, 0, LW, H); }
+      layers = [[tracks, 0.3, 0]];
+    } else if (name === 'buffer') {
+      sky = gradient(W, H, [[0, '#0a0a10'], [1, '#22222c']]);
     } else if (name === 'boss') {
       sky = gradient(W, H, [[0, '#0a0318'], [1, '#2a0a4a']]);
       extra = mk(W, H); {
@@ -711,6 +884,16 @@ window.ART = (() => {
           const r = rng(Math.floor(t / 6));
           for (let i = 0; i < 6; i++) { ctx.fillStyle = r() > 0.5 ? 'rgba(255,90,180,0.18)' : 'rgba(47,224,255,0.16)'; ctx.fillRect((r() * W) | 0, (r() * H * 0.6) | 0, (8 + r() * 60) | 0, (2 + r() * 6) | 0); }
         }
+        if (name === 'edit') { const ph = ((t * 0.8) % (W + 40)) - 20; ctx.fillStyle = '#ff3b3b'; ctx.fillRect(Math.round(ph), 0, 2, H); ctx.fillRect(Math.round(ph) - 3, 0, 8, 6); }
+        if (name === 'sea') {
+          ctx.fillStyle = 'rgba(255,255,255,0.06)'; for (let i = 0; i < 5; i++) { const bx = ((i * 90 - camX * 0.1 + t * 0.2) % (W + 80)) - 40; ctx.beginPath(); ctx.moveTo(bx, 0); ctx.lineTo(bx + 30, 0); ctx.lineTo(bx + 80, H); ctx.lineTo(bx + 40, H); ctx.fill(); }
+          ctx.fillStyle = 'rgba(220,240,255,0.7)'; for (let i = 0; i < 18; i++) { const px = ((i * 71 - camX * 0.5) % W + W) % W; const py = H - ((t * (0.4 + (i % 3) * 0.2) + i * 37) % H); ctx.fillRect(Math.round(px), Math.round(py), 2, 2); }
+        }
+        if (name === 'buffer') {
+          for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; const k = ((i - Math.floor(t / 5)) % 12 + 12) % 12; ctx.fillStyle = 'rgba(255,255,255,' + (0.04 + (k / 12) * 0.16) + ')'; ctx.fillRect(Math.round(W / 2 + Math.cos(a) * 70 - 6), Math.round(96 + Math.sin(a) * 70 - 6), 12, 12); }
+          ctx.fillStyle = 'rgba(255,255,255,0.04)'; for (let j = 0; j < H; j += 3) ctx.fillRect(0, j, W, 1);
+        }
+        if (name === 'fair') { for (let i = 0; i < 4; i++) { const a = Math.sin(t * 0.02 + i * 1.7) * 0.5; ctx.fillStyle = ['rgba(47,224,255,0.07)', 'rgba(255,90,180,0.07)', 'rgba(255,210,63,0.07)', 'rgba(59,209,111,0.07)'][i]; ctx.beginPath(); const bx = 40 + i * 100; ctx.moveTo(bx, H); ctx.lineTo(bx + Math.sin(a) * 300 - 20, 0); ctx.lineTo(bx + Math.sin(a) * 300 + 30, 0); ctx.fill(); } }
         if (name === 'cave') {
           ctx.fillStyle = 'rgba(200,246,255,0.5)';
           for (let i = 0; i < 14; i++) { const px = ((i * 97 - camX * 0.3 + t * 0.15 * ((i % 3) + 1)) % W + W) % W; const py = ((i * 53 + t * 0.2 * ((i % 2) + 1)) % H); ctx.fillRect(Math.round(px), Math.round(py), 1, 1); }
@@ -725,5 +908,5 @@ window.ART = (() => {
     return res;
   }
 
-  return { HERO, ENEMY, ITEM, tiles, background, THEMES, mk, rng };
+  return { HERO, ENEMY, ITEM, NPC, tiles, background, THEMES, mk, rng };
 })();

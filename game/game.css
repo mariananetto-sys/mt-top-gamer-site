@@ -119,6 +119,8 @@ kbd {
 .i-cd { background: conic-gradient(#ff5ab4, #ffd23f, #7cf0ff, #a6ff5a, #ff5ab4); border-radius: 50% !important; }
 .i-star { background: #ffd23f; clip-path: polygon(50% 0, 62% 36%, 100% 38%, 70% 60%, 80% 100%, 50% 76%, 20% 100%, 30% 60%, 0 38%, 38% 36%); }
 .i-coin { background: radial-gradient(circle, #fff3b0 0 20%, #ffc531 22% 70%, #c98a00 72%); border-radius: 50% !important; }
+.i-npc { background: #ff8fd8; }
+.i-house { background: linear-gradient(#c27a3e 0 40%, #7a4418 40%); }
 .tip { margin: 14px 0 0; color: var(--muted); font-size: 14px; }
 
 @media (max-width: 560px) {
