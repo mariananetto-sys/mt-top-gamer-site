@@ -115,3 +115,36 @@ document.querySelectorAll(".chip").forEach((chip) => {
 renderVideos();
 renderShorts();
 $("#year").textContent = new Date().getFullYear();
+
+// Prévia do jogo (cena em pixel art desenhada com a arte do próprio jogo)
+(function drawGamePreview() {
+  const cv = document.getElementById("game-preview");
+  if (!cv || !window.ART) return;
+  const W = 384, H = 224, S = 3;
+  cv.width = W * S; cv.height = H * S;
+  const x = cv.getContext("2d");
+  x.imageSmoothingEnabled = false;
+  x.scale(S, S);
+  ART.background("grass", W, H).draw(x, 140, 0);
+  const t = ART.tiles("grass");
+  for (let i = 0; i < 24; i++) {
+    if (i === 15 || i === 16) continue;
+    x.drawImage(t.groundTop, i * 16, 192); x.drawImage(t.ground, i * 16, 208);
+  }
+  [[7, "brick"], [8, "q"], [9, "brick"], [10, "q"], [11, "brick"]].forEach(([c, k]) => x.drawImage(k === "q" ? t.q[0] : t.brick, c * 16, 128));
+  x.drawImage(t.pillarCap[1][0], 19 * 16, 160); x.drawImage(t.pillarCap[1][1], 20 * 16, 160);
+  x.drawImage(t.pillarBody[0], 19 * 16, 176); x.drawImage(t.pillarBody[1], 20 * 16, 176);
+  [6, 7, 8].forEach((c, i) => x.drawImage(ART.ITEM.coin[i % 4], c * 16 + 8, 96 - i * 6));
+  x.drawImage(ART.HERO.n.b.jump.r, 112, 112);
+  x.drawImage(ART.ENEMY.bug[0].r, 200, 176);
+  x.drawImage(ART.ENEMY.cart[1].r, 248, 176);
+  x.drawImage(ART.ENEMY.pad.r, 290, 100);
+  x.drawImage(ART.ITEM.turbo, 136, 113);
+  x.font = '16px "Press Start 2P", monospace';
+  x.textAlign = "center"; x.textBaseline = "top";
+  const title = () => {
+    x.fillStyle = "#1a1020"; x.fillText("A AVENTURA", W / 2 + 2, 26 + 2);
+    x.fillStyle = "#ffd23f"; x.fillText("A AVENTURA", W / 2, 26);
+  };
+  if (document.fonts && document.fonts.load) document.fonts.load('16px "Press Start 2P"').then(title, title); else title();
+})();

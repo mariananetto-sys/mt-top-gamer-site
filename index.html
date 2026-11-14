@@ -24,6 +24,7 @@
     </a>
     <nav class="nav" aria-label="Seções">
       <a href="#sobre">Sobre</a>
+      <a href="#jogo">Jogo</a>
       <a href="#videos">Vídeos</a>
       <a href="#shorts">Shorts</a>
       <a href="#redes">Redes</a>
@@ -52,6 +53,7 @@
               Inscrever no canal
             </a>
             <a class="btn btn-blue" href="#videos">Ver vídeos</a>
+            <a class="btn btn-yellow" href="jogo.html">🎮 Jogar o jogo</a>
           </div>
         </div>
       </div>
@@ -81,9 +83,30 @@
       </ul>
     </section>
 
+    <!-- JOGO -->
+    <section id="jogo" class="section">
+      <h2 class="section-title"><span>02</span> O jogo do Matheus</h2>
+      <div class="game-card">
+        <div class="game-text">
+          <p class="mgp-tag">NOVO · JOGUE NO NAVEGADOR</p>
+          <h3>Matheus Top Gamer: A Aventura</h3>
+          <p>Um jogo de plataforma 2D no estilo dos clássicos. O malvado <strong>BUGSOFT</strong> espalhou bugs e lag pelo Universo 100% Gamer, e só o Matheus pode salvar a gameplay!</p>
+          <ul class="game-facts">
+            <li>4 fases + chefão</li>
+            <li>Power-ups: Controle Turbo, Disco e Estrela 100%</li>
+            <li>PC, controle e celular</li>
+          </ul>
+          <a class="btn btn-red" href="jogo.html">Jogar agora ▶</a>
+        </div>
+        <a class="game-preview" href="jogo.html" aria-label="Abrir o jogo">
+          <canvas id="game-preview" width="384" height="224"></canvas>
+        </a>
+      </div>
+    </section>
+
     <!-- VÍDEOS -->
     <section id="videos" class="section">
-      <h2 class="section-title"><span>02</span> Vídeos recentes</h2>
+      <h2 class="section-title"><span>03</span> Vídeos recentes</h2>
       <div class="filters" role="group" aria-label="Filtrar vídeos">
         <button class="chip is-active" data-filter="all">Todos</button>
         <button class="chip" data-filter="mgp">MGPs completos</button>
@@ -98,13 +121,13 @@
 
     <!-- SHORTS -->
     <section id="shorts" class="section">
-      <h2 class="section-title"><span>03</span> Shorts</h2>
+      <h2 class="section-title"><span>04</span> Shorts</h2>
       <div id="shorts-row" class="shorts-row"></div>
     </section>
 
     <!-- REDES -->
     <section id="redes" class="section">
-      <h2 class="section-title"><span>04</span> Redes sociais &amp; comunidade</h2>
+      <h2 class="section-title"><span>05</span> Redes sociais &amp; comunidade</h2>
       <div class="socials">
         <a class="social s-yt" href="https://www.youtube.com/@MT-TOP-GAMER.2006" target="_blank" rel="noopener"><span>YouTube</span><small>@MT-TOP-GAMER.2006</small></a>
         <a class="social s-dc" href="https://discord.gg/ezG8F54a" target="_blank" rel="noopener"><span>Discord</span><small>Comunidade oficial</small></a>
@@ -128,6 +151,7 @@
     <a class="player-link" href="#" target="_blank" rel="noopener">Abrir no YouTube ↗</a>
   </dialog>
 
+  <script src="game/art.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

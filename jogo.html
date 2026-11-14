@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Matheus Top Gamer: A Aventura</title>
+  <meta name="description" content="Jogo de plataforma 2D do canal Matheus Top Gamer Entretenimentos: 4 fases, um chefão e muita zoeira. Jogue no navegador, no PC ou no celular.">
+  <meta property="og:title" content="Matheus Top Gamer: A Aventura 100% Gamer">
+  <meta property="og:description" content="Jogo de plataforma 2D do canal: 4 fases e o chefão BUGSOFT. Jogue no navegador!">
+  <meta property="og:image" content="assets/banner.jpg">
+  <meta name="theme-color" content="#0b1033">
+  <link rel="icon" href="assets/avatar.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rubik:wght@400;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="game/game.css">
+</head>
+<body>
+  <header class="g-top">
+    <a href="./" class="g-back" aria-label="Voltar ao site">← <span>Site</span></a>
+    <h1>MATHEUS <span class="r">TOP</span> <span class="y">GAMER</span><small>A Aventura 100% Gamer</small></h1>
+    <div class="g-tools">
+      <button id="btn-mute" class="g-btn" aria-label="Ligar ou desligar o som">🔊</button>
+      <button id="btn-full" class="g-btn" aria-label="Tela cheia">⛶</button>
+    </div>
+  </header>
+
+  <main class="g-stage">
+    <div class="g-frame">
+      <canvas id="game" width="384" height="224" aria-label="Jogo Matheus Top Gamer"></canvas>
+      <div id="overlay" class="g-overlay" hidden>
+        <a class="g-cta red" href="https://www.youtube.com/@MT-TOP-GAMER.2006?sub_confirmation=1" target="_blank" rel="noopener">Inscrever no canal</a>
+        <button id="btn-again" class="g-cta blue">Jogar de novo</button>
+      </div>
+    </div>
+
+    <div class="touch" aria-hidden="true">
+      <div class="dpad" id="dpad"><span class="l">◀</span><span class="r">▶</span></div>
+      <button class="tbtn pause" data-k="start">❚❚</button>
+      <div class="ab">
+        <button class="tbtn b" data-k="run">B<small>correr</small></button>
+        <button class="tbtn a" data-k="jump">A<small>pular</small></button>
+      </div>
+    </div>
+
+    <section class="g-help">
+      <h2>Como jogar</h2>
+      <ul class="keys">
+        <li><kbd>←</kbd><kbd>→</kbd> andar</li>
+        <li><kbd>Z</kbd> ou <kbd>Espaço</kbd> pular (segure para pular mais alto)</li>
+        <li><kbd>X</kbd> ou <kbd>Shift</kbd> correr e jogar CDs</li>
+        <li><kbd>Enter</kbd> pausar · <kbd>M</kbd> som</li>
+      </ul>
+      <ul class="items">
+        <li><b class="i-pad"></b><span><strong>Controle Turbo</strong> deixa o Matheus grande e quebra tijolos.</span></li>
+        <li><b class="i-cd"></b><span><strong>Disco</strong> deixa você arremessar CDs nos inimigos.</span></li>
+        <li><b class="i-star"></b><span><strong>Estrela 100%</strong> deixa você invencível por um tempo.</span></li>
+        <li><b class="i-coin"></b><span><strong>Fichas</strong>: junte 100 para ganhar uma vida.</span></li>
+      </ul>
+      <p class="tip">Funciona com teclado, controle (gamepad) e na tela do celular. Seu progresso fica salvo neste navegador.</p>
+    </section>
+  </main>
+
+  <script src="game/art.js"></script>
+  <script src="game/audio.js"></script>
+  <script src="game/levels.js"></script>
+  <script src="game/main.js"></script>
+</body>
+</html>
