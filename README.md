@@ -18,7 +18,8 @@ Os números de inscritos e vídeos ficam em `index.html` (procure por `inscritos
 
 Jogo de plataforma 2D em `jogo.html` (link no menu do site e na seção "O jogo do Matheus").
 
-- 4 fases (Planície Retrô, Caverna dos Cartuchos, Nuvens do Lag, Fábrica Bugsoft) + o chefão BUGSOFT.
+- 4 fases (Colinas Tropicais, Caverna dos Cartuchos, Nuvens do Lag, Fábrica Bugsoft) + o chefão BUGSOFT.
+- Inimigos: bug do lag, cartucho bravo, controle voador, glitch espinhento e a bola de metal (pisar só deixa tonta; CD, casco ou estrela destroem).
 - Power-ups: Controle Turbo (fica grande), Disco (joga CDs) e Estrela 100% (invencível). 100 fichas = 1 vida.
 - Teclado (setas, Z pular, X correr/CD, Enter pausa, M som), controle USB/Bluetooth e botões na tela do celular.
 - O progresso (fase liberada e recorde) fica salvo no navegador de quem joga.

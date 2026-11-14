@@ -18,6 +18,7 @@ window.ART = (() => {
     r: '#e8402e', y: '#ffd23f', u: '#2f7bff', w: '#ffffff', p: '#2b3486', P: '#1a1f55', n: '#6b3a1e',
     v: '#8a3ad6', V: '#4e1d8c', g: '#b3b9d1', G: '#6b7190', R: '#ff3b3b', c: '#e8402e', C: '#9c2318',
     Y: '#d99a00', L: '#3bd16f', o: '#ff9f1c', e: '#2fe0ff', m: '#ff5ab4',
+    q: '#2a2a36', Q: '#4a4a5c',
   };
 
   function fromRows(rows, pal, w) {
@@ -55,15 +56,16 @@ window.ART = (() => {
     '..kdsssssskssk..',
     '...kkSsssssk....',
   ];
+  // camisa preta com faixas vermelha e azul (cores da logo do MGP)
   const BODY_S = [
-    '..kuyyrryyuk....',
-    '..kuyyrryyuksk..',
-    '..krruuyyrrk....',
+    '..kqQrruuqqk....',
+    '..kqqrruuqqksk..',
+    '..kqqrruuqqk....',
   ];
   const BODY_S_JUMP = [
-    '..kuyyrryyukssk.',
-    '..kuyyrryyukk...',
-    '..krruuyyrrk....',
+    '..kqQrruuqqkssk.',
+    '..kqqrruuqqkk...',
+    '..kqqrruuqqk....',
   ];
   const LEGS_S = {
     idle: ['..kppppppppk....', '..kpppkkpppk....', '..knnnk.knnnk...', '..kkkkk.kkkkk...'],
@@ -82,9 +84,9 @@ window.ART = (() => {
     'sk.dskksskksd.ks',
     'sk.dssssssssd.ks',
     '.sk.kSskkSsk.ks.',
-    '..kkuyyrryyukk..',
-    '...kuyyrryyuk...',
-    '...krruuyyrrk...',
+    '..kkqqrruuqqkk..',
+    '...kqqrruuqqk...',
+    '...kqqrruuqqk...',
     '...kppppppppk...',
     '..knnnk..knnnk..',
     '..kkkkk..kkkkk..',
@@ -105,26 +107,26 @@ window.ART = (() => {
     '...kkSssssk.....',
   ];
   const TORSO_B = [
-    '..kkuuyyrryykk..',
-    '.kuuuyyrrryyuuk.',
-    '.kuuyyyrrryyyuk.',
-    '.kurryyyuuyyrrk.',
-    '.kkrryyuuuyyrkk.',
-    '.ksrrryuuuyrrrsk',
-    '.kssyyrruurryssk',
-    '..kkyyrruurrkk..',
+    '..kkqqqqqqqqkk..',
+    '.kqQqrrqquuqqqk.',
+    '.kqQrrrqquuuqqk.',
+    '.kqqrrqqqquuqqk.',
+    '.kkqqrqqqquqqkk.',
+    '.ksqqqrqquqqqsk.',
+    '.kssqqqrruqqqssk',
+    '..kkqqqrruqqkk..',
     '..kPPPPPPPPPPk..',
     '..kppppppppppk..',
   ];
   const TORSO_B_JUMP = [
-    '..kkuuyyrryykkss',
-    '.kuuuyyrrryyuksk',
-    '.kuuyyyrrryyykk.',
-    '.kurryyyuuyyrrk.',
-    '.kkrryyuuuyyrrk.',
-    '.ksrrryuuuyrrrk.',
-    '.kssyyrruurryyk.',
-    '..kkyyrruurrkk..',
+    '..kkqqqqqqqqkkss',
+    '.kqQqrrqquuqqksk',
+    '.kqQrrrqquuuqkk.',
+    '.kqqrrqqqquuqqk.',
+    '.kkqqrqqqquqqqk.',
+    '.ksqqqrqquqqqqk.',
+    '.kssqqqrruqqqqk.',
+    '..kkqqqrruqqkk..',
     '..kPPPPPPPPPPk..',
     '..kppppppppppk..',
   ];
@@ -137,11 +139,11 @@ window.ART = (() => {
 
   const HERO_PALS = {
     n: {},
-    cd: { r: '#ffffff', y: '#ff8a3d', u: '#9b4dff', b: '#9b4dff', p: '#3a1f6e', P: '#24104a' },
-    s0: { h: '#ff5ab4', H: '#b0249a', b: '#ffffff', r: '#ffffff', y: '#ff5ab4', u: '#ffe14f', p: '#b0249a', P: '#6a0f5c' },
-    s1: { h: '#5ff3ff', H: '#1aa0c0', b: '#ffffff', r: '#ffffff', y: '#5ff3ff', u: '#ff5ab4', p: '#1a6aa0', P: '#0f3a6a' },
-    s2: { h: '#a6ff5a', H: '#4cb020', b: '#ffffff', r: '#ffffff', y: '#a6ff5a', u: '#2f7bff', p: '#2a7a20', P: '#164a10' },
-    s3: { h: '#ffffff', H: '#ffb02e', b: '#e8402e', r: '#ffd23f', y: '#ffffff', u: '#e8402e', p: '#e8402e', P: '#9c2318' },
+    cd: { q: '#f4f4ff', Q: '#ffffff', r: '#ff8a3d', u: '#9b4dff', b: '#9b4dff', p: '#3a1f6e', P: '#24104a' },
+    s0: { h: '#ff5ab4', H: '#b0249a', b: '#ffffff', r: '#ffffff', q: '#ff5ab4', Q: '#ffb0e0', u: '#ffe14f', p: '#b0249a', P: '#6a0f5c' },
+    s1: { h: '#5ff3ff', H: '#1aa0c0', b: '#ffffff', r: '#ffffff', q: '#5ff3ff', Q: '#c0ffff', u: '#ff5ab4', p: '#1a6aa0', P: '#0f3a6a' },
+    s2: { h: '#a6ff5a', H: '#4cb020', b: '#ffffff', r: '#ffffff', q: '#a6ff5a', Q: '#e0ffc0', u: '#2f7bff', p: '#2a7a20', P: '#164a10' },
+    s3: { h: '#ffffff', H: '#ffb02e', b: '#e8402e', r: '#ffd23f', q: '#ffffff', Q: '#ffffff', u: '#e8402e', p: '#e8402e', P: '#9c2318' },
   };
   const HERO = {};
   for (const [name, over] of Object.entries(HERO_PALS)) {
@@ -241,6 +243,27 @@ window.ART = (() => {
     spiky: both(fromRows(SPIKY, { ...BASE, w: '#ffffff' }, 16)),
     spikyGlitch: both(fromRows(SPIKY, { ...BASE, R: '#2fe0ff', w: '#ff5ab4' }, 16)),
   };
+
+  // Bola de metal com parafusos (rola e não morre pisando)
+  ENEMY.ball = [0, 1, 2, 3].map((f) => {
+    const c = mk(16, 16), x = c.getContext('2d');
+    const cx = 7.5, cy = 7.5, r = 7.5;
+    for (let j = 0; j < 16; j++) for (let i = 0; i < 16; i++) {
+      const d = Math.hypot(i - cx, j - cy);
+      if (d > r) continue;
+      const lit = (cx - i) + (cy - j);
+      x.fillStyle = d > r - 1 ? '#1a1020' : lit > 5 ? '#e4e9f5' : lit > 0 ? '#aab2c6' : lit > -5 ? '#7d8599' : '#555c70';
+      x.fillRect(i, j, 1, 1);
+    }
+    for (let n = 0; n < 4; n++) {
+      const a = (n * Math.PI) / 2 + (f * Math.PI) / 8;
+      const bx = Math.round(cx + Math.cos(a) * 4.6 - 1), by = Math.round(cy + Math.sin(a) * 4.6 - 1);
+      x.fillStyle = '#1a1020'; x.fillRect(bx, by, 3, 3);
+      x.fillStyle = '#c9a23a'; x.fillRect(bx, by, 2, 2);
+    }
+    x.fillStyle = '#3a3f52'; x.fillRect(2, 7, 12, 1);
+    return c;
+  });
 
   // ----------------------------------------------------------------- ITENS
   const HEART = [
@@ -346,6 +369,7 @@ window.ART = (() => {
 
   // ----------------------------------------------------------------- TILES
   const THEMES = {
+    tropical: { g1: '#c4691f', g2: '#8e4513', g3: '#e8913f', t1: '#3fd04a', t2: '#1f9a34', tL: '#b8f78a', br: '#d0632a', brL: '#f7a064', brD: '#8a3812', mo: '#3e1606', hd: '#c27a3e', hdL: '#f0b070', hdD: '#7a4418', semi: 'wood', style: 'bands' },
     grass: { g1: '#c66a2c', g2: '#9a4818', g3: '#e48a48', t1: '#46c84f', t2: '#2c9338', tL: '#a4f27c', br: '#d0632a', brL: '#f7a064', brD: '#8a3812', mo: '#3e1606', hd: '#c27a3e', hdL: '#f0b070', hdD: '#7a4418', semi: 'wood', style: 'dirt' },
     cave: { g1: '#3a4c88', g2: '#24315e', g3: '#5468aa', t1: '#5fd6ff', t2: '#2f8fc0', tL: '#c8f6ff', br: '#3f74d4', brL: '#7fb0ff', brD: '#1e3f8a', mo: '#0b1430', hd: '#4f62a0', hdL: '#8a9ee0', hdD: '#26336a', semi: 'wood', style: 'dirt' },
     sky: { g1: '#8a5fc4', g2: '#5f3d94', g3: '#a984e0', t1: '#7cf0c4', t2: '#3fbf92', tL: '#d4fff0', br: '#e26aa0', brL: '#ffa8cf', brD: '#9a3468', mo: '#4a1030', hd: '#b07ad8', hdL: '#dcb4ff', hdD: '#6a3c96', semi: 'cloud', style: 'dirt' },
@@ -378,6 +402,18 @@ window.ART = (() => {
           for (let i = 1; i < 16; i += 4) x.fillRect(i, 4, 2, 1);
           x.fillStyle = th.tL; x.fillRect(0, 0, 16, 1);
           for (let i = 2; i < 16; i += 5) x.fillRect(i, 1, 1, 1);
+        }
+      } else if (th.style === 'bands') {
+        for (let j = 0; j < 16; j++) { x.fillStyle = Math.floor(j / 4) % 2 ? th.g2 : th.g1; x.fillRect(0, j, 16, 1); }
+        x.fillStyle = th.g3; [[3, 1], [11, 2], [7, 9], [14, 10], [1, 13]].forEach(([a, b]) => x.fillRect(a, b, 2, 1));
+        x.fillStyle = th.g2; [[6, 5], [12, 6], [2, 14]].forEach(([a, b]) => x.fillRect(a, b, 1, 1));
+        if (top) {
+          x.fillStyle = th.t1; x.fillRect(0, 0, 16, 5);
+          x.fillStyle = th.t2;
+          for (let i = 0; i < 16; i++) { const h = 5 + [2, 3, 2, 1][i % 4]; x.fillRect(i, 5, 1, h - 5); }
+          x.fillStyle = th.tL; x.fillRect(0, 0, 16, 1);
+          for (let i = 1; i < 16; i += 4) { x.fillRect(i, 1, 1, 2); x.fillRect(i + 1, 1, 1, 1); }
+          x.fillStyle = '#ffffff'; x.fillRect(6, 2, 1, 1);
         }
       } else if (th.style === 'stone') {
         x.fillStyle = th.mo; x.fillRect(0, 0, 16, 16);
@@ -574,7 +610,7 @@ window.ART = (() => {
     if (bgCache[key]) return bgCache[key];
     const LW = 512;
     let layers = [], sky, extra = null;
-    if (name === 'grass' || name === 'title') {
+    if (name === 'grass') {
       sky = gradient(W, H, [[0, '#4fb8ff'], [1, '#c8f0ff']]);
       const far = ridge(LW, H, '#8cbde6', 78, [[16, 2, 0.3], [9, 5, 1.1], [4, 11, 2]]);
       { const x = far.getContext('2d'); x.globalCompositeOperation = 'source-atop'; x.fillStyle = '#eaf6ff'; x.fillRect(0, H - 100, LW, 10); }
@@ -582,6 +618,35 @@ window.ART = (() => {
       const near = ridge(LW, H, '#58c25e', 44, [[14, 3, 0.5], [7, 7, 2.0]]);
       { const x = near.getContext('2d'); x.globalCompositeOperation = 'source-atop'; x.fillStyle = '#46a84f'; for (let i = 0; i < LW; i += 12) for (let j = H - 60; j < H; j += 10) x.fillRect(i + ((j / 10) % 2) * 6, j, 2, 2); }
       layers = [[far, 0.12, 0], [clouds, 0.2, 0.15], [near, 0.35, 0]];
+    } else if (name === 'tropical' || name === 'title') {
+      sky = gradient(W, H, [[0, '#1f7fff'], [0.62, '#8fd8ff'], [0.63, '#2a8ff0'], [1, '#1a6ad0']]);
+      extra = mk(W, H); {
+        const x = extra.getContext('2d'); const hz = Math.round(H * 0.63);
+        const r = rng(3);
+        for (let i = 0; i < 40; i++) { x.fillStyle = r() > 0.5 ? '#bfe8ff' : '#6fc0ff'; x.fillRect((r() * W) | 0, hz + 2 + ((r() * (H - hz)) | 0), 3 + ((r() * 10) | 0), 1); }
+      }
+      const clouds = mk(LW, H); { const x = clouds.getContext('2d'); [[60, 30, 1.1], [220, 50, 0.8], [360, 24, 1.2], [470, 58, 0.7]].forEach(([cx, cy, s]) => cloud(x, cx, cy, s, '#ffffff', '#cfeeff')); }
+      // montanhas com faixas e cachoeiras
+      const far = ridge(LW, H, '#2f9a5a', 96, [[18, 2, 0.6], [10, 5, 1.7], [5, 13, 0.4]]);
+      { const x = far.getContext('2d'); x.globalCompositeOperation = 'source-atop';
+        for (let j = H - 110; j < H; j += 8) { x.fillStyle = (j / 8) % 2 ? '#24804a' : '#2f9a5a'; x.fillRect(0, j, LW, 4); }
+        x.fillStyle = '#c8f0ff'; [70, 250, 400].forEach((wx) => { x.fillRect(wx, H - 80, 6, 80); x.fillStyle = '#ffffff'; x.fillRect(wx + 1, H - 80, 2, 80); x.fillStyle = '#c8f0ff'; }); }
+      // morros arredondados com palmeiras
+      const near = ridge(LW, H, '#3cc34f', 44, [[12, 3, 0.2], [7, 8, 2.4]]);
+      { const x = near.getContext('2d');
+        x.globalCompositeOperation = 'source-atop';
+        for (let j = H - 70; j < H; j += 6) { x.fillStyle = (j / 6) % 2 ? '#c4691f' : '#8e4513'; x.fillRect(0, j + 20, LW, 3); }
+        x.globalCompositeOperation = 'source-over';
+        const palm = (px, py, h) => {
+          for (let i = 0; i < h; i += 3) { x.fillStyle = (i / 3) % 2 ? '#8a5a2a' : '#b07a3a'; x.fillRect(px + Math.round(Math.sin(i / 10) * 2), py - i, 4, 3); }
+          const tx = px + Math.round(Math.sin(h / 10) * 2) + 2, ty = py - h;
+          x.fillStyle = '#1f9a34';
+          [[-1, 0], [1, 0], [-1, 0.6], [1, 0.6], [0, -1]].forEach(([dx, dy]) => { for (let k = 0; k < 12; k++) x.fillRect(tx + dx * k - 1, ty + Math.round(dy * k + (k * k) / 14), 3, 2); });
+          x.fillStyle = '#3fd04a'; [[-1, 0], [1, 0]].forEach(([dx]) => { for (let k = 0; k < 9; k++) x.fillRect(tx + dx * k, ty - 1 + Math.round((k * k) / 14), 2, 1); });
+        };
+        [[40, 26], [150, 34], [300, 22], [420, 30]].forEach(([px, h]) => { let top = H; for (let j = 0; j < H; j++) { if (x.getImageData(px + 1, j, 1, 1).data[3] > 0) { top = j; break; } } palm(px, top + 2, h); });
+      }
+      layers = [[clouds, 0.08, 0.1], [far, 0.15, 0], [near, 0.35, 0]];
     } else if (name === 'cave') {
       sky = gradient(W, H, [[0, '#07061a'], [1, '#1b1446']]);
       const far = ridge(LW, H, '#15113a', 90, [[30, 4, 0.2], [14, 9, 1.4], [6, 23, 0.7]]);

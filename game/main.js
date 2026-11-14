@@ -209,6 +209,7 @@
     switch (d.type) {
       case 'g': return { ...base, kind: 'g', x: bx + 1, y: by - 14, w: 14, h: 14, enemy: true };
       case 's': return { ...base, kind: 's', x: bx + 1, y: by - 14, w: 14, h: 14, enemy: true };
+      case 'b': return { ...base, kind: 'b', x: bx + 1, y: by - 14, w: 14, h: 14, enemy: true, roll: 0, stun: 0 };
       case 'k': return { ...base, kind: 'k', x: bx + 1, y: by - 15, w: 14, h: 15, enemy: true, state: 'walk', shellT: 0, kickT: 0 };
       case 'f': return { ...base, kind: 'f', x: bx + 1, y: by - 12, w: 14, h: 12, enemy: true, baseY: by - 12 };
       case 'mph': return { ...base, kind: 'mp', plat: true, active: true, axis: 'x', x: bx, y: d.y * T, w: 48, h: 8, a: bx, b: bx + d.range * T, dir: 1, speed: 0.8, dx: 0, dy: 0 };
@@ -477,6 +478,11 @@
       }
       return;
     }
+    if (e.kind === 'b') {
+      if (stomp) { p.y = e.y - p.h; stompBounce(); e.stun = 120; AUDIO.sfx('bump'); for (let i = 0; i < 4; i++) G.parts.push({ type: 'spark', x: e.x + 7, y: e.y, vx: (Math.random() - 0.5) * 3, vy: -Math.random() * 2, life: 14, color: '#ffd23f' }); }
+      else if (e.stun === 0) hurtPlayer();
+      return;
+    }
     if (stomp && e.kind !== 's') {
       p.y = e.y - p.h; stompBounce(); AUDIO.sfx('stomp'); comboScore(e.x, e.y);
       if (e.kind === 'g') { e.dying = 'flat'; e.dt = 30; e.enemy = false; }
@@ -504,6 +510,14 @@
     if (e.dying === 'flip') { e.vy += 0.3; e.x += e.vx; e.y += e.vy; if (e.y > H + 24) e.gone = true; return; }
     if (e.kind === 'g') walker(e, 0.5, false);
     else if (e.kind === 's') walker(e, 0.55, false);
+    else if (e.kind === 'b') {
+      if (e.stun > 0) { e.stun--; e.vx = 0; e.vy = Math.min(e.vy + 0.35, 6); const pb = e.y + e.h; e.y += e.vy; collideY(e, pb); }
+      else {
+        if (e.t % 40 === 0) e.dir = P.x < e.x ? -1 : 1;
+        walker(e, 1.05, false);
+        e.roll += e.vx;
+      }
+    }
     else if (e.kind === 'k') {
       if (e.kickT > 0) e.kickT--;
       if (e.state === 'walk') walker(e, 0.45, true);
@@ -964,6 +978,16 @@
         rect('#1a1020', dx + 11, e.y - (flap ? 3 : 0), 6, 6); rect('#ffffff', dx + 12, e.y + 1 - (flap ? 3 : 0), 4, 4);
       }
       img(face(ENEMY.pad), dx, e.y + 4, flipY);
+    } else if (e.kind === 'b') {
+      const fr = ENEMY.ball[((Math.floor(e.roll / 3) % 4) + 4) % 4];
+      const shake = e.stun > 0 && e.stun < 30 ? ((e.t >> 1) % 2 ? 1 : -1) : 0;
+      img(fr, dx + shake, by - 16, flipY);
+      if (!flipY) {
+        const ex = R(dx + 5 + e.dir * 2 + shake), ey = R(by - 11);
+        rect('#1a1020', ex, ey, 6, 6); rect(e.stun > 0 ? '#6b7190' : '#ff3b3b', ex + 1, ey + 1, 4, 4);
+        if (e.stun > 0) rect('#1a1020', ex + 1, ey + 3, 4, 1); else rect('#ffffff', ex + 1, ey + 1, 1, 1);
+        if (e.stun > 0) for (let i = 0; i < 2; i++) { const a = e.t * 0.15 + i * 3.1; rect('#ffd23f', dx + 7 + Math.cos(a) * 7, by - 19 + Math.sin(a) * 2, 2, 2); }
+      }
     } else if (e.kind === 's') {
       const glitch = (e.t % 50) < 5;
       img(glitch ? ENEMY.spikyGlitch.r : ((e.t >> 4) & 1 ? ENEMY.spiky.l : ENEMY.spiky.r), dx + (glitch ? 2 : 0), by - 16, flipY);
@@ -1157,7 +1181,7 @@
 
   function drawTitle() {
     ART.background('title', W, H).draw(ctx, G.t * 1.2, G.t);
-    const ts = ART.tiles('grass');
+    const ts = ART.tiles('tropical');
     const off = -R(G.t * 1.2) % 16;
     for (let x = off; x < W; x += 16) { ctx.drawImage(ts.groundTop, x, H - 32); ctx.drawImage(ts.ground, x, H - 16); }
     const run = HERO.n.s[Math.floor(G.t / 6) % 2 ? 'walkA' : 'walkB'].r;
@@ -1165,6 +1189,7 @@
     const bx = W - ((G.t * 0.6) % (W + 40));
     ctx.drawImage(ENEMY.bug[(G.t >> 3) & 1].r, R(bx), H - 48);
     ctx.drawImage(ENEMY.cart[(G.t >> 3) & 1].r, R(bx + 22), H - 48);
+    ctx.drawImage(ENEMY.ball[3 - ((G.t >> 2) % 4)], R(bx + 44), H - 48);
     // avatar
     const ax = W / 2 - 26, ay = 10;
     rect('#1a1020', ax - 2, ay - 2, 56, 56); rect('#ffd23f', ax - 1, ay - 1, 54, 54); rect('#e8402e', ax, ay, 52, 52);

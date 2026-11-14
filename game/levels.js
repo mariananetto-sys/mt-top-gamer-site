@@ -7,7 +7,7 @@
 //   *  tijolo com estrela   X  bloco duro   =  plataforma vazada
 //   [ ]  cartucho gigante   ^  espinhos      ~  lava       o  ficha
 //  Inimigos/objetos: g bug, k cartucho, f controle voador, s glitch,
-//   mph/mpv plataforma móvel, fall plataforma que cai, spring mola,
+//   b bola de metal (pisar só deixa tonta), mph/mpv plataforma móvel, fall plataforma que cai, spring mola,
 //   K checkpoint, G fim de fase, fb barra de fogo, boss chefão.
 // =====================================================================
 window.LEVELS = (() => {
@@ -28,7 +28,7 @@ window.LEVELS = (() => {
 
   // ---------------------------------------------------- FASE 1
   function fase1() {
-    const L = builder(212, 'grass', 'PLANÍCIE RETRÔ', 'grass');
+    const L = builder(212, 'tropical', 'COLINAS TROPICAIS', 'grass');
     L.intro = 'O BUGSOFT espalhou bugs pelo Universo 100% Gamer!';
     L.ground(0, 68); L.ground(72, 90); L.ground(94, 140); L.ground(144, 211);
     L.put(16, 8, '?');
@@ -50,7 +50,7 @@ window.LEVELS = (() => {
     L.stairs(124, [1, 2, 3, 4]); L.stairs(130, [4, 3, 2, 1]);
     L.e('g', 128, 11);
     L.stairs(135, [1, 2, 3, 4, 4, 4]); L.put(141, 6, 'ooo'); L.stairs(144, [4, 3, 2, 1]);
-    L.e('g', 150, 11); L.e('g', 152, 11);
+    L.e('b', 152, 11);
     L.e('spring', 158, 11); L.put(156, 2, 'ooooo');
     L.pillar(162, 3); L.e('k', 167, 11);
     L.put(170, 8, '?M?'); L.e('f', 176, 7); L.e('g', 180, 11); L.e('g', 182, 11);
@@ -83,7 +83,7 @@ window.LEVELS = (() => {
     L.put(94, 8, 'BB1BB');
     L.e('s', 120, 11);
     L.put(104, 11, '^^^^^'); L.put(103, 8, '======='); L.put(105, 7, 'ooo');
-    L.e('g', 112, 11);
+    L.e('b', 112, 11);
     L.put(114, 8, '?M?');
     L.fill(124, 2, 146, 6, '#');
     L.put(126, 10, 'oooooooooooooooooo');
@@ -121,7 +121,7 @@ window.LEVELS = (() => {
     L.ground(152, 165); L.e('g', 158, 11); L.e('s', 161, 11); L.put(156, 8, '?*?');
     L.e('mph', 167, 10, { range: 5 });
     L.e('fall', 176, 9); L.e('fall', 180, 8);
-    L.ground(184, 211); L.e('k', 196, 11);
+    L.ground(184, 211); L.e('b', 196, 11);
     L.stairs(188, [1, 2, 3, 4, 5]);
     L.e('G', 202, 11);
     return L;
@@ -157,7 +157,7 @@ window.LEVELS = (() => {
     L.stairs(137, [1, 2, 3]); L.put(140, 11, '^^^^'); L.stairs(144, [3, 2, 1]);
     L.e('k', 148, 11);
     L.e('fall', 152, 10); L.e('fall', 155, 10);
-    L.e('s', 165, 11); L.e('g', 168, 11); L.e('g', 170, 11);
+    L.e('s', 165, 11); L.e('b', 170, 11);
     L.put(172, 8, '?');
     L.e('G', 182, 11);
     return L;

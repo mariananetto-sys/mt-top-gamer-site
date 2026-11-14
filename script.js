@@ -125,8 +125,8 @@ $("#year").textContent = new Date().getFullYear();
   const x = cv.getContext("2d");
   x.imageSmoothingEnabled = false;
   x.scale(S, S);
-  ART.background("grass", W, H).draw(x, 140, 0);
-  const t = ART.tiles("grass");
+  ART.background("tropical", W, H).draw(x, 140, 0);
+  const t = ART.tiles("tropical");
   for (let i = 0; i < 24; i++) {
     if (i === 15 || i === 16) continue;
     x.drawImage(t.groundTop, i * 16, 192); x.drawImage(t.ground, i * 16, 208);
