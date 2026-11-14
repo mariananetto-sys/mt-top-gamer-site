@@ -337,7 +337,7 @@
     if (jumpPressed) p.jumpBuf = 7; else if (p.jumpBuf > 0) p.jumpBuf--;
     if (p.onGround) p.coyote = 6; else if (p.coyote > 0) p.coyote--;
     if (p.jumpBuf > 0 && p.coyote > 0) {
-      p.vy = Math.min(p.vy, -(5.2 + Math.abs(p.vx) * 0.28));
+      p.vy = Math.min(p.vy, -(5.7 + Math.abs(p.vx) * 0.25));
       p.onGround = false; p.coyote = 0; p.jumpBuf = 0; p.onPlat = null;
       AUDIO.sfx(p.power ? 'jumpBig' : 'jump');
     }
