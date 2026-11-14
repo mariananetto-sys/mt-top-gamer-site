@@ -319,25 +319,25 @@ window.ART = (() => {
     '...kPPk..kPPk...',
     '...knnk..knnk...',
   ], { ...BASE, v: '#8a3ad6', o: '#ff8a2a', L: '#2fc85a', y: '#ffd23f', P: '#2a1f55' }, 16);
-  // Miguel: gorro azul-esverdeado, barba castanha e camisa laranja
+  // Miguel: cabelo castanho escuro, comprido e cacheado, e um sorrisão
   const MIGUEL = fromRows([
-    '.....kkkkkk.....',
-    '....kccccccck...',
-    '...kcCcCcCcCk...',
-    '...kddddddddk...',
-    '...kdssssssdk...',
-    '...kdskssksdk...',
-    '...kdssssSsdk...',
-    '...kdddrrdddk...',
-    '....kddddddk....',
-    '...kooOooOook...',
-    '..kooooooooook..',
+    '....kkkkkkkk....',
+    '...kddDddDddk...',
+    '..kdDddddddDdk..',
+    '..kddssssssddk..',
+    '.kdDdskssksdDdk.',
+    '.kddssssSssddk..',
+    '.kdDdsswwwsdDdk.',
+    '.kddDdsssssdDdk.',
+    '..kdddkkkkdddk..',
+    '..kdDkooooOkDdk.',
+    '...kooooooooook.',
     '..ksoooooooosk..',
     '...kuuuuuuuuk...',
     '...kuuukkuuuk...',
     '...kuuk..kuuk...',
     '...knnk..knnk...',
-  ], { ...BASE, c: '#2fb8c8', C: '#1a7a8a', o: '#ff8a3d', O: '#c95a1a', u: '#2f5ab0', d: '#5a3418' }, 16);
+  ], { ...BASE, s: '#f4c8a0', S: '#d49a72', o: '#ff8a3d', O: '#c95a1a', u: '#2f5ab0', d: '#2e1c12', D: '#5a3820' }, 16);
   const AXO = fromRows(pad([
     '.m.m........m.m.',
     '..mmm.kkkk.mmm..',

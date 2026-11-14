@@ -58,7 +58,7 @@ function renderVideos(filter = "all") {
       <div class="thumb">
         <img src="https://i.ytimg.com/vi/${v.id}/hqdefault.jpg" alt="" loading="lazy">
         ${BADGE[v.tipo] ? `<span class="badge ${v.tipo}">${BADGE[v.tipo]}</span>` : ""}
-        <span class="dur">${v.duracao}</span>
+        ${v.duracao ? `<span class="dur">${v.duracao}</span>` : ""}
         <span class="play"></span>
       </div>
       <div class="video-info">
@@ -115,6 +115,34 @@ document.querySelectorAll(".chip").forEach((chip) => {
 renderVideos();
 renderShorts();
 $("#year").textContent = new Date().getFullYear();
+
+// ---------------------------------------------------------------------
+// Atualização automática: o site pergunta à função /api/videos (Vercel)
+// quais são os vídeos e shorts mais novos do canal. Se der qualquer erro
+// (sem internet, arquivo aberto direto no PC...), fica a lista acima.
+// ---------------------------------------------------------------------
+function tipoDe(titulo) {
+  const t = titulo.toUpperCase();
+  if (/TRAILER|INTRO\/|\/INTRO/.test(t)) return "trailer";
+  if (/^MGP/.test(t)) return "mgp";
+  return "outros";
+}
+(async function atualizarVideos() {
+  try {
+    const r = await fetch("/api/videos", { cache: "no-store" });
+    if (!r.ok) return;
+    const d = await r.json();
+    if (Array.isArray(d.videos) && d.videos.length) {
+      VIDEOS.splice(0, VIDEOS.length, ...d.videos.map((v) => ({ id: v.id, tipo: tipoDe(v.titulo), titulo: v.titulo, duracao: v.duracao, quando: v.quando })));
+      const ativo = document.querySelector(".chip.is-active");
+      renderVideos(ativo ? ativo.dataset.filter : "all");
+    }
+    if (Array.isArray(d.shorts) && d.shorts.length) {
+      SHORTS.splice(0, SHORTS.length, ...d.shorts.map((s) => ({ id: s.id, titulo: s.titulo, views: s.views })));
+      renderShorts();
+    }
+  } catch (e) { /* fica a lista fixa */ }
+})();
 
 // Prévia do jogo (cena em pixel art desenhada com a arte do próprio jogo)
 (function drawGamePreview() {

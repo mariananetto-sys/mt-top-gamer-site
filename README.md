@@ -8,11 +8,13 @@ Site do canal [@MT-TOP-GAMER.2006](https://www.youtube.com/@MT-TOP-GAMER.2006). 
 2. Framework Preset: **Other**. Não precisa de comando de build nem de pasta de saída.
 3. Clique em **Deploy**.
 
-## Atualizar vídeos
+## Vídeos e shorts (atualizam sozinhos)
 
-Abra `script.js` e edite as listas `VIDEOS` e `SHORTS` no topo do arquivo. O `id` é o código do link do YouTube (`watch?v=CODIGO` ou `/shorts/CODIGO`).
+A função `api/videos.js` roda na Vercel e lê as páginas públicas de vídeos e shorts do canal no YouTube (sem chave de API). Ao abrir o site, ele busca essa lista e mostra os vídeos mais novos; a resposta fica guardada em cache por 15 minutos.
 
-Os números de inscritos e vídeos ficam em `index.html` (procure por `inscritos`).
+Se a função falhar (ou se o site for aberto direto do computador, sem a Vercel), aparecem as listas fixas `VIDEOS` e `SHORTS` no topo do `script.js`, que dá para editar à mão.
+
+Os números de inscritos e vídeos do topo continuam fixos em `index.html` (procure por `inscritos`); para atualizarem sozinhos seria preciso uma chave da API do YouTube.
 
 ## Jogo: Matheus Top Gamer — A Aventura
 

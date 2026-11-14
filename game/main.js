@@ -652,8 +652,22 @@
     }
   }
 
-  const NPC_NAME = { axo: 'AXOLOTE', ps2: 'PS2 GORDO', discord: 'GALERA DO DISCORD', babs: 'BABS MARY', inscrito: 'INSCRITO 500' };
+  const NPC_NAME = { axo: 'AXOLOTE', ps2: 'PS2 GORDO', discord: 'GALERA DO DISCORD', babs: 'BABS MARY', inscrito: 'INSCRITO 500', miguel: 'MIGUEL' };
   function npcTalk(e) {
+    if (e.who === 'couple') {
+      // casal ajudante: a Babs chama, o Miguel dá um presente
+      const step = e.met < 100 ? 0 : e.met < 230 ? 1 : 2;
+      if (step >= 1 && !e.done) {
+        e.done = true;
+        const kind = P.power === 0 ? 'turbo' : P.power === 1 ? 'cd' : 'star';
+        G.items.push({ kind, x: e.x + 1, y: e.y - 18, w: 14, h: 14, vx: 0, vy: -3, dir: P.x < e.x ? -1 : 1, rise: 0, t: 0 });
+        AUDIO.sfx('appear');
+        for (let i = 0; i < 4; i++) G.parts.push({ type: 'heart', x: e.x + 8, y: e.y - 4, vx: (Math.random() - 0.5) * 0.8, vy: -0.6, life: 50 });
+      }
+      const lines = [['babs', 'Amor, olha o Matheus!'], ['miguel', 'Salve, Matheus! Toma um presente da gente!'], ['babs', 'Boa sorte! A gente ta torcendo por voce <3']];
+      G.dialog = { who: lines[step][0], name: NPC_NAME[lines[step][0]], txt: lines[step][1] };
+      return;
+    }
     let txt = e.say || '';
     if (e.who === 'axo' && !txt) txt = 'Oi, Matheus! Eu sou o Axolote. Fica de olho nas casinhas: algumas tem porta secreta!';
     else if (e.who === 'inscrito' && !txt) txt = 'Eu fui o inscrito 500! Bora, Matheus, o canal vai longe!';
@@ -1259,6 +1273,13 @@
         text('BABS MARY', R(e.bx + 12), R(e.y - 9), { size: 6, align: 'right', color: '#ff8fd8' });
         text('MIGUEL', R(e.mx + 4), R(e.y - 9), { size: 6, color: '#7cf0ff' });
       }
+    } else if (e.kind === 'npc' && e.who === 'couple') {
+      img(ART.NPC.babs.r, e.x - 7, e.y);
+      img(ART.NPC.miguel.l, e.x + 7, e.y);
+      rect('#f2b27c', e.x + 6, e.y + 11, 4, 2);
+      if ((G.t >> 5) % 3 === 0) { const hy = R(e.y - 6 - ((G.t >> 2) % 4)); rect('#ff5ab4', e.x + 6, hy, 2, 2); rect('#ff5ab4', e.x + 9, hy, 2, 2); rect('#ff5ab4', e.x + 6, hy + 1, 5, 2); rect('#ff5ab4', e.x + 7, hy + 3, 3, 1); }
+      text('BABS MARY', R(e.x + 4), R(e.y - 16), { size: 6, align: 'right', color: '#ff8fd8' });
+      text('MIGUEL', R(e.x + 13), R(e.y - 16), { size: 6, color: '#7cf0ff' });
     } else if (e.kind === 'npc') {
       const spr = ART.NPC[e.who][e.face > 0 ? 'l' : 'r'];
       img(spr, e.x, e.y + (e.who === 'axo' ? Math.round(Math.sin(G.t * 0.1)) : 0));
