@@ -391,7 +391,7 @@
     for (let ty = y0; ty <= y1; ty++) for (let tx = x0; tx <= x1; tx++) {
       const c = tileAt(tx, ty);
       if (c === 'o') { setTile(tx, ty, '.'); collectCoin(tx * T + 8, ty * T + 8); }
-      else if (c === '^' && p.y + p.h > ty * T + 7) { if (P.inv === 0 && !P.star) { hurtPlayer(); if (!P.dead) P.vy = -4.5; } }
+      else if (c === '^' && p.y + p.h > ty * T + 9 && p.x + p.w - 3 > tx * T + 2 && p.x + 3 < tx * T + 14) { if (P.inv === 0 && !P.star) { hurtPlayer(); if (!P.dead) P.vy = -4.5; } }
       else if (c === '~' && p.y + p.h > ty * T + 6) { killPlayer(true); return; }
     }
     if (p.y > H + 8) { killPlayer(true); return; }
