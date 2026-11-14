@@ -132,6 +132,10 @@ function tipoDe(titulo) {
     const r = await fetch("/api/videos", { cache: "no-store" });
     if (!r.ok) return;
     const d = await r.json();
+    const stats = document.querySelectorAll(".stats strong");
+    if (d.inscritos && stats[0]) stats[0].textContent = d.inscritos;
+    if (d.totalVideos && stats[1]) stats[1].textContent = d.totalVideos;
+    if (d.totalVideos) document.querySelectorAll('a[href$="/videos"]').forEach((a) => { a.textContent = a.textContent.replace(/[0-9.,]+( mil)? vídeos/, d.totalVideos + " vídeos"); });
     if (Array.isArray(d.videos) && d.videos.length) {
       VIDEOS.splice(0, VIDEOS.length, ...d.videos.map((v) => ({ id: v.id, tipo: tipoDe(v.titulo), titulo: v.titulo, duracao: v.duracao, quando: v.quando })));
       const ativo = document.querySelector(".chip.is-active");

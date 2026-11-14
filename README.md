@@ -14,7 +14,7 @@ A função `api/videos.js` roda na Vercel e lê as páginas públicas de vídeos
 
 Se a função falhar (ou se o site for aberto direto do computador, sem a Vercel), aparecem as listas fixas `VIDEOS` e `SHORTS` no topo do `script.js`, que dá para editar à mão.
 
-Os números de inscritos e vídeos do topo continuam fixos em `index.html` (procure por `inscritos`); para atualizarem sozinhos seria preciso uma chave da API do YouTube.
+Os números de inscritos e vídeos do topo também vêm da função (os de `index.html` são só a reserva).
 
 ## Jogo: Matheus Top Gamer — A Aventura
 

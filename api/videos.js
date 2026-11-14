@@ -63,7 +63,10 @@ function parseShorts(data) {
 async function page(path) {
   const r = await fetch(`https://www.youtube.com/${HANDLE}/${path}`, { headers: { 'User-Agent': UA, 'Accept-Language': 'pt-BR,pt;q=0.9' } });
   if (!r.ok) throw new Error(`YouTube respondeu ${r.status}`);
-  return initialData(await r.text());
+  const html = await r.text();
+  const data = initialData(html);
+  if (data) data.__html = html;
+  return data;
 }
 
 async function handler(req, res) {
@@ -71,10 +74,15 @@ async function handler(req, res) {
     const [v, s] = await Promise.all([page('videos'), page('shorts')]);
     const videos = v ? parseVideos(v) : [];
     const shorts = s ? parseShorts(s) : [];
+    // números do topo do canal (ex.: "568 inscritos", "669 vídeos")
+    const html = (v && v.__html) || '';
+    const num = (re) => { const m = html.match(re); return m ? m[1] : ''; };
+    const inscritos = num(/"content":"([0-9.,]+(?: mil)?) inscritos"/);
+    const totalVideos = num(/"content":"([0-9.,]+(?: mil)?) vídeos"/) || num(/"content":"([0-9.,]+(?: mil)?) vídeos"/);
     if (!videos.length && !shorts.length) throw new Error('nenhum vídeo encontrado');
     res.setHeader('Cache-Control', 's-maxage=900, stale-while-revalidate=3600');
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.status(200).send(JSON.stringify({ atualizado: new Date().toISOString(), videos, shorts }));
+    res.status(200).send(JSON.stringify({ atualizado: new Date().toISOString(), inscritos, totalVideos, videos, shorts }));
   } catch (e) {
     res.setHeader('Cache-Control', 's-maxage=60');
     res.status(502).json({ erro: String(e.message || e) });
