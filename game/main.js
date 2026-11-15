@@ -392,7 +392,8 @@
     const max = water ? (run ? 1.7 : 1.2) : run ? 2.6 : 1.45;
     const ice = !!G.L.ice && p.onGround;
     const acc = (p.onGround ? (run ? 0.1 : 0.08) : 0.07) * (ice ? 0.45 : 1);
-    const dir = (I.right ? 1 : 0) - (I.left ? 1 : 0);
+    let dir = (I.right ? 1 : 0) - (I.left ? 1 : 0);
+    if (G.glitch && G.glitch.kind === 'invert') dir = -dir;
     p.skid = false;
     if (dir !== 0) {
       p.face = dir;
@@ -419,7 +420,7 @@
       p.onGround = false; p.coyote = 0; p.jumpBuf = 0; p.onPlat = null;
       AUDIO.sfx(p.power ? 'jumpBig' : 'jump');
     }
-    p.vy += p.vy < 0 && jumpHeld ? 0.2 : 0.42;
+    p.vy += (p.vy < 0 && jumpHeld ? 0.2 : 0.42) * (G.glitch && G.glitch.kind === 'lowgrav' ? 0.45 : 1);
     if (p.vy > 6.5) p.vy = 6.5;
     }
 
@@ -1026,8 +1027,28 @@
     G.cam += (target - G.cam) * 0.12;
     G.cam = clamp(G.cam, 0, G.mw * T - W);
   }
+  // ---------- bugs da live do Jackson (eventos aleatórios que atrapalham)
+  const GLITCHES = {
+    invert: 'CONTROLES INVERTIDOS!', lowgrav: 'GRAVIDADE BUGADA!', lag: 'LAG NA LIVE!', vanish: 'CHAO SUMIU (SO NA TELA)!', shake: 'TELA TREMENDO!',
+  };
+  function updateGlitch() {
+    if (!G.L.live) { G.glitch = null; return false; }
+    if (!G.glitch) G.glitch = { kind: null, t: 0, next: 180, n: 0 };
+    const g = G.glitch;
+    if (!g.kind) {
+      if (--g.next <= 0) {
+        const ks = Object.keys(GLITCHES); g.kind = ks[Math.floor(Math.random() * ks.length)];
+        g.t = 100 + Math.floor(Math.random() * 80); AUDIO.sfx('bossHit'); G.shake = 6;
+      }
+    } else if (--g.t <= 0) { g.kind = null; g.next = 200 + Math.floor(Math.random() * 220); }
+    if (g.kind === 'shake') G.shake = Math.max(G.shake, 2);
+    // lag: o jogo trava 2 de cada 3 quadros
+    if (g.kind === 'lag') { g.n++; if (g.n % 3) return true; }
+    return false;
+  }
   function updateWorld() {
     if (G.freeze > 0) { G.freeze--; return; }
+    if (updateGlitch()) return;
     G.t++;
     if (G.shake > 0) G.shake--;
     if (G.flash > 0) G.flash--;
@@ -1088,6 +1109,7 @@
   // ------------------------------------------------------------ UPDATE
   function update() {
     pollInput();
+    syncLive();
     G.stateT++;
     switch (G.state) {
       case 'title':
@@ -1312,7 +1334,7 @@
       let im = null, oy = 0;
       for (const b of G.bumps) if (b.tx === tx && b.ty === ty) oy = -Math.round(Math.sin((b.t / 10) * Math.PI) * 5);
       switch (c) {
-        case '#': im = tileAt(tx, ty - 1) === '#' ? ts.ground : ts.groundTop; break;
+        case '#': im = tileAt(tx, ty - 1) === '#' ? ts.ground : ts.groundTop; if (G.glitch && G.glitch.kind === 'vanish' && ((tx * 7 + ty * 3 + (G.t >> 3)) % 4) === 0) im = null; break;
         case 'B': case '*': im = ts.brick; break;
         case '?': case 'M': case '1': im = ts.q[qf]; break;
         case 'E': im = ts.used; break;
@@ -1814,6 +1836,7 @@
         break;
       default:
         drawWorld();
+        if (G.L && G.L.live) drawGlitchFx();
         if (G.state === 'pause') {
           rect('rgba(11,16,51,0.7)', 0, 0, W, H);
           text('PAUSA', W / 2, 70, { color: '#ffd23f', size: 16, align: 'center', outline: '#1a1020' });
@@ -1827,6 +1850,59 @@
           text('VITÓRIA!', W / 2, 74, { color: '#ffd23f', size: 16, align: 'center', outline: '#1a1020' });
           text('VOCÊ VENCEU O ' + (G.L.bossName || 'BUGSOFT') + '!', W / 2, 100, { align: 'center', outline: '#1a1020' });
         }
+    }
+  }
+
+  function drawGlitchFx() {
+    const g = G.glitch, strong = g && g.kind;
+    // fatias da tela deslocadas
+    if (Math.random() < (strong ? 0.6 : 0.22)) {
+      ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0);
+      const n = strong ? 4 : 1 + ((Math.random() * 2) | 0);
+      for (let i = 0; i < n; i++) {
+        const y = Math.floor(Math.random() * cv.height), h = Math.floor((2 + Math.random() * 16) * S), dx = Math.floor((Math.random() - 0.5) * 22 * S);
+        ctx.drawImage(cv, 0, y, cv.width, h, dx, y, cv.width, h);
+      }
+      ctx.restore();
+    }
+    // faixas coloridas e chuvisco
+    if (Math.random() < (strong ? 0.5 : 0.15)) { rect(Math.random() < 0.5 ? 'rgba(255,40,200,0.22)' : 'rgba(40,240,255,0.22)', 0, Math.random() * H, W, 2 + Math.random() * 10); }
+    for (let i = 0; i < (strong ? 60 : 18); i++) rect(['#ff3bd6', '#2fe0ff', '#ffffff', '#1a1020'][i % 4], Math.random() * W, Math.random() * H, 2, 1);
+    // aviso do bug
+    if (strong) {
+      const blink = (G.t >> 2) % 2;
+      rect('rgba(10,0,24,0.75)', W / 2 - 110, 40, 220, 26);
+      text('BUG!', W / 2 + (blink ? 1 : -1), 44, { color: blink ? '#ff3bd6' : '#2fe0ff', align: 'center' });
+      text(GLITCHES[g.kind], W / 2, 55, { color: '#ffffff', align: 'center', size: 6 });
+    }
+  }
+
+  // ---------- vídeo da live de fundo (YouTube), só enquanto o jogador está nessa fase
+  const liveBox = document.getElementById('live');
+  let liveFrame = null, liveCmd = '', liveMuted = false;
+  function liveSend(func) {
+    if (!liveFrame || liveCmd === func) return;
+    liveCmd = func;
+    try { liveFrame.contentWindow.postMessage(JSON.stringify({ event: 'command', func, args: [] }), '*'); } catch (e) { /* ok */ }
+  }
+  function syncLive() {
+    if (!liveBox) return;
+    const want = G.L && G.L.live && ['intro', 'play', 'pause', 'dying', 'clear', 'scene'].includes(G.state);
+    if (want && !liveFrame) {
+      const v = G.L.live;
+      liveFrame = document.createElement('iframe');
+      liveFrame.src = `https://www.youtube.com/embed/${v.id}?start=${v.start}&autoplay=1&controls=0&rel=0&playsinline=1&enablejsapi=1&modestbranding=1&iv_load_policy=3${save.muted ? '&mute=1' : ''}`; liveMuted = !!save.muted;
+      liveFrame.allow = 'autoplay; encrypted-media';
+      liveFrame.title = 'Live do Jackson';
+      liveBox.appendChild(liveFrame); liveBox.hidden = false; liveCmd = 'playVideo';
+      document.body.classList.add('live-on');
+    } else if (!want && liveFrame) {
+      liveFrame.remove(); liveFrame = null; liveBox.hidden = true; liveCmd = '';
+      document.body.classList.remove('live-on');
+    }
+    if (liveFrame) {
+      liveSend(G.state === 'pause' || document.hidden ? 'pauseVideo' : 'playVideo');
+      if (liveMuted !== !!save.muted) { liveMuted = !!save.muted; try { liveFrame.contentWindow.postMessage(JSON.stringify({ event: 'command', func: liveMuted ? 'mute' : 'unMute', args: [] }), '*'); } catch (e) { /* ok */ } }
     }
   }
 

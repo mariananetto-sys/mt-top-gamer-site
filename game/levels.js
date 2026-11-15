@@ -348,8 +348,11 @@ window.LEVELS = (() => {
   }
 
   function fase11() {
-    const L = builder(200, 'desert', 'DESERTO DOS PIXELS', 'desert');
-    L.intro = 'Calor de 50 graus! Cuidado com os caranguejos do deserto.';
+    const L = builder(200, 'live', 'LIVE DO JACKSON', '');
+    L.intro = 'Voce entrou na live do Jackson... e ta tudo BUGADO!';
+    L.live = { id: 'dqPPM1RCKTo', start: 568 };
+    L.e('npc', 4, 11, { who: 'jackson', say: 'Zubba lorpi, Matheus! Bem-vindo na minha live! Kranka fuu... tudo bugou aqui, bli-bli!' });
+    L.e('npc', 188, 11, { who: 'jackson', say: 'Pippo nunga! Valeu por vir na live, Matheus! Zonk-zonk!' });
     L.ground(0, 40); L.ground(44, 80); L.ground(87, 120); L.ground(125, 160); L.ground(164, 199);
     L.put(8, 8, '?M?'); L.e('c', 16, 11); L.e('w', 24, 11); L.pillar(30, 3); L.e('c', 36, 11);
     L.put(41, 9, 'ooo');

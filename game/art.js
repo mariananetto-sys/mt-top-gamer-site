@@ -534,6 +534,7 @@ window.ART = (() => {
 
   // ----------------------------------------------------------------- TILES
   const THEMES = {
+    live: { g1: '#1a1030', g2: '#0e0820', g3: '#2a1a50', t1: '#ff3bd6', t2: '#8a2ab0', tL: '#ffb0f4', br: '#3a2a7a', brL: '#7a5af0', brD: '#1a0a40', mo: '#0a0414', hd: '#2a1a50', hdL: '#6a4aa0', hdD: '#140a28', semi: 'metal', style: 'plate' },
     snow: { g1: '#9cc4e8', g2: '#7aa8d6', g3: '#e0f0ff', t1: '#ffffff', t2: '#c8dcf0', tL: '#ffffff', br: '#6a9ad8', brL: '#b8d8ff', brD: '#3a5a9a', mo: '#1a2a4a', hd: '#8ab0d8', hdL: '#e0f0ff', hdD: '#4a6a9a', semi: 'cloud', style: 'sand' },
     city: { g1: '#2a2440', g2: '#1a1630', g3: '#3a3458', t1: '#2fe0ff', t2: '#1a7ab0', tL: '#c0f8ff', br: '#4a3a7a', brL: '#7a6ab8', brD: '#24184a', mo: '#0c0818', hd: '#3a3458', hdL: '#6a64a0', hdD: '#1a1630', semi: 'metal', style: 'plate' },
     desert: { g1: '#e8a95a', g2: '#c98a3e', g3: '#f6c88a', t1: '#f8d49a', t2: '#e0b070', tL: '#fff0d0', br: '#d07a3a', brL: '#f0a868', brD: '#8a4a1a', mo: '#4a2410', hd: '#c88a4a', hdL: '#f0c080', hdD: '#7a4a1a', semi: 'wood', style: 'sand' },
@@ -864,6 +865,10 @@ window.ART = (() => {
   function background(name, W, H) {
     const key = name + W + 'x' + H;
     if (bgCache[key]) return bgCache[key];
+    if (name === 'live') {
+      bgCache[key] = { draw(ctx) { ctx.clearRect(0, 0, W, H); ctx.fillStyle = 'rgba(8,0,24,0.22)'; ctx.fillRect(0, 0, W, H); } };
+      return bgCache[key];
+    }
     const LW = 512;
     let layers = [], sky, extra = null;
     if (name === 'grass') {
