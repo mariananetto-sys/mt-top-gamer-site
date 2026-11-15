@@ -47,7 +47,7 @@
     Space: 'jump', KeyZ: 'jump', KeyK: 'jump', KeyX: 'run', KeyJ: 'run', ShiftLeft: 'run', ShiftRight: 'run',
     Enter: 'start', Escape: 'start', KeyP: 'start',
   };
-  const kb = {}, touch = {}, pad = {};
+  const kb = {}, touch = {}, pad = {}, keyPresses = {};
   const I = {}, prev = {};
   const BTN = ['left', 'right', 'up', 'down', 'jump', 'run', 'start'];
   let audioReady = false;
@@ -59,10 +59,10 @@
     wakeAudio();
     if (e.code === 'KeyM') { toggleMute(); return; }
     const k = KMAP[e.code];
-    if (k) { kb[k] = true; e.preventDefault(); }
+    if (k) { if (!kb[k] && !e.repeat) keyPresses[k] = true; kb[k] = true; e.preventDefault(); }
   });
   window.addEventListener('keyup', (e) => { const k = KMAP[e.code]; if (k) { kb[k] = false; e.preventDefault(); } });
-  window.addEventListener('blur', () => { for (const k in kb) kb[k] = false; for (const k in touch) touch[k] = false; });
+  window.addEventListener('blur', () => { for (const k in kb) kb[k] = false; for (const k in keyPresses) keyPresses[k] = false; for (const k in touch) touch[k] = false; });
 
   // controles de toque: cada dedo vale pelo botão que está embaixo dele, então dá pra
   // arrastar o polegar entre os botões (do B pro A) ou apertar os dois juntos
@@ -133,7 +133,8 @@
     pollPad();
     for (const k of BTN) {
       const v = !!(kb[k] || touch[k] || pad[k]);
-      I[k + 'P'] = v && !prev[k];
+      I[k + 'P'] = (v && !prev[k]) || !!keyPresses[k];
+      keyPresses[k] = false;
       I[k] = v;
       prev[k] = v;
     }
@@ -712,7 +713,7 @@
       e.vy = Math.min(e.vy + 0.35, 6); const pb = e.y + e.h; e.y += e.vy; collideY(e, pb);
       e.face = P.x < e.x ? -1 : 1;
       const near = !P.dead && Math.abs(P.x + P.w / 2 - (e.x + 8)) < 28 && Math.abs(P.y + P.h - (e.y + e.h)) < 40;
-      if (near) { e.met++; npcTalk(e); }
+      if (near) { e.met++; npcTalk(e); } else { e.dialogDismissed = false; e.dialogPage = 0; e.dialogText = null; }
     } else if (e.kind === 'fb') {
       e.ang += e.speed;
       if (P.dead) return;
@@ -724,6 +725,10 @@
   }
 
   const NPC_NAME = { axo: 'AXOLOTE', ps2: 'PS2 GORDO', discord: 'GALERA DO DISCORD', babs: 'BABS MARY', inscrito: 'INSCRITO 500', miguel: 'MIGUEL', rafael: 'RAFAEL', scott: 'SCOTT', jackson: 'JACKSON' };
+  function showNpcDialog(e, who, txt) {
+    if (e.dialogText !== txt) { e.dialogText = txt; e.dialogPage = 0; e.dialogDismissed = false; }
+    if (!e.dialogDismissed) G.dialog = { who, name: NPC_NAME[who], txt, npc: e, page: e.dialogPage || 0 };
+  }
   function npcTalk(e) {
     if (e.who === 'couple') {
       // casal ajudante: a Babs chama, o Miguel dá um presente
@@ -736,7 +741,7 @@
         for (let i = 0; i < 4; i++) G.parts.push({ type: 'heart', x: e.x + 8, y: e.y - 4, vx: (Math.random() - 0.5) * 0.8, vy: -0.6, life: 50 });
       }
       const lines = e.lines || [['babs', 'Amor, olha o Matheus!'], ['miguel', 'Salve, Matheus! Toma um presente da gente!'], ['babs', 'Boa sorte! A gente ta torcendo por voce <3']];
-      G.dialog = { who: lines[step][0], name: NPC_NAME[lines[step][0]], txt: lines[step][1] };
+      showNpcDialog(e, lines[step][0], lines[step][1]);
       return;
     }
     let txt = e.say || '';
@@ -765,7 +770,7 @@
         } else { e.msg = 'Faltam fichas, parceiro! Junte ' + offer[1] + ' e volta aqui.'; e.msgT = 100; AUDIO.sfx('bump'); }
       }
     }
-    G.dialog = { who: e.who, name: NPC_NAME[e.who], txt };
+    showNpcDialog(e, e.who, txt);
   }
 
   // ------------------------------------------------------------ TIROS
@@ -1096,6 +1101,22 @@
         }
         break;
       case 'play':
+        if (G.dialog && G.dialog.npc && !(G.dialog.npc.who === 'ps2' && I.runP)) {
+          if (!I.selP) break;
+          const npc = G.dialog.npc;
+          const pages = Math.ceil(wrap(G.dialog.txt, 38).length / 3);
+          if ((npc.dialogPage || 0) + 1 < pages) {
+            npc.dialogPage = (npc.dialogPage || 0) + 1;
+            G.dialog.page = npc.dialogPage;
+            AUDIO.sfx('select');
+            break;
+          }
+          if (npc.who === 'couple' && npc.met < 230) npc.met = npc.met < 100 ? 100 : 230;
+          else if (npc.who === 'babs' && !npc.done) npc.met = 110;
+          else npc.dialogDismissed = true;
+          G.dialog = null;
+          I.jumpP = false; I.startP = false; I.selP = false;
+        }
         if (I.startP) { toState('pause'); AUDIO.stopMusic(); AUDIO.sfx('pause'); break; }
         updateWorld();
         break;
@@ -1642,12 +1663,14 @@
     return out;
   }
   function drawDialog(d) {
-    const x = 10, y = 34, w = W - 20, h = 44;
+    const x = 10, y = 34, w = W - 20, h = 54;
     rect('#1a1020', x - 2, y - 2, w + 4, h + 4); rect('#0b1033', x, y, w, h); rect('#ffd23f', x, y, w, 1);
     rect('#ffd23f', x + 4, y + 4, 36, 36); rect('#5ec8ff', x + 5, y + 5, 34, 34);
     ctx.drawImage(d.who === 'matheus' ? HERO.n.s.idle.r : ART.NPC[d.who].r, x + 6, y + 6, 32, 32);
     text(d.name, x + 46, y + 5, { color: '#ffd23f' });
-    wrap(d.txt, 38).slice(0, 3).forEach((l, i) => text(l, x + 46, y + 16 + i * 9, { color: '#ffffff', size: 8 }));
+    const lines = wrap(d.txt, 38);
+    lines.slice((d.page || 0) * 3, (d.page || 0) * 3 + 3).forEach((l, i) => text(l, x + 46, y + 16 + i * 9, { color: '#ffffff', size: 8 }));
+    if (d.npc) text((d.page || 0) * 3 + 3 < lines.length ? 'Z/ENTER >' : 'Z/ENTER', x + w - 74, y + h - 7, { color: '#ffd23f', size: 6 });
   }
   function drawMenu(items, y0, gap) {
     G.menuRects = [];
