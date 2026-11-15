@@ -60,6 +60,7 @@ a { color: inherit; }
 .btn-red { background: var(--red); }
 .btn-blue { background: var(--blue); }
 .btn-yellow { background: var(--yellow); color: #111; }
+.btn-discord { background: #5865f2; }
 .btn-sm { padding: 8px 14px; font-size: .85rem; box-shadow: 3px 3px 0 #000; }
 
 /* ---------- Hero ---------- */
