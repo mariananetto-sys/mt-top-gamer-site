@@ -876,7 +876,26 @@ window.ART = (() => {
       const far = ridge(LW, H, '#2f9a5a', 96, [[18, 2, 0.6], [10, 5, 1.7], [5, 13, 0.4]]);
       { const x = far.getContext('2d'); x.globalCompositeOperation = 'source-atop';
         for (let j = H - 110; j < H; j += 8) { x.fillStyle = (j / 8) % 2 ? '#24804a' : '#2f9a5a'; x.fillRect(0, j, LW, 4); }
-        x.fillStyle = '#c8f0ff'; [70, 250, 400].forEach((wx) => { x.fillRect(wx, H - 80, 6, 80); x.fillStyle = '#ffffff'; x.fillRect(wx + 1, H - 80, 2, 80); x.fillStyle = '#c8f0ff'; }); }
+      }
+      // cachoeiras: saem perto dos picos da montanha e são animadas (desenhadas atrás dos morros)
+      const farTop = (i) => H - Math.round(96 + 18 * Math.sin((i / LW) * Math.PI * 4 + 0.6) + 10 * Math.sin((i / LW) * Math.PI * 10 + 1.7) + 5 * Math.sin((i / LW) * Math.PI * 26 + 0.4));
+      const falls = [[30, 150], [200, 320], [360, 480]].map(([a, b]) => { let best = a; for (let i = a; i < b; i++) if (farTop(i) < farTop(best)) best = i; return { x: best + 6, top: farTop(best + 6) + 10 }; });
+      const drawFalls = (ctx, camX, t) => {
+        for (const f of falls) {
+          let sx = -Math.round((camX * 0.15) % LW) + f.x; if (sx > W) sx -= LW; if (sx < -20) sx += LW;
+          if (sx < -12 || sx > W + 4) continue;
+          const top = f.top, w = 8;
+          ctx.fillStyle = '#5a8a6a'; ctx.fillRect(sx - 2, top - 2, w + 4, 3);
+          for (let y = top; y < H; y++) {
+            const k = (y - Math.floor(t * 1.6)) % 9;
+            ctx.fillStyle = '#6fbfe8'; ctx.fillRect(sx, y, 1, 1); ctx.fillRect(sx + w - 1, y, 1, 1);
+            ctx.fillStyle = (k + 9) % 9 < 3 ? '#ffffff' : '#bfe8ff'; ctx.fillRect(sx + 1, y, w - 2, 1);
+            if (((y * 7 + f.x) % 5) === 0) { ctx.fillStyle = '#e8f8ff'; ctx.fillRect(sx + 2 + ((y + (t >> 2)) % 4), y, 1, 1); }
+          }
+          ctx.fillStyle = 'rgba(255,255,255,0.75)';
+          for (let i = 0; i < 4; i++) { const r = 3 + ((t >> 3) + i) % 3; ctx.fillRect(sx - 3 + i * 4, H - 50 - r, r, r); }
+        }
+      };
       // morros arredondados com palmeiras
       const near = ridge(LW, H, '#3cc34f', 44, [[12, 3, 0.2], [7, 8, 2.4]]);
       { const x = near.getContext('2d');
@@ -897,7 +916,7 @@ window.ART = (() => {
         x.fillStyle = glow; x.fillRect(sx - 70, sy - 70, 140, 140); blob(x, sx, sy, 13, '#fffbe0'); }
       const dist = ridge(LW, H, '#7ab8e8', 108, [[22, 1, 0.3], [12, 3, 1.4], [6, 7, 2.2]]);
       { const x = dist.getContext('2d'); x.globalCompositeOperation = 'source-atop'; x.fillStyle = '#e8f6ff'; for (let i = 0; i < LW; i++) { const top = H - (108 + 22 * Math.sin((i / LW) * Math.PI * 2 + 0.3) + 12 * Math.sin((i / LW) * Math.PI * 6 + 1.4) + 6 * Math.sin((i / LW) * Math.PI * 14 + 2.2)); x.fillRect(i, Math.round(top), 1, 5); } }
-      layers = [[dist, 0.05, 0], [clouds, 0.08, 0.1], [far, 0.15, 0], [near, 0.35, 0]];
+      layers = [[dist, 0.05, 0], [clouds, 0.08, 0.1], [far, 0.15, 0, drawFalls], [near, 0.35, 0]];
     } else if (name === 'cave') {
       sky = gradient(W, H, [[0, '#07061a'], [1, '#1b1446']]);
       const far = ridge(LW, H, '#15113a', 90, [[30, 4, 0.2], [14, 9, 1.4], [6, 23, 0.7]]);
@@ -1001,11 +1020,12 @@ window.ART = (() => {
       draw(ctx, camX, t) {
         ctx.drawImage(sky, 0, 0);
         if (extra) ctx.drawImage(extra, 0, 0);
-        layers.forEach(([img, f, drift], i) => {
+        layers.forEach(([img, f, drift, after], i) => {
           if (i === layers.length - 1 && HAZE[name]) { ctx.fillStyle = HAZE[name]; ctx.fillRect(0, 0, W, H); }
           let off = -Math.round((camX * f + t * drift) % LW);
           if (off > 0) off -= LW;
           for (let x = off; x < W; x += LW) ctx.drawImage(img, x, 0);
+          if (after) after(ctx, camX, t);
         });
         animExtras(ctx, name, camX, t, W, H);
         if (name === 'boss') {
