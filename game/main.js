@@ -51,11 +51,11 @@
   const kb = {}, touch = {}, pad = {}, presses = {};
   const I = {}, prev = {};
   const BTN = ['left', 'right', 'up', 'down', 'jump', 'run', 'start'];
-  let audioReady = false;
   function wakeAudio() {
-    if (!audioReady) { AUDIO.init(); audioReady = true; }
+    AUDIO.init();
     AUDIO.resume();
-    if (typeof liveKick === 'function') liveKick();
+    if (G.state === 'title' || G.state === 'credits' || G.state === 'map') AUDIO.music('title');
+    liveKick();
   }
   window.addEventListener('keydown', (e) => {
     wakeAudio();
@@ -101,9 +101,20 @@
     if (dpad) dpad.dataset.dir = held.has('left') ? 'l' : held.has('right') ? 'r' : '';
   }
   if (touchZone) {
-    const down = (e) => { e.preventDefault(); wakeAudio(); try { touchZone.setPointerCapture(e.pointerId); } catch (err) { /* ok */ } fingers.set(e.pointerId, keysAt(e.clientX, e.clientY)); syncTouch(); };
+    const down = (e) => {
+      e.preventDefault();
+      if (e.pointerType === 'mouse') wakeAudio();
+      try { touchZone.setPointerCapture(e.pointerId); } catch (err) { /* ok */ }
+      fingers.set(e.pointerId, keysAt(e.clientX, e.clientY));
+      syncTouch();
+    };
     const move = (e) => { if (!fingers.has(e.pointerId)) return; e.preventDefault(); fingers.set(e.pointerId, keysAt(e.clientX, e.clientY)); syncTouch(); };
-    const up = (e) => { fingers.delete(e.pointerId); syncTouch(); };
+    const up = (e) => {
+      const wasHeld = fingers.delete(e.pointerId);
+      // Para toque e caneta, a ativação do áudio vem ao soltar.
+      if (wasHeld && e.type === 'pointerup' && e.pointerType !== 'mouse') wakeAudio();
+      syncTouch();
+    };
     touchZone.addEventListener('pointerdown', down);
     touchZone.addEventListener('pointermove', move);
     ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((t) => touchZone.addEventListener(t, up));
@@ -111,7 +122,7 @@
   }
   // clique / toque nos menus do canvas
   let click = null;
-  cv.addEventListener('pointerdown', (e) => {
+  cv.addEventListener('click', (e) => {
     wakeAudio();
     const r = cv.getBoundingClientRect();
     click = { x: ((e.clientX - r.left) / r.width) * W, y: ((e.clientY - r.top) / r.height) * H };
@@ -161,6 +172,7 @@
   if (muteBtn) { muteBtn.textContent = save.muted ? '🔇' : '🔊'; muteBtn.addEventListener('click', () => { wakeAudio(); toggleMute(); muteBtn.blur(); }); }
   const fullBtn = document.getElementById('btn-full');
   if (fullBtn) fullBtn.addEventListener('click', () => {
+    wakeAudio();
     const el = document.querySelector('.g-stage');
     if (document.fullscreenElement) document.exitFullscreen();
     else if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
@@ -1195,7 +1207,6 @@
     switch (G.state) {
       case 'title':
         G.t++;
-        if (audioReady && AUDIO.current !== 'title') AUDIO.music('title');
         menu(titleItems());
         break;
       case 'credits':

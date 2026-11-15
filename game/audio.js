@@ -43,7 +43,9 @@ window.AUDIO = (() => {
     const d = noiseBuf.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
   }
-  function resume() { if (ctx && ctx.state === 'suspended') ctx.resume(); }
+  function resume() {
+    if (ctx && (ctx.state === 'suspended' || ctx.state === 'interrupted')) ctx.resume().catch(() => {});
+  }
   function suspend() { if (ctx && ctx.state === 'running') ctx.suspend(); }
 
   function tone(f, t, d, o = {}) {
