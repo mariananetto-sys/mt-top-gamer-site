@@ -1160,8 +1160,22 @@
     const items = [{ label: 'JOGAR', act: () => newGame(0) }];
     if (save.unlocked > 1) items.push({ label: 'CONTINUAR (MAPA)', act: () => { G.score = 0; G.coins = 0; G.lives = 5; G.power = 0; openMap(save.unlocked - 1); } });
     items.push({ label: 'SOM: ' + (save.muted ? 'DESLIGADO' : 'LIGADO'), act: () => { toggleMute(); AUDIO.sfx('select'); } });
+    items.push({ label: 'CRÉDITOS', act: () => { toState('credits'); AUDIO.sfx('select'); } });
     return items;
   }
+  const creditsItems = [
+    { label: 'VOLTAR', act: () => { toState('title'); G.menuSel = titleItems().length - 1; AUDIO.sfx('select'); } },
+  ];
+  const creators = 'LUCAS E CLAUDE';
+  const credits = [
+    ['CRIAÇÃO', creators],
+    ['PROGRAMAÇÃO', creators],
+    ['DESIGN DE FASES', creators],
+    ['ARTE E ANIMAÇÃO', creators],
+    ['MÚSICA E EFEITOS', creators],
+    ['HISTÓRIA', 'LUCAS'],
+    ['IDEIAS DE FASES', 'LUCAS'],
+  ];
   const pauseItems = [
     { label: 'CONTINUAR', act: () => { toState('play'); AUDIO.music(P.star > 0 ? 'star' : G.boss ? (G.boss.state === 'intro' ? '' : G.boss.b2 ? 'boss2' : 'boss') : levelSong()); } },
     { label: 'MAPA', act: () => openMap(G.levelIdx) },
@@ -1183,6 +1197,10 @@
         G.t++;
         if (audioReady && AUDIO.current !== 'title') AUDIO.music('title');
         menu(titleItems());
+        break;
+      case 'credits':
+        G.t++;
+        menu(creditsItems);
         break;
       case 'intro':
         if (G.stateT > 150 || (G.stateT > 40 && I.selP)) {
@@ -1878,10 +1896,25 @@
     text('TOP', W / 2 - 52, 92, { color: '#e8402e', size: 16, align: 'center', outline: '#1a1020' });
     text('GAMER', W / 2 + 28, 92, { color: '#ffd23f', size: 16, align: 'center', outline: '#1a1020' });
     text('A AVENTURA 100% GAMER', W / 2, 114, { color: '#ff8fd8', align: 'center', outline: '#1a1020' });
-    drawMenu(titleItems(), 134, 15);
+    drawMenu(titleItems(), 132, 17);
     const hint = isTouch ? 'TOQUE NA OPÇÃO OU USE A/B' : 'SETAS: MOVER  Z: PULAR  X: CORRER/CD';
     text(hint, W / 2, H - 13, { color: '#ffffff', align: 'center', outline: '#1a1020' });
     if (save.best) text('RECORDE ' + pad0(save.best, 6), W - 6, 6, { color: '#ffffff', align: 'right', size: 8, outline: '#1a1020' });
+  }
+
+  function drawCredits() {
+    ART.background('title', W, H).draw(ctx, G.t * 0.35, G.t);
+    rect('#1a1020', 21, 14, W - 42, H - 28);
+    rect('#0b1033', 23, 16, W - 46, H - 32);
+    rect('#ffd23f', 23, 16, W - 46, 2);
+    text('CRÉDITOS', W / 2, 29, { size: 16, color: '#ffd23f', align: 'center' });
+    credits.forEach(([role, names], i) => {
+      const y = 58 + i * 16;
+      rect(i % 2 ? '#152050' : '#101942', 36, y - 3, W - 72, 15);
+      text(role, 44, y, { color: '#a9caff' });
+      text(names, W - 44, y, { align: 'right' });
+    });
+    drawMenu(creditsItems, 184, 17);
   }
 
   function drawIntro() {
@@ -1944,7 +1977,7 @@
     text('O UNIVERSO 100% GAMER ESTA SALVO!', W / 2, 114, { align: 'center' });
     text('PONTOS ' + pad0(G.score, 6), W / 2, 128, { color: '#ffd23f', align: 'center' });
     text('LUCAS: "VALEU POR JOGAR MEU JOGO!"', W / 2, 144, { color: '#7cf0ff', align: 'center' });
-    text('FEITO POR: LUCAS', W / 2, 156, { color: '#ffffff', align: 'center' });
+    text('FEITO POR ' + creators, W / 2, 156, { color: '#ffffff', align: 'center' });
     text('INSCREVA-SE: @MT-TOP-GAMER.2006', W / 2, 170, { color: '#ff8fd8', align: 'center' });
     ctx.drawImage(ART.NPC.inscrito.r, 22, 150); ctx.drawImage(ART.NPC.axo.r, 22, 170); ctx.drawImage(ART.NPC.babs.l, W - 38, 150); ctx.drawImage(ART.NPC.miguel.l, W - 38, 170);
     drawParts();
@@ -1955,6 +1988,7 @@
     ctx.imageSmoothingEnabled = false;
     switch (G.state) {
       case 'title': drawTitle(); break;
+      case 'credits': drawCredits(); break;
       case 'intro': drawIntro(); break;
       case 'ending': drawEnding(); break;
       case 'map': drawMap(); break;
