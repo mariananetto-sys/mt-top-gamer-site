@@ -1187,6 +1187,7 @@
     ['MÚSICA E EFEITOS', 'CLAUDE E LUCAS'],
     ['HISTÓRIA', creator],
     ['IDEIAS DE FASES', creator],
+    ['IDEIAS', 'LUCAS E COMUNIDADE'],
   ];
   const pauseItems = [
     { label: 'CONTINUAR', act: () => { toState('play'); AUDIO.music(P.star > 0 ? 'star' : G.boss ? (G.boss.state === 'intro' ? '' : G.boss.b2 ? 'boss2' : 'boss') : levelSong()); } },
@@ -1955,7 +1956,7 @@
       text(role, 44, y, { color: '#a9caff', accents: true });
       text(names, W - 44, y, { align: 'right' });
     });
-    drawMenu(creditsItems, 184, 17);
+    drawMenu(creditsItems, 190, 17);
   }
 
   function drawIntro() {
