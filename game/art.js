@@ -244,6 +244,27 @@ window.ART = (() => {
     spikyGlitch: both(fromRows(SPIKY, { ...BASE, R: '#2fe0ff', w: '#ff5ab4' }, 16)),
   };
 
+  const GUARD_BODY = [
+    '......kkkk......',
+    '.....kggGgk.....',
+    '....kggggGgk....',
+    '....kssksGgk....',
+    '....kssssGkk....',
+    '.....kSSsk..k...',
+    '....kRrrk..kgk..',
+    '...kRRrrkk.kgk..',
+    '...krrYgggkkGk..',
+    '..krrrgggggksk..',
+    '..krrkggYggkk...',
+    '..kCkkGgggGk....',
+    '...kqkkGGGk.....',
+    '...kqk.kGk......',
+  ];
+  ENEMY.guard = [
+    ['..kqqk..kqk.....', '..kkkk..kkk.....'],
+    ['....kqqk.kqk....', '....kkkk.kkk....'],
+  ].map((legs) => both(fromRows([...GUARD_BODY, ...legs], { ...BASE, R: '#c47958', r: '#8b3d39', g: '#c2b39c', G: '#746b6b', Y: '#e8ab52' }, 16)));
+
   // Bola de metal com parafusos (rola e não morre pisando)
   ENEMY.ball = [0, 1, 2, 3].map((f) => {
     const c = mk(16, 16), x = c.getContext('2d');
@@ -384,25 +405,25 @@ window.ART = (() => {
     '...kssk..kssk...',
     '...knnk..knnk...',
   ], { ...BASE, y: '#ffe28a', Y: '#e8c25a', r: '#e8402e', q: '#2a2a36' }, 16);
-  // Scott: cabelo loiro espetado, olhar cansado, camisa branca e gravata
+  // Scott: cabelo comprido, camiseta de banda por cima das mangas claras e jeans.
   const SCOTT = fromRows([
-    '.k..k.kk.k..k...',
-    '..kykyyykyyk....',
-    '..kyyyyyyyyyk...',
-    '.kyyYyyyYyyyyk..',
-    '..kyssssssssyk..',
-    '..kysqqssqqsyk..',
-    '..kysskssksssk..',
-    '...kssssSsssk...',
-    '....kssrrssk....',
-    '...kwwwkkwwwk...',
-    '..kwwwwkkwwwwk..',
-    '..kswwwkkwwwsk..',
-    '...kqqqkkqqqk...',
-    '...kqqqkkqqqk...',
-    '...kqqk..kqqk...',
-    '...knnk..knnk...',
-  ], { ...BASE, y: '#f4e6a8', Y: '#d8c27a', q: '#1a1a24' }, 16);
+    '.....kkkkkk.....',
+    '...kkYYYYYYk....',
+    '..kYYYyYYYYYk...',
+    '..kYyyyYYsYYyk..',
+    '..kYyyYssssYyk..',
+    '..kYyYskssksYk..',
+    '..kYyYsssSssYk..',
+    '..kYYYssrssYYk..',
+    '.kYYyksssskyYk..',
+    '.kYykrCCCCrkyYk.',
+    '.kYkwwrryrwwkYk.',
+    '..kkgkrrrrkgkk..',
+    '...kskuuuuksk...',
+    '....kuuppuk.....',
+    '....kuk.kuk.....',
+    '...kwwk.kwwk....',
+  ], { ...BASE, y: '#d39a62', Y: '#8f553e', r: '#873239', C: '#592636', u: '#456184', p: '#303f61' }, 16);
   // Jackson: carinha rosa e redondo de bermuda azul
   const JACKSON = fromRows([
     '................',
@@ -534,6 +555,8 @@ window.ART = (() => {
 
   // ----------------------------------------------------------------- TILES
   const THEMES = {
+    roofs: { g1: '#a47154', g2: '#754a40', g3: '#d19768', t1: '#e9ad73', t2: '#a86244', tL: '#ffe0a0', br: '#944f3b', brL: '#db9060', brD: '#613037', mo: '#563740', hd: '#917260', hdL: '#ddab7d', hdD: '#65433e', semi: 'wood', style: 'stone' },
+    snowCity: { g1: '#41466c', g2: '#262d50', g3: '#67658b', t1: '#eff8ff', t2: '#aabfe9', tL: '#ffffff', br: '#5a4b75', brL: '#9483a6', brD: '#3e375a', mo: '#222440', hd: '#4e6281', hdL: '#98b3d1', hdD: '#263853', semi: 'metal', style: 'stone' },
     bat: { g1: '#2a1a40', g2: '#1a0e2c', g3: '#3e2a5c', t1: '#b48aff', t2: '#6a3ab0', tL: '#e8d8ff', br: '#4a2a7a', brL: '#8a6ac8', brD: '#24104a', mo: '#0c0618', hd: '#3a2a5a', hdL: '#7a64a8', hdD: '#1a1030', semi: 'metal', style: 'plate' },
     live: { g1: '#1a1030', g2: '#0e0820', g3: '#2a1a50', t1: '#ff3bd6', t2: '#8a2ab0', tL: '#ffb0f4', br: '#3a2a7a', brL: '#7a5af0', brD: '#1a0a40', mo: '#0a0414', hd: '#2a1a50', hdL: '#6a4aa0', hdD: '#140a28', semi: 'metal', style: 'plate' },
     snow: { g1: '#9cc4e8', g2: '#7aa8d6', g3: '#e0f0ff', t1: '#ffffff', t2: '#c8dcf0', tL: '#ffffff', br: '#6a9ad8', brL: '#b8d8ff', brD: '#3a5a9a', mo: '#1a2a4a', hd: '#8ab0d8', hdL: '#e0f0ff', hdD: '#4a6a9a', semi: 'cloud', style: 'sand' },
@@ -781,6 +804,52 @@ window.ART = (() => {
   }
 
   // ----------------------------------------------------------- CENÁRIOS
+  const props = {
+    venue: (() => {
+      const c = mk(112, 67), x = c.getContext('2d');
+      for (const [color, px, py, w, h] of [
+        ['#27243d', 4, 6, 104, 61], ['#49405c', 8, 9, 96, 58], ['#40334f', 28, 20, 56, 47],
+        ['#d4e6ff', 1, 3, 110, 4], ['#eef8ff', 6, 1, 101, 3], ['#a4b7df', 5, 7, 101, 3],
+        ['#39223d', 9, 17, 94, 20], ['#d27d90', 11, 19, 90, 16], ['#472d50', 16, 22, 80, 10],
+        ['#2b2640', 39, 44, 34, 23], ['#d99897', 42, 47, 28, 20], ['#573a56', 53, 47, 6, 20],
+        ['#7f6292', 10, 46, 18, 13], ['#7f6292', 84, 46, 18, 13],
+        ['#edb8a5', 12, 48, 14, 9], ['#edb8a5', 86, 48, 14, 9],
+      ]) { x.fillStyle = color; x.fillRect(px, py, w, h); }
+      x.fillStyle = '#ffdcad';
+      for (let px = 13; px < 101; px += 4) { x.fillRect(px, 19, 1, 1); x.fillRect(px, 34, 1, 1); }
+      x.font = 'bold 8px monospace'; x.textAlign = 'center'; x.textBaseline = 'top';
+      x.fillText('CASA DE SHOWS', 56, 22);
+      return c;
+    })(),
+    hay: (() => {
+      const c = mk(32, 11), x = c.getContext('2d'), random = rng(31);
+      for (const [color, px, py, w, h] of [
+        ['#4c3434', 0, 8, 32, 3], ['#694134', 2, 5, 28, 5], ['#a46936', 3, 3, 26, 6],
+        ['#de9b47', 6, 1, 20, 7], ['#f6ca65', 10, 0, 11, 4], ['#f6ca65', 5, 3, 9, 2],
+      ]) { x.fillStyle = color; x.fillRect(px, py, w, h); }
+      for (let i = 0; i < 30; i++) {
+        x.fillStyle = i % 2 ? '#f8d77e' : '#ac723b';
+        x.fillRect(7 + Math.floor(random() * 18), 3 + Math.floor(random() * 6), 2 + Math.floor(random() * 4), 1);
+      }
+      return c;
+    })(),
+    tram: (() => {
+      const c = mk(48, 17), x = c.getContext('2d');
+      for (const [color, px, py, w, h] of [
+        ['#25304d', 2, 2, 44, 13], ['#25304d', 0, 6, 48, 7], ['#e9f7ff', 4, 0, 40, 3],
+        ['#d4e6ff', 1, 2, 46, 2], ['#a94c56', 2, 4, 44, 9], ['#db6670', 2, 9, 44, 2],
+        ['#692e4b', 4, 12, 40, 2], ['#26293f', 9, 14, 8, 3], ['#26293f', 31, 14, 8, 3],
+        ['#ffdd99', 1, 9, 2, 2], ['#ffdd99', 45, 9, 2, 2],
+      ]) { x.fillStyle = color; x.fillRect(px, py, w, h); }
+      for (let wx = 5; wx < 42; wx += 9) {
+        x.fillStyle = '#613a52'; x.fillRect(wx, 4, 7, 5);
+        x.fillStyle = '#ffdcb1'; x.fillRect(wx + 1, 5, 5, 3);
+        x.fillStyle = '#c88685'; x.fillRect(wx + 4, 5, 1, 3);
+      }
+      return c;
+    })(),
+  };
+
   function gradient(w, h, stops) {
     const c = mk(w, h), x = c.getContext('2d');
     const g = x.createLinearGradient(0, 0, 0, h);
@@ -856,6 +925,21 @@ window.ART = (() => {
         ctx.fillRect(Math.round(x) - 5, Math.round(y) - up, 4, 1); ctx.fillRect(Math.round(x) + 2, Math.round(y) - up, 4, 1);
         ctx.fillRect(Math.round(x) - 6, Math.round(y) + 1 - up * 2, 2, 1); ctx.fillRect(Math.round(x) + 5, Math.round(y) + 1 - up * 2, 2, 1);
       }
+    } else if (name === 'roofs') {
+      for (let i = 0; i < 5; i++) bird(ctx, wrapX(i * 60 + t * 0.37 - camX * 0.13, W + 60) - 30, 45 + i * 5 + Math.sin(t * 0.04 + i) * 7, t + i * 4);
+      ctx.fillStyle = 'rgba(255,218,161,0.45)';
+      for (let i = 0; i < 16; i++) {
+        const x = wrapX(i * 73 + t * 0.32 - camX * 0.62, W);
+        const y = 96 + (i * 37) % 84 + Math.sin(t * 0.033 + i) * 5;
+        ctx.fillRect(Math.round(x), Math.round(y), 1, 1);
+      }
+    } else if (name === 'snowCity') {
+      for (let i = 0; i < 52; i++) {
+        const z = i % 3, x = wrapX(i * 59 + t * (0.22 + z * 0.15) + Math.sin(t * 0.025 + i) * 5 - camX * (0.14 + 0.12 * z), W);
+        const y = (i * 37 + t * (0.35 + z * 0.28)) % H;
+        ctx.fillStyle = ['#b0c5f0', '#e3edff', '#ffffff'][z];
+        ctx.fillRect(Math.round(x), Math.floor(y), z === 2 ? 2 : 1, z === 2 ? 2 : 1);
+      }
     } else if (name === 'snow') {
       for (let k = 0; k < 3; k++) for (let x = 0; x < W; x += 2) { const y = 22 + k * 11 + Math.sin(x * 0.018 + t * 0.012 + k * 1.7) * 9; ctx.fillStyle = k === 1 ? 'rgba(120,200,255,0.09)' : 'rgba(80,255,170,0.10)'; ctx.fillRect(x, Math.round(y), 2, 16); }
       ctx.fillStyle = 'rgba(255,255,255,0.9)';
@@ -868,6 +952,111 @@ window.ART = (() => {
       ctx.fillStyle = 'rgba(10,40,100,0.55)';
       for (let i = 0; i < 9; i++) { const x = wrapX(i * 31 + t * 0.4 - camX * 0.3, W + 120) - 60 + (i % 3) * 8, y = 70 + (i % 3) * 7 + Math.sin(t * 0.04 + i) * 2; ctx.fillRect(Math.round(x), Math.round(y), 5, 2); ctx.fillRect(Math.round(x) - 2, Math.round(y) - 1, 2, 4); }
     }
+  }
+
+  function rooftops(w, h, near) {
+    const c = mk(w, h), x = c.getContext('2d'), random = rng(near ? 84 : 25);
+    const base = h - (near ? 53 : 65);
+    const masonry = near ? ['#744650', '#94565b', '#ab6a62'] : ['#a45f65', '#b37372', '#d08a7a'];
+    const rim = near ? '#d89477' : '#dc947e', shadow = near ? '#563646' : '#975968';
+    for (let bx = 0; bx < w;) {
+      const bw = 22 + Math.floor(random() * 24), top = base - Math.floor(random() * 37);
+      const type = Math.floor(random() * 4);
+      x.fillStyle = masonry[type % masonry.length]; x.fillRect(bx, top, bw, h - top);
+      x.fillStyle = shadow; x.fillRect(bx + bw - 5, top, 5, h - top);
+      x.fillStyle = rim; x.fillRect(bx, top, bw, 2);
+      if (type === 0) {
+        const center = bx + Math.floor(bw / 2);
+        for (let dy = 0; dy < 16; dy++) {
+          const radius = Math.round(Math.sqrt(1 - (1 - dy / 16) ** 2) * (bw / 2 - 2));
+          x.fillStyle = masonry[dy < 3 ? 2 : 1]; x.fillRect(center - radius, top - 16 + dy, radius * 2, 1);
+          if (radius > 3) { x.fillStyle = shadow; x.fillRect(center + radius - 4, top - 16 + dy, 4, 1); }
+        }
+        x.fillStyle = rim; x.fillRect(center, top - 21, 1, 6);
+      } else if (type === 1) {
+        const center = bx + Math.floor(bw / 2);
+        x.fillStyle = masonry[0]; x.fillRect(center - 5, top - 30, 10, 30);
+        x.fillStyle = shadow; x.fillRect(center + 2, top - 29, 3, 29);
+        x.fillStyle = rim; x.fillRect(center - 6, top - 25, 12, 2); x.fillRect(center - 5, top - 31, 10, 2);
+        x.fillStyle = masonry[0]; x.fillRect(center - 2, top - 35, 4, 5);
+      } else {
+        x.fillStyle = masonry[0];
+        for (let col = bx + 2; col + 4 < bx + bw; col += 8) x.fillRect(col, top - 4, 4, 5);
+      }
+      for (let wy = top + 11; wy < h; wy += 15) {
+        for (let wx = bx + 5; wx + 4 < bx + bw - 4; wx += 11) {
+          x.fillStyle = shadow; x.fillRect(wx, wy + 1, 5, 7); x.fillRect(wx + 1, wy, 3, 1);
+          if (near && random() < 0.26) { x.fillStyle = '#e9a873'; x.fillRect(wx + 1, wy + 2, 3, 4); }
+        }
+      }
+      bx += bw + 3;
+    }
+    return c;
+  }
+
+  function snowPeaks(w, h) {
+    const c = mk(w, h), x = c.getContext('2d');
+    const random = rng(91);
+    const peaks = [[42, 68, 54], [152, 43, 76], [260, 83, 62], [390, 47, 81], [497, 78, 58]];
+    for (const [center, top, radius] of peaks) {
+      for (let y = top; y < h; y++) {
+        const depth = y - top;
+        const left = Math.floor(center - Math.min(radius, depth * 0.60) + Math.sin(depth * 0.23) * 3);
+        const right = Math.ceil(center + Math.min(radius, depth * 0.85) + Math.sin(depth * 0.18) * 2);
+        const mid = Math.min(right, center + Math.floor(depth * 0.13));
+        const snowEdge = 32 + Math.cos(y * 0.34) * 7 + random() * 5;
+        x.fillStyle = depth < snowEdge ? '#e0dcf4' : '#7989b5'; x.fillRect(left, y, mid - left, 1);
+        x.fillStyle = depth < snowEdge + 8 ? '#acb4dd' : '#546491'; x.fillRect(mid, y, right - mid, 1);
+      }
+    }
+    // Rocha quadriculada nas encostas, sob a linha de neve.
+    x.globalCompositeOperation = 'source-atop';
+    for (let y = 113; y < h; y += 8) for (let px = 0; px < w; px += 8) {
+      if ((px / 8 + Math.floor(y / 8)) % 2) {
+        x.fillStyle = 'rgba(44,45,99,0.16)'; x.fillRect(px, y, 8, 8);
+      }
+    }
+    const foothills = ridge(w, h, '#617a9e', 56, [[15, 3, 2], [9, 7, 1]]);
+    x.globalCompositeOperation = 'source-over'; x.drawImage(foothills, 0, 0);
+    return c;
+  }
+
+  function winterStreet(w, h) {
+    const c = mk(w, h), x = c.getContext('2d'), random = rng(62);
+    const fronts = ['#383d66', '#51405f', '#41496c', '#534666'];
+    const signs = ['DISCOS', 'CAFÉ', 'ARCADE', 'SHOW'];
+    for (let bx = 0, i = 0; bx <= w - 25; i++) {
+      const bw = Math.min(w - bx, 28 + Math.floor(random() * 26));
+      const shop = i % 3 === 0, top = h - (shop ? 78 : 100) - Math.floor(random() * 20);
+      const front = fronts[i % fronts.length];
+      x.fillStyle = '#2b3050'; x.fillRect(bx + 2, top + 2, bw, h - top);
+      x.fillStyle = front; x.fillRect(bx, top, bw - 3, h - top);
+      x.fillStyle = '#9bafd5'; x.fillRect(bx - 1, top - 2, bw, 3);
+      x.fillStyle = '#d9e3f9'; x.fillRect(bx, top - 3, bw - 3, 2);
+      for (let wy = top + 12; wy < h - 48; wy += 16) {
+        for (let wx = bx + 6; wx < bx + bw - 11; wx += 12) {
+          x.fillStyle = '#272b4d'; x.fillRect(wx - 1, wy - 1, 7, 10);
+          x.fillStyle = random() < 0.42 ? '#f7be9e' : '#7d84ac'; x.fillRect(wx, wy, 5, 7);
+          x.fillStyle = front; x.fillRect(wx + 2, wy, 1, 7); x.fillRect(wx, wy + 3, 5, 1);
+        }
+      }
+      if (shop) {
+        x.fillStyle = '#302743'; x.fillRect(bx + 2, h - 60, bw - 7, 14);
+        x.font = 'bold 7px monospace'; x.textAlign = 'center'; x.textBaseline = 'top';
+        x.fillStyle = '#ffb3b8'; x.fillText(signs[(i / 3) % signs.length], bx + Math.floor((bw - 3) / 2), h - 56, bw - 10);
+        x.fillStyle = '#c4d6f0'; x.fillRect(bx + 1, h - 46, bw - 5, 2);
+        x.fillStyle = '#886076'; x.fillRect(bx + 1, h - 44, bw - 5, 4);
+        x.fillStyle = '#ffce9d'; x.fillRect(bx + 5, h - 36, bw - 13, 13);
+        x.fillStyle = front; x.fillRect(bx + Math.floor(bw / 2), h - 36, 2, 13);
+      }
+      if (i % 2 === 0) {
+        const pole = bx + bw + 1, lamp = h - 56;
+        x.fillStyle = '#2a2b48'; x.fillRect(pole, lamp, 2, 56); x.fillRect(pole - 4, lamp, 8, 4);
+        x.fillStyle = '#ffdaae'; x.fillRect(pole - 3, lamp + 2, 6, 3);
+      }
+      bx += bw + 6;
+    }
+    return c;
   }
 
   const bgCache = {};
@@ -1035,6 +1224,24 @@ window.ART = (() => {
         for (let tr = 0; tr < 4; tr++) { const y = H - 92 + tr * 18; x.fillStyle = '#16161e'; x.fillRect(0, y, LW, 14); for (let cx = 0; cx < LW;) { const w = 30 + ((r() * 60) | 0); x.fillStyle = cols[tr]; x.fillRect(cx + 2, y + 2, w - 4, 10); x.fillStyle = 'rgba(255,255,255,0.35)'; x.fillRect(cx + 2, y + 2, w - 4, 2); cx += w + ((r() * 14) | 0); } } }
       { const x = tracks.getContext('2d'); x.globalCompositeOperation = 'source-atop'; x.fillStyle = 'rgba(14,14,22,0.68)'; x.fillRect(0, 0, LW, H); }
       layers = [[tracks, 0.3, 0]];
+    } else if (name === 'roofs') {
+      sky = gradient(W, H, [[0, '#59446a'], [0.42, '#d9806e'], [0.77, '#ffd29a'], [1, '#e29070']]);
+      extra = mk(W, H);
+      const sun = extra.getContext('2d');
+      const sx = Math.round(W * 0.76), sy = 102;
+      const light = sun.createRadialGradient(sx, sy, 4, sx, sy, 62);
+      light.addColorStop(0, '#ffedaa'); light.addColorStop(1, 'rgba(255,190,122,0)');
+      sun.fillStyle = light; sun.fillRect(sx - 62, sy - 62, 124, 124);
+      blob(sun, sx, sy, 24, '#fff0b9');
+      const hills = ridge(LW, H, '#bd7b7a', 78, [[17, 2, 1], [9, 5, 3], [5, 8, 0.5]]);
+      layers = [[hills, 0.10, 0], [rooftops(LW, H, false), 0.23, 0], [rooftops(LW, H, true), 0.48, 0]];
+    } else if (name === 'snowCity') {
+      sky = gradient(W, H, [[0, '#222755'], [0.42, '#4c5690'], [0.74, '#af91b7'], [1, '#e2aac3']]);
+      extra = mk(W, H);
+      const moon = extra.getContext('2d');
+      blob(moon, Math.round(W * 0.77), 56, 16, '#fff0dc');
+      const distant = ridge(LW, H, '#697bb3', 103, [[43, 3, 0.1], [22, 7, 0.9], [9, 13, 2.5]]);
+      layers = [[distant, 0.08, 0], [snowPeaks(LW, H), 0.17, 0], [winterStreet(LW, H), 0.46, 0]];
     } else if (name === 'snow') {
       sky = gradient(W, H, [[0, '#0e1a4a'], [0.55, '#3a5aa8'], [1, '#a8c8f0']]);
       extra = mk(W, H); { const x = extra.getContext('2d'); const r = rng(9); for (let i = 0; i < 60; i++) { x.fillStyle = r() > 0.8 ? '#ffffff' : 'rgba(255,255,255,0.6)'; x.fillRect((r() * W) | 0, (r() * H * 0.45) | 0, 1, 1); } }
@@ -1152,5 +1359,5 @@ window.ART = (() => {
     return res;
   }
 
-  return { HERO, ENEMY, ITEM, NPC, tiles, background, THEMES, mk, rng };
+  return { HERO, ENEMY, ITEM, NPC, props, tiles, background, THEMES, mk, rng };
 })();

@@ -8,7 +8,7 @@
 //   [ ]  cartucho gigante   ^  espinhos      ~  lava       o  ficha
 //  Inimigos/objetos: g bug, k cartucho, f controle voador, s glitch,
 //   b bola de metal (pisar só deixa tonta), mph/mpv plataforma móvel, fall plataforma que cai, spring mola,
-//   K checkpoint, G fim de fase, fb barra de fogo, boss chefão.
+//   K checkpoint, G fim de fase, fb barra de fogo, boss chefão, guard patrulheiro, hay feno, tram bonde.
 // =====================================================================
 window.LEVELS = (() => {
   function builder(w, theme, name, song) {
@@ -383,7 +383,52 @@ window.LEVELS = (() => {
     return L;
   }
 
-  const list = [fase1, fase2, fase3, fase4, chefe, fase5, fase6, fase7, fase8, chefe2, fase9, fase10, fase11];
-  const labels = ['1', '2', '3', '4', 'CHEFE', '5', '6', '7', '8', 'CHEFE 2', '9', '10', '11'];
+  function fase12() {
+    const L = builder(146, 'roofs', 'TELHADOS DO RAFA', 'roofs');
+    L.intro = 'Do mercado à torre de vigia, siga o Rafa pelos telhados da cidade.';
+    L.ground(0, 22); L.ground(23, 34, 10); L.ground(39, 49, 9);
+    L.ground(50, 64, 11); L.ground(72, 85, 10); L.ground(86, 97, 8);
+    L.ground(98, 109, 11); L.ground(110, 119, 10); L.ground(123, 145, 11);
+
+    L.e('npc', 6, 11, { who: 'rafael', say: 'Siga pelas vigas e pelos telhados. Segure Z no salto para chegar mais alto.' });
+    L.put(13, 8, '?M?'); L.e('guard', 18, 11);
+    L.put(26, 9, 'oooo'); L.e('guard', 32, 9);
+    L.put(35, 8, 'oooo'); L.put(36, 10, '==='); L.e('guard', 45, 8);
+    L.put(52, 7, '====='); L.put(53, 6, 'ooo'); L.e('f', 58, 7);
+    L.e('K', 61, 10); L.put(67, 10, '==='); L.put(67, 8, 'ooo');
+    L.e('guard', 79, 9);
+    L.put(89, 7, 'ooo'); L.put(91, 4, '?*?'); L.e('guard', 94, 7);
+    L.e('hay', 99, 10); L.put(98, 8, 'ooo'); L.secret(103, 11);
+    L.e('guard', 116, 9); L.put(120, 8, 'ooo'); L.e('f', 127, 7);
+    L.e('npc', 131, 10, { who: 'rafael', say: 'Mandou bem, Matheus. O Scott está te esperando do outro lado da serra.' });
+    L.e('G', 139, 10);
+    return L;
+  }
+
+  function fase13() {
+    const L = builder(138, 'snowCity', 'CIDADE NEVADA DO SCOTT', 'snowCity');
+    L.intro = 'Pegue o bonde, atravesse a neve e encontre o Scott na frente da casa de shows.';
+    L.ice = true;
+    L.ground(0, 24); L.ground(29, 51); L.ground(60, 82);
+    L.ground(83, 93, 10); L.ground(94, 102); L.ground(107, 137);
+
+    L.e('npc', 6, 11, { who: 'scott', say: 'Bem-vindo! O bonde cruza o canal. Depois, sobe pela marquise pra chegar na casa de shows.' });
+    L.put(11, 8, '?M?'); L.e('w', 18, 11);
+    L.put(25, 11, '===='); L.put(25, 8, 'oooo'); L.e('n', 37, 6);
+    L.put(42, 8, 'B?B'); L.e('k', 43, 11);
+    L.e('K', 49, 11); L.e('tram', 51, 11, { range: 7 });
+    L.put(54, 9, 'ooooo'); L.e('g', 63, 11);
+    L.secret(67); L.put(75, 8, '?*?'); L.e('w', 78, 11);
+    L.put(84, 9, 'ooooooo'); L.e('f', 92, 6);
+    L.put(97, 8, '?1?'); L.put(103, 10, '===='); L.put(104, 8, 'oo');
+    L.e('w', 111, 11); L.e('n', 117, 7);
+    L.e('venue', 128, 11);
+    L.e('npc', 124, 11, { who: 'scott', say: 'Chegou na hora! O show vai começar. Valeu por jogar, Matheus!' });
+    L.e('G', 131, 11);
+    return L;
+  }
+
+  const list = [fase1, fase2, fase3, fase4, chefe, fase5, fase6, fase7, fase8, chefe2, fase9, fase10, fase11, fase12, fase13];
+  const labels = ['1', '2', '3', '4', 'CHEFE', '5', '6', '7', '8', 'CHEFE 2', '9', '10', '11', '12', '13'];
   return { list, labels };
 })();

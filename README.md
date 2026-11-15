@@ -22,12 +22,12 @@ Jogo de plataforma 2D em `jogo.html` (link no menu do site e na seção "O jogo 
 
 - Mundo 1: Colinas Tropicais, Caverna dos Cartuchos, Nuvens do Lag, Fábrica Bugsoft + chefão BUGSOFT.
 - Mundo 2: Praia do Pixel, Feira Gamer, Fundo do Mar Digital (nadando), Ilha de Edição + chefão BUFFERÃO.
-- Mundo 3: Pico Congelado (gelo que escorrega), Festa dos Inscritos (zonas da Babs, do Miguel, da Martbuz e do Jackson) e a Live do Jackson (vídeo do YouTube de fundo e bugs na tela e no jogo).
+- Mundo 3: Pico Congelado (gelo que escorrega), Festa dos Inscritos (zonas da Babs, do Miguel, da Martbuz e do Jackson), Live do Jackson (vídeo do YouTube de fundo e bugs no jogo), Telhados do Rafa (parkour por uma cidade medieval) e Cidade Nevada do Scott (bonde, neve e uma casa de shows).
 - Mapa de mundos para escolher e rejogar fases; segredos por fase ficam salvos.
 - Amigos: Axolote (dicas), PS2 Gordo (loja), Babs Mary ("É brincadeira, Matheus!"), Inscrito 500 e a galera do Discord escondida em casinhas secretas.
 - Inimigos: bug do lag, cartucho bravo, controle voador, glitch espinhento, caranguejo pixel, rodinha de carregamento, peixe-controle, sininho spam, hater do comentário e a bola de metal (normal e turbo) (pisar só deixa tonta; CD, casco ou estrela destroem).
 - Power-ups: Controle Turbo (fica grande), Disco (joga CDs) e Estrela 100% (invencível). 100 fichas = 1 vida.
-- Teclado (setas, Z pular, X correr/CD, Enter pausa, M som), controle USB/Bluetooth e botões na tela do celular.
+- Teclado (setas, Z pular, X correr/CD, Enter pausa, M som), controle USB/Bluetooth e botões na tela do celular. Durante um diálogo, Z e Enter avançam a fala. No celular, toque na caixa ou aperte A.
 - O progresso (fase liberada e recorde) fica salvo no navegador de quem joga.
 - Toda a arte e as músicas são geradas por código, sem arquivos extras.
 
