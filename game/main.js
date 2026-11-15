@@ -5,6 +5,8 @@
 // =====================================================================
 (() => {
   const W = 384, H = 224, T = 16;
+  const SONIC_TIME = 260, SONIC_RUN_FRAMES = 34;
+  const isRolling = (p) => p.sonic > 0 && p.sonic <= SONIC_TIME - SONIC_RUN_FRAMES;
   const cv = document.getElementById('game');
   const ctx = cv.getContext('2d');
   const { HERO, ENEMY, ITEM } = ART;
@@ -39,6 +41,11 @@
   if (!Array.isArray(save.done)) save.done = [];
   if (!Array.isArray(save.sec)) save.sec = [];
   save.unlocked = Math.min(LEVELS.list.length, Math.max(1, Number.isInteger(save.unlocked) ? save.unlocked : 1));
+  const finalIndex = LEVELS.labels.indexOf('CHEFE 3');
+  // Os saves antigos já podem ter a Live concluída ou usar esse índice para uma fase removida.
+  save.done[finalIndex] = save.finalBoss ? 1 : 0;
+  if (save.finalBoss || save.done[finalIndex - 1]) save.unlocked = finalIndex + 1;
+  else save.unlocked = Math.min(save.unlocked, finalIndex);
   function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) { /* sem storage */ } }
   AUDIO.setMuted(!!save.muted);
 
@@ -262,11 +269,12 @@
       case 'npc': return { ...base, kind: 'npc', active: true, who: d.who, say: d.say, lines: d.lines, x: bx, y: by - 16, w: 16, h: 16, met: 0, done: false, face: -1 };
       case 'martbuz': return { ...base, kind: 'martbuz', active: true, x: bx, y: by - 16, w: 16, h: 16, phase: 'wait' };
       case 'kiss': return { ...base, kind: 'kiss', active: true, x: bx, y: by - 16, w: 16, h: 16, phase: 'wait', bx: bx, mx: bx + 40 };
+      case 'boss3': return { ...base, kind: 'boss', final: true, active: true, x: bx - 8, y: 88, w: 30, h: 32, hp: 12, maxHp: 12, state: 'intro', face: -1, inv: 0, landed: false, pattern: 0 };
       case 'boss2': return { ...base, kind: 'boss', b2: true, active: true, x: bx - 12, y: -60, w: 40, h: 40, hp: 12, maxHp: 12, state: 'intro', face: -1, inv: 0, landed: false, last: '', baseY: 52 };
       case 'k': return { ...base, kind: 'k', x: bx + 1, y: by - 15, w: 14, h: 15, enemy: true, state: 'walk', shellT: 0, kickT: 0 };
       case 'f': return { ...base, kind: 'f', x: bx + 1, y: by - 12, w: 14, h: 12, enemy: true, baseY: by - 12 };
       case 'm': return { ...base, kind: 'm', x: bx + 1, y: by - 10, w: 14, h: 10, enemy: true, baseY: by - 10 };
-      case 'dash': return { ...base, kind: 'dash', active: true, x: bx, y: by - 3, w: 16, h: 3, cool: 0 };
+      case 'sonic': return { ...base, kind: 'sonic', active: true, x: bx, y: by - 18, w: 18, h: 18 };
       case 'tram': case 'mph': return { ...base, kind: 'mp', tram: d.type === 'tram', plat: true, active: true, axis: 'x', x: bx, y: d.y * T, w: 48, h: 8, a: bx, b: bx + d.range * T, dir: 1, speed: 0.8, dx: 0, dy: 0 };
       case 'mpv': return { ...base, kind: 'mp', plat: true, active: true, axis: 'y', x: bx, y: d.y * T, w: 48, h: 8, a: d.y * T, b: (d.y + d.range) * T, dir: 1, speed: 0.7, dx: 0, dy: 0 };
       case 'fall': return { ...base, kind: 'fall', plat: true, active: true, x: bx, y: d.y * T, w: 32, h: 8, timer: 0, falling: false, dx: 0, dy: 0 };
@@ -282,6 +290,8 @@
   function loadLevel(idx, fromCheck) {
     const def = LEVELS.list[idx]();
     G.L = def; G.levelIdx = idx;
+    if (!def.finalBoss || !fromCheck) G.ally = null;
+    else if (G.ally) G.ally = createAlly(G.ally.who);
     G.map = def.rows.map((r) => r.slice()); G.mw = def.w;
     G.ents = []; G.items = []; G.shots = []; G.parts = []; G.pops = []; G.bumps = []; G.boss = null; G.goal = null;
     for (const d of def.ents) { const e = spawn(d); if (!e) continue; G.ents.push(e); if (e.kind === 'boss') G.boss = e; if (e.kind === 'G') G.goal = e; }
@@ -292,7 +302,7 @@
       for (const e of G.ents) if (e.kind === 'K' && e.tx <= G.check.x) e.on = true;
     } else if (G.check && G.check.level !== idx) G.check = null;
     P = { x: start.x * T + 2, y: (start.y + 1) * T - 15, w: 12, h: 15, vx: 0, vy: 0, face: 1, onGround: false, power: 0, inv: 0, star: 0,
-      coyote: 0, jumpBuf: 0, anim: 0, combo: 0, dead: false, pit: false, onPlat: null, cdCool: 0, prevBottom: 0, hidden: false, skid: false };
+      coyote: 0, jumpBuf: 0, sonic: 0, anim: 0, combo: 0, dead: false, pit: false, onPlat: null, cdCool: 0, prevBottom: 0, hidden: false, skid: false };
     setPower(G.power);
     G.time = def.time; G.timeAcc = 0; G.hurry = false; G.freeze = 0; G.shake = 0; G.flash = 0;
     G.tallyDone = false; G.look = 0; G.zone = null; G.zoneBanner = null;
@@ -302,9 +312,13 @@
     if (idx + 1 > save.unlocked) { save.unlocked = idx + 1; persist(); }
   }
   function setPower(n) {
-    if (n > 0 && P.h === 15) { P.h = 30; P.y -= 15; }
-    if (n === 0 && P.h === 30) { P.h = 15; P.y += 15; }
-    P.power = n;
+    const h = n > 0 && !P.sonic ? 30 : 15;
+    P.y += P.h - h; P.h = h; P.power = n;
+  }
+  function endSonic() {
+    P.sonic = 0;
+    setPower(P.power);
+    P.vx = clamp(P.vx, -2.6, 2.6);
   }
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
@@ -315,7 +329,7 @@
     toState('intro');
     AUDIO.stopMusic(); AUDIO.sfx('start');
   }
-  // ---------- Tropa da Martbuz (Rafael e Scott) e o Jackson
+  // ---------- Tropa da Martbuz (RafaRL e Scott) e o Jackson
   function martbuzScene(e) {
     e.t++;
     updateParts();
@@ -327,7 +341,7 @@
       if (e.sx > stopS) e.sx -= 1.6;
       if (advance && G.dialog.who === 'rafael') e.t = 201;
       else if (advance && G.dialog.who === 'scott') e.t = 321;
-      if (e.t > 50 && e.t <= 200) G.dialog = { who: 'rafael', name: 'RAFAEL', txt: 'Somos da tropa da Martbuz e vamos acabar com voce!!', advance: true };
+      if (e.t > 50 && e.t <= 200) G.dialog = { who: 'rafael', name: NPC_NAME.rafael, txt: 'Somos da tropa da Martbuz e vamos acabar com voce!!', advance: true };
       else if (e.t > 200) G.dialog = { who: 'scott', name: 'SCOTT', txt: 'E isso ai. Prepara, Matheus...', advance: true };
       if (e.t > 320) {
         G.dialog = null; G.scene = null; e.phase = 'fight';
@@ -375,13 +389,20 @@
   // ------------------------------------------------------------ JOGADOR
   function hurtPlayer() {
     if (P.inv > 0 || P.star > 0 || P.dead || G.state !== 'play') return;
+    if (G.ally?.shield) {
+      G.ally.shield = false;
+      P.inv = 60;
+      pop('PROTEGIDO!', P.x - 32, P.y - 12, '#ff9ada');
+      AUDIO.sfx('check');
+      return;
+    }
     if (P.power === 2) { P.power = 1; P.inv = 120; AUDIO.sfx('powerdown'); G.freeze = 24; G.freezeKind = 'flash'; }
     else if (P.power === 1) { setPower(0); P.inv = 120; AUDIO.sfx('powerdown'); G.freeze = 36; G.freezeKind = 'shrink'; }
     else killPlayer(false);
   }
   function killPlayer(pit) {
     if (P.dead || G.state !== 'play') return;
-    P.dead = true; P.pit = pit; P.vx = 0; P.vy = 0; P.star = 0; P.onPlat = null;
+    P.sonic = 0; P.dead = true; P.pit = pit; P.vx = 0; P.vy = 0; P.star = 0; P.onPlat = null;
     setPower(0);
     G.power = 0;
     AUDIO.stopMusic(); AUDIO.sfx('die');
@@ -405,6 +426,7 @@
 
   function updatePlayer() {
     const p = P;
+    if (p.sonic && (--p.sonic === 0 || G.L.zones?.[G.zone]?.[1] !== 'speedway')) endSonic();
     if (p.inv > 0) p.inv--;
     if (p.star > 0) {
       p.star--;
@@ -419,10 +441,13 @@
     const jumpHeld = I.jump || I.up, jumpPressed = I.jumpP || I.upP;
     // no celular o Matheus corre sozinho ao segurar a direção (o B fica pro CD)
     const run = I.run || touch.left || touch.right;
-    const max = water ? (run ? 1.7 : 1.2) : run ? 2.6 : 1.45;
+    const max = p.sonic ? (isRolling(p) ? 6.7 : 5.9)
+      : G.ally?.boost > 0 ? 3.8 : water ? (run ? 1.7 : 1.2) : run ? 2.6 : 1.45;
     const ice = p.onGround && (G.L.ice || G.L.zones?.[G.zone]?.[4]);
-    const acc = (p.onGround ? (run ? 0.1 : 0.08) : 0.07) * (ice ? 0.45 : 1);
+    const acc = p.sonic || G.ally?.boost > 0 ? (p.onGround ? 0.28 : 0.16)
+      : (p.onGround ? (run ? 0.1 : 0.08) : 0.07) * (ice ? 0.45 : 1);
     let dir = (I.right ? 1 : 0) - (I.left ? 1 : 0);
+    if (p.sonic && dir === 0) dir = 1;
     if (G.glitch && G.glitch.kind === 'invert') dir = -dir;
     p.skid = false;
     if (dir !== 0) {
@@ -454,7 +479,7 @@
     if (p.vy > 6.5) p.vy = 6.5;
     }
 
-    if (p.power === 2 && I.runP && !G.nearShop && p.cdCool === 0 && G.shots.filter((s) => s.kind === 'disc').length < 2) {
+    if (!p.sonic && p.power === 2 && I.runP && !G.nearShop && p.cdCool === 0 && G.shots.filter((s) => s.kind === 'disc').length < 2) {
       G.shots.push({ kind: 'disc', x: p.x + (p.face > 0 ? p.w : -8), y: p.y + 8, w: 8, h: 8, vx: p.face * 4.2, vy: 1.5, t: 0 });
       p.cdCool = 10; AUDIO.sfx('cd');
     }
@@ -579,6 +604,10 @@
   function touchPlayer(e) {
     const p = P;
     if (p.dead || G.state !== 'play' || !overlap(p, e)) return;
+    if (p.sonic) {
+      if (isRolling(p)) { flipKill(e); comboScore(e.x, e.y); }
+      return;
+    }
     if (p.star > 0) { flipKill(e); comboScore(e.x, e.y); return; }
     const stomp = p.vy > 0 && p.prevBottom <= e.y + 6;
     if (e.kind === 'k') {
@@ -744,11 +773,12 @@
         e.on = true; G.check = { level: G.levelIdx, x: e.tx, y: e.ty }; AUDIO.sfx('check');
         for (let i = 0; i < 10; i++) G.parts.push({ type: 'spark', x: e.x + 4, y: e.y + 4, vx: (Math.random() - 0.5) * 3, vy: -Math.random() * 3, life: 30, color: '#ffd23f' });
       }
-    } else if (e.kind === 'dash') {
-      if (e.cool > 0) e.cool--;
-      if (P.onGround && P.x + P.w > e.x && P.x < e.x + e.w && Math.abs(P.y + P.h - (e.y + e.h)) < 4 && P.vx > -1) {
-        P.vx = Math.max(P.vx, 5.6); P.face = 1;
-        if (e.cool === 0) { AUDIO.sfx('boost'); e.cool = 20; for (let i = 0; i < 6; i++) G.parts.push({ type: 'spark', x: e.x + 8, y: e.y, vx: -1 - Math.random() * 2, vy: -Math.random() * 1.5, life: 18, color: '#ffb02e' }); }
+    } else if (e.kind === 'sonic') {
+      if (!P.sonic && overlap(P, e)) {
+        P.sonic = SONIC_TIME; P.vx = 4.8; P.face = 1;
+        setPower(P.power);
+        G.flash = 7; AUDIO.sfx('boost');
+        pop('SONIC!', e.x - 15, e.y - 21, '#80eeff');
       }
     } else if (e.kind === 'G') {
       if (G.state === 'play' && P.x + P.w > e.x + 6 && P.y + P.h > e.y) levelClear();
@@ -779,7 +809,26 @@
     }
   }
 
-  const NPC_NAME = { axo: 'AXOLOTE', ps2: 'PS2 GORDO', discord: 'GALERA DO DISCORD', babs: 'BABS MARY', inscrito: 'INSCRITO 500', miguel: 'MIGUEL', rafael: 'RAFAEL', scott: 'SCOTT', jackson: 'JACKSON' };
+  const NPC_NAME = { axo: 'AXOLOTE', ps2: 'PS2 GORDO', discord: 'GALERA DO DISCORD', babs: 'BABS MARY', inscrito: 'INSCRITO 500', miguel: 'MIGUEL', rafael: 'RafaRL', scott: 'SCOTT', jackson: 'JACKSON' };
+  const ALLIES = {
+    jackson: { effect: 'LIMPA OS PROJÉTEIS', line: 'Zubba lorpi! Fuu blim-blim!', color: '#93ecf4' },
+    babs: { effect: 'PROTEGE DE UM GOLPE', line: 'É brincadeira! Toma um escudo!', color: '#ff9bcc' },
+    miguel: { effect: 'AUMENTA SUA VELOCIDADE', line: 'Vai com tudo, Matheus!', color: '#9aeea2' },
+    scott: { effect: 'PULA SOBRE O CHEFE', line: 'Vou por cima, Matheus.', color: '#c8c5ff' },
+    rafael: { effect: 'PROLONGA A ABERTURA', line: 'Minha mensagem distraiu ele. Vai!', color: '#ffd28f' },
+  };
+  function createAlly(who) {
+    return { who, x: 24, cooldown: 65, message: 0, shield: false, boost: 0, clear: 0, jump: 0 };
+  }
+  const allyItems = Object.entries(ALLIES).map(([who, data]) => ({
+    label: NPC_NAME[who], who, ...data,
+    act: () => {
+      G.ally = createAlly(who);
+      toState('play');
+      AUDIO.sfx('check');
+    },
+  }));
+
   function showNpcDialog(e, who, txt) {
     if (e.dialogText !== txt) { e.dialogText = txt; e.dialogPage = 0; e.dialogDismissed = false; }
     if (!e.dialogDismissed) G.dialog = { who, name: NPC_NAME[who], txt, lines: wrap(txt, 38), npc: e, page: e.dialogPage };
@@ -831,6 +880,10 @@
 
   // ------------------------------------------------------------ TIROS
   function updateShots() {
+    if (G.ally?.clear > 0) {
+      for (const shot of G.shots) if (shot.kind !== 'disc') poof(shot.x + shot.w / 2, shot.y + shot.h / 2);
+      G.shots = G.shots.filter((shot) => shot.kind === 'disc');
+    }
     for (const s of G.shots) {
       s.t++;
       if (s.kind === 'disc') {
@@ -944,9 +997,108 @@
       else hurtPlayer();
     }
   }
+  function updateAlly(b) {
+    const a = G.ally;
+    if (!a || b.state === 'intro' || b.state === 'dying') return;
+    a.x += (clamp(P.x - P.face * 28, 19, W - 35) - a.x) * 0.14;
+    if (a.message > 0) a.message--;
+    if (a.boost > 0) a.boost--;
+    if (a.clear > 0) a.clear--;
+    if (a.jump > 0 && --a.jump === 12 && b.state === 'recover' && b.inv === 0) bossDamage(b, 1, 22);
+    if (a.cooldown > 0) { a.cooldown--; return; }
+    if (a.who === 'jackson' && !G.shots.some((shot) => shot.kind !== 'disc')) return;
+    if (a.who === 'babs' && a.shield) return;
+    if (a.who === 'scott' && (b.state !== 'recover' || b.t > 45)) return;
+    if (a.who === 'rafael' && (b.state !== 'recover' || b.t < 28)) return;
+
+    a.message = 140; a.cooldown = 390;
+    if (a.who === 'jackson') { a.clear = 100; AUDIO.sfx('blip'); }
+    else if (a.who === 'babs') { a.shield = true; AUDIO.sfx('check'); }
+    else if (a.who === 'miguel') { a.boost = 180; AUDIO.sfx('boost'); }
+    else if (a.who === 'scott') { a.jump = 30; AUDIO.sfx('jump'); }
+    else {
+      b.t -= 28;
+      G.parts.push({ type: 'allyNote', x: a.x + 5, y: 164, life: 20,
+        vx: (b.x + b.w / 2 - a.x - 5) / 20, vy: (b.y - 14 - 164) / 20 });
+      AUDIO.sfx('blip');
+    }
+  }
+
+  const BOSS3_PATTERN = ['rush', 'echo', 'leap'];
+  function updateBoss3(b) {
+    if (b.state === 'dying') { bossDying(b); return; }
+    const p = P, enraged = b.hp <= b.maxHp / 2;
+    const face = p.x + p.w / 2 < b.x + b.w / 2 ? -1 : 1;
+    b.x += b.vx; collideX(b);
+    const bottom = b.y + b.h;
+    b.vy = Math.min(b.vy + 0.42, 8);
+    b.y += b.vy; collideY(b, bottom);
+
+    switch (b.state) {
+      case 'intro':
+        if (b.onGround && !b.landed) { b.landed = true; b.t = 0; G.shake = 12; AUDIO.sfx('thud'); }
+        if (b.landed && b.t > 88) { bossState(b, 'patrol'); AUDIO.music('monotomias'); }
+        return;
+      case 'patrol':
+        b.face = face; b.vx = face * (enraged ? 1 : 0.66);
+        if (b.t > (enraged ? 58 : 84)) {
+          b.attack = BOSS3_PATTERN[b.pattern++ % BOSS3_PATTERN.length];
+          b.target = clamp(p.x + p.w / 2, 44, W - 44);
+          b.vx = 0; bossState(b, 'warning'); AUDIO.sfx('blip');
+        }
+        break;
+      case 'warning':
+        if (b.t > (enraged ? 29 : 43)) {
+          bossState(b, b.attack);
+          if (b.attack === 'rush') { b.vx = b.face * (enraged ? 6 : 4.6); AUDIO.sfx('dash'); }
+          if (b.attack === 'leap') {
+            b.vx = clamp((b.target - b.x - b.w / 2) / 27, -5, 5);
+            b.vy = -8.25; AUDIO.sfx('jumpBig');
+          }
+        }
+        break;
+      case 'rush':
+        if (b.hitL || b.hitR || b.t > 72) {
+          b.vx = 0; G.shake = 10; AUDIO.sfx('thud'); bossState(b, 'recover');
+        }
+        break;
+      case 'echo':
+        if (b.t === 1 || (enraged && b.t === 29)) {
+          for (let i = 0; i < 3; i++) {
+            G.shots.push({ kind: 'orb', x: b.x + (b.face > 0 ? b.w - 3 : -6), y: b.y + 14, w: 10, h: 10,
+              vx: b.face * (1.45 + i * 0.75), vy: -3 - i, t: 0 });
+          }
+          AUDIO.sfx('orb');
+        }
+        if (b.t > 52) bossState(b, 'recover');
+        break;
+      case 'leap':
+        if (b.t > 5 && b.onGround) {
+          b.vx = 0; G.shake = 15; AUDIO.sfx('thud');
+          const speed = enraged ? 3.3 : 2.5;
+          for (const dir of [-1, 1]) G.shots.push({ kind: 'wave', x: dir === -1 ? b.x - 12 : b.x + b.w,
+            y: b.y + b.h - 12, w: 12, h: 12, vx: dir * speed, vy: 0, t: 0 });
+          bossState(b, 'recover');
+        }
+        break;
+      case 'recover':
+        if (b.t > (enraged ? 94 : 124)) bossState(b, 'patrol');
+        break;
+    }
+    updateAlly(b);
+    if (b.state === 'dying' || p.dead || !overlap(p, b)) return;
+    if (p.vy > 0 && p.prevBottom <= b.y + 8) {
+      p.y = b.y - p.h; p.vy = -6.3; p.onGround = false; p.onPlat = null;
+      if (b.inv === 0) bossDamage(b, b.state === 'recover' ? 3 : 1, 40);
+    } else if (p.star > 0) {
+      if (b.inv === 0) bossDamage(b, 1, 32);
+    } else if (b.state !== 'recover') hurtPlayer();
+  }
+
   function updateBoss(b) {
     b.t++;
     if (b.inv > 0) b.inv--;
+    if (b.final) { updateBoss3(b); return; }
     if (b.b2) { updateBoss2(b); return; }
     const p = P, enr = b.hp <= b.maxHp / 2;
     const face = p.x + p.w / 2 < b.x + b.w / 2 ? -1 : 1;
@@ -1028,6 +1180,7 @@
   }
   function finishLevel() {
     const i = G.levelIdx;
+    if (G.L.finalBoss) save.finalBoss = true;
     save.done[i] = 1; save.sec[i] = Math.max(save.sec[i] || 0, G.secrets);
     save.unlocked = Math.max(save.unlocked, Math.min(i + 2, LEVELS.list.length));
     save.best = Math.max(save.best, G.score); persist();
@@ -1042,7 +1195,7 @@
   function openMap(sel) { toState('map'); G.mapSel = clamp(sel, 0, save.unlocked - 1); AUDIO.music('title'); }
   function enterLevel(i) { G.check = null; loadLevel(i, false); toState('intro'); AUDIO.stopMusic(); AUDIO.sfx('start'); }
   // posições dos pontos no mapa, uma linha por mundo
-  const MAP_PTS = [[60, 58], [118, 46], [176, 60], [234, 46], [312, 54], [60, 108], [118, 96], [176, 110], [234, 96], [312, 104], [118, 152], [196, 146], [274, 154]];
+  const MAP_PTS = [[60, 58], [118, 46], [176, 60], [234, 46], [312, 54], [60, 108], [118, 96], [176, 110], [234, 96], [312, 104], [79, 152], [151, 146], [226, 154], [310, 146]];
   function updateMap() {
     const n = LEVELS.list.length;
     const mv = (d) => { let k = G.mapSel + d; if (k < 0 || k >= n || k >= save.unlocked) return; G.mapSel = k; AUDIO.sfx('select'); };
@@ -1190,7 +1343,10 @@
     ['IDEIAS', 'LUCAS E COMUNIDADE'],
   ];
   const pauseItems = [
-    { label: 'CONTINUAR', act: () => { toState('play'); AUDIO.music(P.star > 0 ? 'star' : G.boss ? (G.boss.state === 'intro' ? '' : G.boss.b2 ? 'boss2' : 'boss') : levelSong()); } },
+    { label: 'CONTINUAR', act: () => {
+      toState('play');
+      AUDIO.music(P.star > 0 ? 'star' : G.boss?.state === 'intro' ? '' : levelSong());
+    } },
     { label: 'MAPA', act: () => openMap(G.levelIdx) },
     { label: 'SAIR PARA O MENU', act: () => { toState('title'); AUDIO.music('title'); } },
   ];
@@ -1216,9 +1372,13 @@
         break;
       case 'intro':
         if (G.stateT > 150 || (G.stateT > 40 && I.selP)) {
-          toState('play');
+          toState(G.L.finalBoss && !G.ally ? 'assist' : 'play');
           if (!G.L.boss) AUDIO.music(levelSong());
         }
+        break;
+      case 'assist':
+        G.t++;
+        menu(allyItems);
         break;
       case 'play':
         if (G.dialog?.npc && !(G.dialog.npc.who === 'ps2' && I.runP)) {
@@ -1382,6 +1542,15 @@
   function drawPlayer() {
     const p = P;
     if (p.hidden) return;
+    if (p.sonic) {
+      const facing = p.face < 0 ? 'l' : 'r';
+      const sprite = isRolling(p) ? ART.SONIC.ball[(G.t * p.face) & 7] : ART.SONIC.run[(G.t >> 1) & 1][facing];
+      const foot = p.y + p.h;
+      rect('rgba(51,162,255,0.28)', p.x - p.face * 15 - 4, foot - 11, 10, 2);
+      rect('rgba(114,233,255,0.52)', p.x - p.face * 10 - 4, foot - 7, 9, 2);
+      img(sprite, p.x + (p.w - sprite.width) / 2, foot - sprite.height);
+      return;
+    }
     if (p.inv > 0 && !p.dead && (G.t >> 1) % 2 && G.state === 'play' && p.inv < 9000) return;
     let force = null;
     if (G.freeze > 0 && (G.freezeKind === 'grow' || G.freezeKind === 'shrink')) {
@@ -1409,6 +1578,15 @@
         if (k === 0 || k === 4) { px('#1f7a2a', 0, -4, 1, 4); px('#1f7a2a', 2 + sway, -6, 1, 6); px('#1f7a2a', 4, -4, 1, 4); px('#8ef06a', 2 + sway, -6, 1, 1); }
         else if (k === 1) { px('#2a9a3a', 1, -4, 1, 4); px(['#ffffff', '#ffd23f', '#ff8fd8'][h % 3], 0, -6, 3, 2); px('#ffd23f', 1, -6, 1, 1); }
         else if (k === 2) { px('#8a8fa8', 0, -2, 4, 2); px('#c8ccd8', 1, -2, 2, 1); }
+        break;
+      case 'speedway':
+        if (k === 0) { px('#374872', 0, -4, 4, 4); px('#75efff', 1, -4, 2, 1); }
+        break;
+      case 'grotto':
+        if (k <= 1) {
+          px('#38a797', 0, -4, 4, 4); px('#75efd0', 1, -7, 2, 6); px('#b1ffdc', 1, -7, 1, 3);
+          px('#735b9c', 3, -3, 2, 3);
+        }
         break;
       case 'cave':
         if (k <= 1) { px('#5fd6ff', 1, -5, 1, 5); px('#5fd6ff', 0, -3, 3, 3); px('#ffffff', 1, -4, 1, 1); }
@@ -1539,7 +1717,7 @@
     } else if (e.kind === 'rival') {
       if (e.inv > 0 && (e.t >> 1) % 2 && !flipY) return;
       img(face(ART.NPC[e.who]), dx, by - 16, flipY);
-      if (!flipY) { text(e.who === 'rafael' ? 'RAFAEL' : 'SCOTT', R(dx + 8), R(by - 25), { size: 6, align: 'center', color: '#ff3b3b' }); for (let i = 0; i < e.hp; i++) rect('#ff3b3b', dx + 3 + i * 4, by - 18, 3, 2); }
+      if (!flipY) { text(NPC_NAME[e.who], R(dx + 8), R(by - 25), { size: 6, align: 'center', color: '#ff3b3b' }); for (let i = 0; i < e.hp; i++) rect('#ff3b3b', dx + 3 + i * 4, by - 18, 3, 2); }
     } else if (e.kind === 'c') {
       img(face(ENEMY.crab[e.up && !flipY ? 1 : 0]), dx, by - 16, flipY);
     } else if (e.kind === 'p') {
@@ -1579,21 +1757,13 @@
   }
 
   function drawObject(e) {
-    if (e.kind === 'dash') {
-      const x = R(e.x), y = R(e.y);
-      const lit = (G.t >> 2) % 3;
-      rect('#1a1020', x - 1, y - 4, 18, 7);
-      rect('#3b2942', x, y - 3, 16, 5);
-      rect('#ff9d2b', x, y + 2, 16, 1);
-      for (let i = 0; i < 3; i++) {
-        const color = i === lit || e.cool > 0 ? '#fff3a0' : '#ffb02e';
-        const ax = x + 1 + i * 5;
-        rect(color, ax, y - 3, 2, 1);
-        rect(color, ax + 1, y - 2, 2, 1);
-        rect(color, ax + 2, y - 1, 2, 1);
-        rect(color, ax + 1, y, 2, 1);
-        rect(color, ax, y + 1, 2, 1);
-      }
+    if (e.kind === 'sonic') {
+      if (P.sonic) return;
+      const oy = Math.round(Math.sin(e.t * 0.11) * 3);
+      rect('rgba(52,173,255,0.26)', e.x - 4, e.y - 4 + oy, 24, 23);
+      img(ART.SONIC.ball[(e.t >> 2) & 7], e.x, e.y + oy);
+      rect('#c6fbff', e.x + 1, e.y - 1 + oy, 3, 1);
+      rect('#c6fbff', e.x + 2, e.y - 2 + oy, 1, 3);
     } else if (e.kind === 'hay') img(ART.props.hay, e.x, e.y);
     else if (e.kind === 'venue') img(ART.props.venue, e.x, e.y);
     else if (e.tram) img(ART.props.tram, e.x, e.y);
@@ -1615,7 +1785,7 @@
     } else if (e.kind === 'martbuz') {
       if (e.phase === 'intro') {
         img(ART.NPC.rafael.r, e.rx, e.y); img(ART.NPC.scott.r, e.sx, e.y);
-        text('RAFAEL', R(e.rx + 8), R(e.y - 9), { size: 6, align: 'center', color: '#ff3b3b' });
+        text(NPC_NAME.rafael, R(e.rx + 8), R(e.y - 9), { size: 6, align: 'center', color: '#ff3b3b' });
         text('SCOTT', R(e.sx + 8), R(e.y - 9), { size: 6, align: 'center', color: '#ff3b3b' });
       } else if (e.phase === 'jackson') {
         const bob = (G.t >> 2) % 2;
@@ -1729,7 +1899,37 @@
       rect(ec, cx - 4, cy + 3, 8, 1);
     }
   }
+  const BOSS_WARNINGS = { rush: 'INVESTIDA', echo: 'RAJADA', leap: 'SALTO' };
+  function drawBoss3(b) {
+    if (b.inv > 0 && (G.t >> 1) % 2 && b.state !== 'dying') return;
+    const x = b.x, y = b.y, facing = b.face > 0 ? 'r' : 'l';
+    const form = b.state === 'leap' ? 'jump' : Math.abs(b.vx) > 0.4 ? ((G.t >> 2) & 1 ? 'walkA' : 'walkB') : 'idle';
+    if (b.state === 'warning') {
+      const color = (G.t >> 2) % 2 ? '#ff7051' : '#ffcb80';
+      text(BOSS_WARNINGS[b.attack], R(x + b.w / 2), R(y - 12), { size: 7, color, align: 'center' });
+      if (b.attack === 'leap') {
+        rect('rgba(255,112,81,0.32)', b.target - 23, 188, 46, 4);
+        rect(color, b.target - 20, 190, 40, 1);
+      } else if (b.attack === 'rush') {
+        const from = b.face < 0 ? 16 : x + b.w;
+        const to = b.face < 0 ? x : W - 16;
+        rect('rgba(255,112,81,0.25)', from, 184, to - from, 7);
+        rect(color, from, 190, to - from, 1);
+      }
+    } else if (b.state === 'recover') {
+      text('ABERTURA!', R(x + b.w / 2), R(y - 12), { size: 7, color: '#ffe193', align: 'center' });
+      rect('#ffd180', x + 5, y - 2, 2, 2); rect('#ffe4b0', x + 23, y - 3, 2, 2);
+    }
+    const cape = b.face < 0 ? x + b.w - 4 : x - 7;
+    rect('#21122e', cape, y + 15, 11, 16);
+    rect(b.hp <= b.maxHp / 2 ? '#9b4265' : '#633660', cape + 1, y + 16, 8, 12);
+    rect('#ed8663', cape + 1, y + 19, 2, 8);
+    ctx.drawImage(HERO.dark.b[form][facing], R(x + 1), R(y), 28, 32);
+    if (b.state === 'rush') rect('rgba(255,105,95,0.54)', b.face < 0 ? x + b.w : x - 11, y + 23, 11, 2);
+  }
+
   function drawBoss(b) {
+    if (b.final) { drawBoss3(b); return; }
     if (b.b2) { drawBoss2(b); return; }
     if (b.inv > 0 && (G.t >> 1) % 2 && b.state !== 'dying') return;
     const x = R(b.x + (b.state === 'tele' ? ((G.t >> 1) % 2 ? 1 : -1) : 0)), y = R(b.y + (b.state === 'crouch' ? 4 : 0));
@@ -1800,7 +2000,10 @@
       else if (q.type === 'heart') { const x = R(q.x), y = R(q.y); rect('#ff5ab4', x - 2, y, 2, 2); rect('#ff5ab4', x + 1, y, 2, 2); rect('#ff5ab4', x - 2, y + 1, 5, 2); rect('#ff5ab4', x - 1, y + 3, 3, 1); rect('#ff5ab4', x, y + 4, 1, 1); rect('#ffffff', x - 1, y, 1, 1); }
       else if (q.type === 'tear') { rect('#5ec8ff', q.x, q.y, 2, 2); }
       else if (q.type === 'bubble') { rect('rgba(220,240,255,0.85)', q.x - 1, q.y - 1, 3, 3); rect('rgba(255,255,255,0.9)', q.x - 1, q.y - 1, 1, 1); }
-      else if (q.type === 'boom') {
+      else if (q.type === 'allyNote') {
+        rect('#21152d', q.x, q.y, 12, 9); rect('#ffd783', q.x + 1, q.y + 1, 10, 6);
+        rect('#ffd783', q.x + 2, q.y + 7, 2, 2); rect('#986345', q.x + 3, q.y + 3, 6, 2);
+      } else if (q.type === 'boom') {
         ctx.fillStyle = q.life > 12 ? '#ffffff' : q.life > 6 ? '#ffd23f' : '#ff5a1f';
         ctx.beginPath(); ctx.arc(R(q.x), R(q.y), q.r, 0, Math.PI * 2); ctx.fill();
       }
@@ -1816,6 +2019,33 @@
     text(b.txt, W / 2, 100, { color: '#ffd23f', align: 'center', outline: '#1a1020' });
     ctx.globalAlpha = 1;
   }
+  function drawAlly() {
+    const a = G.ally;
+    if (!a) return;
+    let x = a.x, y = 176;
+    if (a.jump && G.boss) {
+      const progress = (30 - a.jump) / 30;
+      x += (G.boss.x + 7 - x) * Math.sin(progress * Math.PI);
+      y -= 44 * Math.sin(progress * Math.PI);
+    }
+    img(ART.NPC[a.who][P.x < x ? 'r' : 'l'], x, y);
+    if (a.shield) {
+      ctx.strokeStyle = 'rgba(255,149,212,0.68)'; ctx.lineWidth = 1;
+      ctx.strokeRect(R(P.x - 4) + 0.5, R(P.y - 3) + 0.5, P.w + 7, P.h + 5);
+    } else if (a.boost > 0 && Math.abs(P.vx) > 1.5) {
+      rect('#81f6bd', P.x - P.face * 9, P.y + P.h - 4, 7, 1);
+    }
+  }
+  function drawAllyCaption() {
+    const a = G.ally;
+    if (!a) return;
+    const data = ALLIES[a.who], name = NPC_NAME[a.who];
+    rect('rgba(15,10,28,0.9)', 15, 198, W - 30, 22);
+    text('AJUDA  ' + name, 22, 202, { size: 6, color: data.color });
+    const caption = a.message > 0 ? data.line : data.effect;
+    text(caption, 22, 210, { size: 6, color: '#ffffff' });
+  }
+
   function drawHUD() {
     drawZoneBanner();
     text('MATHEUS', 12, 8, { color: '#ffd23f' });
@@ -1865,6 +2095,7 @@
     if (!P.hidden && !P.dead && P.onGround) ctx.fillRect(R(P.x), R(P.y + P.h - 1), P.w, 2);
     for (const e of G.ents) if ((e.enemy || e.dying) && e.active) drawEnemy(e);
     if (G.boss && !G.boss.gone) drawBoss(G.boss);
+    drawAlly();
     drawPlayer();
     for (const e of G.ents) if (e.kind === 'fb') drawObject(e);
     drawShots();
@@ -1879,12 +2110,14 @@
     ctx.drawImage(drawWorld.vig, 0, 0);
     if (G.flash > 0) { ctx.fillStyle = `rgba(255,255,255,${G.flash / 20})`; ctx.fillRect(0, 0, W, H); }
     drawHUD();
+    drawAllyCaption();
     if (G.dialog && (G.state === 'play' || G.state === 'scene')) drawDialog(G.dialog);
     const b = G.boss;
     if (b && b.state === 'intro' && b.landed) {
       rect('rgba(10,3,24,0.7)', 0, 74, W, 52);
       text('CHEFÃO', W / 2, 82, { color: '#ffd23f', align: 'center' });
-      text(G.L.bossName || 'BUGSOFT', W / 2, 96, { color: '#ff5ab4', size: 16, align: 'center', outline: '#1a1020' });
+      const name = G.L.bossName || 'BUGSOFT';
+      text(name, W / 2, 96, { color: '#ff5ab4', size: Math.min(16, Math.floor((W - 28) / name.length)), align: 'center', outline: '#1a1020' });
       text(G.L.bossSub || 'O BUG SUPREMO', W / 2, 115, { color: '#ffffff', align: 'center' });
     }
   }
@@ -1959,6 +2192,25 @@
     drawMenu(creditsItems, 190, 17);
   }
 
+  function drawAllySelect() {
+    ART.background('monotomias', W, H).draw(ctx, 0, G.t);
+    rect('rgba(12,9,30,0.87)', 19, 12, W - 38, H - 24);
+    rect('#e48667', 19, 12, W - 38, 2);
+    text('CHAME UM AJUDANTE', W / 2, 25, { color: '#ffd18b', size: 12, align: 'center' });
+    text('ESCOLHA UM PARA O DUELO', W / 2, 43, { color: '#cbb6db', size: 7, align: 'center' });
+    G.menuRects = [];
+    allyItems.forEach(({ label, who, effect, color }, i) => {
+      const x = 35, y = 58 + i * 25, w = W - x * 2, sel = G.menuSel === i;
+      G.menuRects.push({ x, y, w, h: 21 });
+      rect(sel ? '#543552' : '#271b3c', x, y, w, 21);
+      rect(sel ? color : '#483451', x, y, 2, 21);
+      ctx.drawImage(ART.NPC[who].r, x + 10, y + 2);
+      text(label, x + 38, y + 6, { color: sel ? color : '#ffffff' });
+      text(effect, W - x - 8, y + 8, { size: 6, color: '#ddd3ef', align: 'right' });
+    });
+    text(isTouch ? 'TOQUE EM UM AMIGO' : 'SETAS PARA ESCOLHER   Z OU ENTER PARA CONFIRMAR', W / 2, 194, { color: '#cbb6db', size: 6, align: 'center' });
+  }
+
   function drawIntro() {
     rect('#0b1033', 0, 0, W, H);
     const rnd = ART.rng(42);
@@ -1992,7 +2244,7 @@
       for (let k = 0; k <= 10; k++) ctx.fillRect(R(ax + (bx - ax) * k / 10) - 1, R(ay + (by - ay) * k / 10) - 1, 2, 2);
     }
     MAP_PTS.forEach(([x, y], i) => {
-      const open = i < save.unlocked, done = save.done[i], sel = i === G.mapSel, boss = i === 4 || i === 9;
+      const open = i < save.unlocked, done = save.done[i], sel = i === G.mapSel, boss = LEVELS.labels[i].startsWith('CHEFE');
       rect('#1a1020', x - 9, y - 9, 18, 18);
       rect(!open ? '#3a3f52' : done ? '#ffd23f' : boss ? '#e8402e' : '#2f7bff', x - 8, y - 8, 16, 16);
       text(boss ? '!' : LEVELS.labels[i], x + 1, y - 4, { color: open ? '#ffffff' : '#6b7190', align: 'center' });
@@ -2015,7 +2267,7 @@
     const jump = Math.abs(Math.sin(G.t * 0.08)) * 10;
     ctx.drawImage(HERO.n.b.jump.r, W / 2 - 70, 70 - R(jump));
     ctx.drawImage(HERO.n.b.jump.l, W / 2 + 54, 70 - R(jump));
-    text('BUGSOFT E BUFFERAO DERROTADOS!', W / 2, 102, { align: 'center' });
+    text('MONOTOMIAS DERROTADO!', W / 2, 102, { align: 'center' });
     text('O UNIVERSO 100% GAMER ESTA SALVO!', W / 2, 114, { align: 'center' });
     text('PONTOS ' + pad0(G.score, 6), W / 2, 128, { color: '#ffd23f', align: 'center' });
     text('LUCAS: "VALEU POR JOGAR MEU JOGO!"', W / 2, 144, { color: '#7cf0ff', align: 'center' });
@@ -2032,6 +2284,7 @@
       case 'title': drawTitle(); break;
       case 'credits': drawCredits(); break;
       case 'intro': drawIntro(); break;
+      case 'assist': drawAllySelect(); break;
       case 'ending': drawEnding(); break;
       case 'map': drawMap(); break;
       case 'gameover':

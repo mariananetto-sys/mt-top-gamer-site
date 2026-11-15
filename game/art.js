@@ -139,6 +139,7 @@ window.ART = (() => {
 
   const HERO_PALS = {
     n: {},
+    dark: { h: '#ff724e', H: '#833649', r: '#b23e62', u: '#522c5e', b: '#4e2a63', d: '#2b1c40', q: '#281c3d', Q: '#68436c', s: '#bb7181', S: '#7e425c', p: '#4e355a', P: '#24172d' },
     cd: { q: '#f4f4ff', Q: '#ffffff', r: '#ff8a3d', u: '#9b4dff', b: '#9b4dff', p: '#3a1f6e', P: '#24104a' },
     s0: { h: '#ff5ab4', H: '#b0249a', b: '#ffffff', r: '#ffffff', q: '#ff5ab4', Q: '#ffb0e0', u: '#ffe14f', p: '#b0249a', P: '#6a0f5c' },
     s1: { h: '#5ff3ff', H: '#1aa0c0', b: '#ffffff', r: '#ffffff', q: '#5ff3ff', Q: '#c0ffff', u: '#ff5ab4', p: '#1a6aa0', P: '#0f3a6a' },
@@ -386,7 +387,7 @@ window.ART = (() => {
     '..kkkkkkkkkkkk..',
     '..kk........kk..',
   ], 16), BASE, 16);
-  // Rafael: cabelo loiro em chanel com franja e batom vermelho
+  // RafaRL: cabelo loiro em chanel com franja e batom vermelho
   const RAFAEL = fromRows([
     '.....kkkkkk.....',
     '....kyyyyyyk....',
@@ -555,6 +556,9 @@ window.ART = (() => {
 
   // ----------------------------------------------------------------- TILES
   const THEMES = {
+    speedway: { g1: '#201a41', g2: '#14102e', g3: '#453473', t1: '#15a9db', t2: '#1465a0', tL: '#a4fffa', br: '#6e4191', brL: '#b88ceb', brD: '#332364', mo: '#12102b', hd: '#3b285d', hdL: '#8b79bb', hdD: '#211838', semi: 'metal', style: 'plate' },
+    grotto: { g1: '#1d746e', g2: '#104c58', g3: '#409b8f', t1: '#6cdfa4', t2: '#327f70', tL: '#c8fbc1', br: '#41667e', brL: '#89b6b7', brD: '#214155', mo: '#073743', hd: '#315d69', hdL: '#6baba3', hdD: '#254251', semi: 'cloud', style: 'stone' },
+    monotomias: { g1: '#353049', g2: '#21172d', g3: '#59506e', t1: '#d06c49', t2: '#692c48', tL: '#ffd083', br: '#864964', brL: '#df897b', brD: '#4f2a47', mo: '#21152c', hd: '#4b3351', hdL: '#94717f', hdD: '#23182f', semi: 'metal', style: 'plate' },
     roofs: { g1: '#a47154', g2: '#754a40', g3: '#d19768', t1: '#e9ad73', t2: '#a86244', tL: '#ffe0a0', br: '#944f3b', brL: '#db9060', brD: '#613037', mo: '#563740', hd: '#917260', hdL: '#ddab7d', hdD: '#65433e', semi: 'wood', style: 'stone' },
     snowCity: { g1: '#41466c', g2: '#262d50', g3: '#67658b', t1: '#eff8ff', t2: '#aabfe9', tL: '#ffffff', br: '#5a4b75', brL: '#9483a6', brD: '#3e375a', mo: '#222440', hd: '#4e6281', hdL: '#98b3d1', hdD: '#263853', semi: 'metal', style: 'stone' },
     bat: { g1: '#2a1a40', g2: '#1a0e2c', g3: '#3e2a5c', t1: '#b48aff', t2: '#6a3ab0', tL: '#e8d8ff', br: '#4a2a7a', brL: '#8a6ac8', brD: '#24104a', mo: '#0c0618', hd: '#3a2a5a', hdL: '#7a64a8', hdD: '#1a1030', semi: 'metal', style: 'plate' },
@@ -804,6 +808,43 @@ window.ART = (() => {
   }
 
   // ----------------------------------------------------------- CENÁRIOS
+  const SONIC = (() => {
+    const head = [
+      '......kkk.........',
+      '.....kuuk.kk......',
+      '..kkkkUukkuuk.....',
+      '...kuuuuuuusuk....',
+      '....kuuuuuuuwk....',
+      '.kkkuuuuuuuwwgk...',
+      '..kuuuuuuuuwwkk...',
+      '...kuuuuuuUssskkk.',
+      '....kkuuussSsssk..',
+      '...kuuuukkssssk...',
+      '....kkkuuUkkk.....',
+      '......kuusuk......',
+      '....kkwwuwuk......',
+      '...kwwkkusuk......',
+    ];
+    const feet = [
+      ['.....kuukkuk......', '....kuuk..kukk....', '..kkrrk...kwrrkk..', '..kwwwk...kwwwwk..'],
+      ['......kukkuk......', '......kuukkuuk....', '....kkwrrk..krkk..', '....kwwwwk..kwwk..'],
+    ];
+    const palette = { ...BASE, u: '#287aff', U: '#1842a3', s: '#ffbd80', g: '#36c483' };
+    const run = feet.map((frame) => both(fromRows([...head, ...frame], palette, 18)));
+    const ball = Array.from({ length: 8 }, (_, frame) => {
+      const c = mk(16, 16), x = c.getContext('2d');
+      for (let py = 0; py < 16; py++) for (let px = 0; px < 16; px++) {
+        const dx = px - 7.5, dy = py - 7.5, r = Math.hypot(dx, dy);
+        if (r > 8) continue;
+        const twist = 0.8 * r + 2 * Math.atan2(dy, dx) - frame * Math.PI / 4;
+        x.fillStyle = r > 7 ? '#10204f' : Math.sin(twist) > 0.58 ? '#acfcff' : Math.sin(twist) > -0.26 ? '#3eb3ff' : '#164ed2';
+        x.fillRect(px, py, 1, 1);
+      }
+      return c;
+    });
+    return { run, ball };
+  })();
+
   const props = {
     venue: (() => {
       const c = mk(112, 67), x = c.getContext('2d');
@@ -1069,7 +1110,80 @@ window.ART = (() => {
     }
     const LW = 512;
     let layers = [], sky, extra = null;
-    if (name === 'grass') {
+    if (name === 'speedway') {
+      sky = gradient(W, H, [[0, '#0c112e'], [0.62, '#29205e'], [1, '#7e327e']]);
+      extra = mk(W, H);
+      const x = extra.getContext('2d'), sunX = Math.round(W * 0.72);
+      blob(x, sunX, 98, 35, '#ef6697');
+      x.fillStyle = '#b34485';
+      for (let py = 86; py <= 130; py += 6) {
+        const span = Math.floor(Math.sqrt(35 ** 2 - (py + 1 - 98) ** 2));
+        x.fillRect(sunX - span, py, span * 2, 2);
+      }
+      const skyline = mk(LW, H), s = skyline.getContext('2d'), random = rng(62);
+      for (let bx = 0; bx < LW;) {
+        const w = 10 + Math.floor(random() * 22), y = 169 - Math.floor(random() * 49);
+        s.fillStyle = '#1b1740'; s.fillRect(bx, y, w, H - y);
+        s.fillStyle = bx % 2 ? '#46367d' : '#653465'; s.fillRect(bx, y, w, 2);
+        for (let i = bx + 3; i < bx + w - 2; i += 4) for (let py = y + 8; py < 172; py += 7) {
+          if (random() < 0.4) { s.fillStyle = random() < 0.5 ? '#b4528d' : '#338bac'; s.fillRect(i, py, 2, 2); }
+        }
+        bx += w + 3;
+      }
+      const rail = mk(LW, H), r = rail.getContext('2d');
+      r.fillStyle = '#131730'; r.fillRect(0, 161, LW, 7);
+      r.fillStyle = '#40c9eb'; r.fillRect(0, 161, LW, 1);
+      r.fillStyle = '#83568e'; r.fillRect(0, 168, LW, 1);
+      for (let j = 0; j < LW; j += 16) {
+        r.fillStyle = '#44365e'; r.fillRect(j, 169, 2, 23);
+        r.fillStyle = '#af63c6'; r.fillRect(j + 2, 169, 1, 17);
+      }
+      layers = [[skyline, 0.15, 0], [rail, 0.53, 0]];
+    } else if (name === 'grotto') {
+      sky = gradient(W, H, [[0, '#071c37'], [0.42, '#18415b'], [1, '#256962']]);
+      const far = ridge(LW, H, '#17304a', 84, [[34, 3, 0.8], [13, 9, 1.6]], true);
+      const cave = mk(LW, H), x = cave.getContext('2d');
+      const random = rng(23);
+      for (let px = 0; px < LW; px += 23) {
+        const w = 7 + Math.round(random() * 13), h = 21 + Math.round(random() * 54);
+        const ly = 177 + Math.round(random() * 18);
+        for (let y = 0; y < h; y++) {
+          const span = Math.min(w, 2 + Math.floor(y * 0.38));
+          x.fillStyle = px % 3 ? '#246b75' : '#665d99'; x.fillRect(px, ly - h + y, span, 1);
+          x.fillStyle = px % 3 ? '#62ceb3' : '#b08cda'; x.fillRect(px, ly - h + y, 1, 1);
+          x.fillStyle = '#154d68'; x.fillRect(px + span - 3, ly - h + y + 1, 3, 1);
+        }
+      }
+      const falls = mk(LW, H), f = falls.getContext('2d');
+      f.fillStyle = '#226f8a'; f.fillRect(54, 20, 24, 164); f.fillRect(328, 24, 36, 163);
+      for (let i = 0; i < 12; i++) {
+        f.fillStyle = i % 3 ? '#43a0ac' : '#87d9cc';
+        f.fillRect(54 + i * 2, 24 + i % 4, 1, 156 - i % 7);
+        f.fillRect(328 + i * 3, 38 - i % 6, 1, 141 + i % 6);
+      }
+      f.fillStyle = '#83d6be'; f.fillRect(40, 181, 51, 3); f.fillRect(318, 182, 60, 3);
+      layers = [[falls, 0.19, 0], [far, 0.23, 0], [cave, 0.41, 0]];
+    } else if (name === 'monotomias') {
+      sky = gradient(W, H, [[0, '#140c29'], [0.52, '#4a2450'], [1, '#100e24']]);
+      extra = mk(W, H);
+      const x = extra.getContext('2d'), mid = Math.round(W / 2);
+      const light = x.createRadialGradient(mid, 92, 15, mid, 92, 145);
+      light.addColorStop(0, '#9c4f64'); light.addColorStop(1, 'rgba(67,38,83,0)');
+      x.fillStyle = light; x.fillRect(12, 0, W - 24, H);
+      for (let i = 0; i < 7; i++) {
+        const px = 28 + i * 53;
+        x.fillStyle = '#2d1b37'; x.fillRect(px, 28, 11, 162);
+        x.fillStyle = '#6a4764'; x.fillRect(px + 2, 28, 2, 162);
+        x.fillStyle = '#c67a69'; x.fillRect(px - 4, 113, 19, 2);
+      }
+      x.strokeStyle = '#c17c68'; x.lineWidth = 2; x.strokeRect(mid - 61, 46, 122, 76);
+      x.strokeStyle = '#65405f'; x.strokeRect(mid - 57, 50, 114, 68);
+      x.fillStyle = '#ffd082';
+      for (let y = 65; y < 103; y += 4) {
+        const span = Math.min(y - 64, 104 - y);
+        x.fillRect(mid - span, y, span * 2 + 1, 2);
+      }
+    } else if (name === 'grass') {
       sky = gradient(W, H, [[0, '#4fb8ff'], [1, '#c8f0ff']]);
       const far = ridge(LW, H, '#8cbde6', 78, [[16, 2, 0.3], [9, 5, 1.1], [4, 11, 2]]);
       { const x = far.getContext('2d'); x.globalCompositeOperation = 'source-atop'; x.fillStyle = '#eaf6ff'; x.fillRect(0, H - 100, LW, 10); }
@@ -1359,5 +1473,5 @@ window.ART = (() => {
     return res;
   }
 
-  return { HERO, ENEMY, ITEM, NPC, props, tiles, background, THEMES, mk, rng };
+  return { HERO, ENEMY, ITEM, NPC, SONIC, props, tiles, background, THEMES, mk, rng };
 })();

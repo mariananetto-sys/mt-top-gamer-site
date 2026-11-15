@@ -328,18 +328,18 @@ window.LEVELS = (() => {
   }
 
   function fase10() {
-    const rafa = 190, scott = 254, jackson = 318;
-    const L = builder(jackson + 62, 'bat', 'FESTA DOS INSCRITOS', 'city');
+    const miguel = 64, martbuz = 146, rafa = 206, scott = 270, jackson = 334;
+    const L = builder(jackson + 86, 'bat', 'FESTA DOS INSCRITOS', 'city');
     L.intro = 'Cada inscrito ganhou a sua parte da fase. Bora visitar todo mundo!';
-    L.time = 420;
+    L.time = 460;
     // Trechos: [começa no x, tema, música, nome da zona, gelo].
     L.zones = [
       [0, 'bat', 'city', 'ZONA DA BABS'],
-      [64, 'tropical', 'grass', 'ZONA DO MIGUEL'],
-      [130, 'castle', 'castle', 'QG DA MARTBUZ'],
-      [rafa, 'roofs', 'roofs', 'ZONA DO RAFA E DO SCOTT'],
-      [scott, 'snowCity', 'snowCity', 'ZONA DO RAFA E DO SCOTT', true],
-      [jackson, 'cave', 'cave', 'CAVERNA DO JACKSON'],
+      [miguel, 'speedway', 'speedway', 'ZONA DO MIGUEL'],
+      [martbuz, 'castle', 'castle', 'QG DA MARTBUZ'],
+      [rafa, 'roofs', 'roofs', 'ZONA DO RAFARL E DO SCOTT'],
+      [scott, 'snowCity', 'snowCity', 'ZONA DO RAFARL E DO SCOTT', true],
+      [jackson, 'grotto', 'grotto', 'CAVERNA DO JACKSON'],
     ];
     L.start = { x: 3, y: 9 };
     // --- zona da Babs (noite, morcegos, roxo)
@@ -347,20 +347,23 @@ window.LEVELS = (() => {
     L.e('npc', 6, 9, { who: 'babs', say: 'Essa parte e MINHA! Noite, lua cheia e morcegos. Cuidado com eles, Matheus!' });
     L.put(11, 6, '?M?'); L.put(21, 7, 'ooo'); L.e('m', 30, 5); L.e('g', 36, 8); L.put(41, 6, 'ooo');
     L.e('m', 50, 6); L.put(52, 6, 'B?B'); L.e('m', 58, 4);
-    // --- zona do Miguel (velocidade, setas, molas e muitas fichas)
-    L.ground(64, 100); L.ground(105, 129);
-    L.e('npc', 67, 11, { who: 'miguel', say: 'Bem-vindo na minha zona! Aqui e so velocidade: pisa nas setas e vai com tudo!' });
-    L.e('dash', 72, 11); L.put(76, 9, 'oooooo'); L.e('b', 84, 11); L.e('dash', 90, 11); L.put(92, 8, 'oooooo');
-    L.put(101, 7, 'oooo'); L.e('dash', 108, 11); L.e('g', 114, 11);
-    L.e('spring', 120, 11); for (let y = 2; y <= 6; y += 2) L.put(120, y, 'o'); L.e('b', 125, 11);
-    // --- QG da Martbuz (Rafael e Scott)
-    L.ground(130, 150); L.lava(151, 155); L.ground(156, 189);
-    L.e('K', 131, 11);
-    L.e('npc', 134, 11, { who: 'rafael', say: 'Bem-vindo ao QG da tropa da Martbuz! Hoje a gente so veio curtir a festa... por enquanto.' });
-    L.e('npc', 138, 11, { who: 'scott', say: 'E isso ai. Mas cuidado com a lava, Matheus...' });
-    L.fill(145, 10, 145, 11, 'X'); L.e('fb', 145, 9, { len: 4, speed: 0.035 });
-    L.put(153, 9, 'ooo'); L.e('s', 162, 11); L.put(164, 8, '?*?'); L.e('k', 170, 11); L.e('g', 178, 11); L.e('g', 181, 11);
-    // --- Rafa e Scott: telhados, depois a cidade nevada
+    // --- pista do Miguel
+    L.ground(miguel, miguel + 36); L.ground(miguel + 43, miguel + 59); L.ground(miguel + 65, martbuz - 1);
+    L.put(miguel + 37, 12, '======'); L.put(miguel + 60, 12, '=====');
+    L.e('npc', miguel + 3, 11, { who: 'miguel', say: 'Pegue a energia azul e vire o Sonic! Você corre sozinho e logo vira uma bola. Use Z para pular.' });
+    L.e('K', miguel + 6, 11); L.e('sonic', miguel + 9, 11);
+    L.put(miguel + 16, 11, 'ooooooo'); L.e('b', miguel + 29, 11);
+    L.put(miguel + 36, 9, 'oooooooo'); L.put(miguel + 45, 11, 'oooooooo'); L.e('k', miguel + 52, 11);
+    L.put(miguel + 58, 8, 'oooooooo'); L.e('b', miguel + 69, 11); L.put(miguel + 73, 11, 'ooooo');
+    // --- QG da Martbuz
+    L.ground(martbuz, martbuz + 20); L.lava(martbuz + 21, martbuz + 25); L.ground(martbuz + 26, rafa - 1);
+    L.e('K', martbuz + 1, 11);
+    L.e('npc', martbuz + 4, 11, { who: 'rafael', say: 'Bem-vindo ao QG da tropa da Martbuz! Hoje a gente so veio curtir a festa... por enquanto.' });
+    L.e('npc', martbuz + 8, 11, { who: 'scott', say: 'E isso ai. Mas cuidado com a lava, Matheus...' });
+    L.fill(martbuz + 15, 10, martbuz + 15, 11, 'X'); L.e('fb', martbuz + 15, 9, { len: 4, speed: 0.035 });
+    L.put(martbuz + 23, 9, 'ooo'); L.e('s', martbuz + 32, 11); L.put(martbuz + 34, 8, '?*?');
+    L.e('k', martbuz + 40, 11); L.e('g', martbuz + 48, 11); L.e('g', martbuz + 51, 11);
+    // --- RafaRL e Scott: telhados, depois a cidade nevada
     L.ground(rafa, rafa + 15); L.ground(rafa + 16, rafa + 24, 10);
     L.ground(rafa + 29, rafa + 39, 9); L.ground(rafa + 40, rafa + 49, 11);
     L.ground(rafa + 54, scott - 1);
@@ -380,12 +383,15 @@ window.LEVELS = (() => {
     L.put(scott + 49, 9, 'oooo'); L.e('venue', scott + 56, 11);
 
     // --- caverna do Jackson
-    L.ground(jackson, jackson + 25); L.ground(jackson + 29, L.w - 1);
-    L.fill(jackson, 0, L.w - 1, 1, '#');
-    L.e('npc', jackson + 3, 11, { who: 'jackson', say: 'Zubba lorpi! Caverna do Jackson, kranka fuu! Bli-bli, Matheus, zonk-zonk!' });
-    L.secret(jackson + 9); L.e('f', jackson + 18, 7); L.put(jackson + 26, 9, 'ooo'); L.e('c', jackson + 35, 11); L.e('w', jackson + 41, 11);
-    L.stairs(jackson + 48, [1, 2, 3, 4]);
-    L.e('G', jackson + 56, 11);
+    L.ground(jackson, jackson + 25); L.ground(jackson + 30, jackson + 45);
+    L.ground(jackson + 50, jackson + 62, 10); L.ground(jackson + 63, L.w - 1);
+    L.e('K', jackson + 1, 11);
+    L.e('npc', jackson + 4, 11, { who: 'jackson', say: 'Zubba lorpi! Kranka fuu, gruta blubba! Bli-bli, Matheus, zonk-zonk!' });
+    L.secret(jackson + 11); L.put(jackson + 20, 8, 'B?B');
+    L.put(jackson + 26, 10, '===='); L.put(jackson + 26, 8, 'oooo'); L.e('c', jackson + 37, 11);
+    L.e('spring', jackson + 43, 11); L.put(jackson + 46, 9, '===='); L.put(jackson + 47, 7, 'ooo'); L.e('m', jackson + 55, 6);
+    L.e('K', jackson + 60, 9); L.e('w', jackson + 69, 11); L.put(jackson + 74, 8, '?1?');
+    L.e('G', jackson + 80, 11);
     return L;
   }
 
@@ -411,7 +417,19 @@ window.LEVELS = (() => {
     return L;
   }
 
-  const list = [fase1, fase2, fase3, fase4, chefe, fase5, fase6, fase7, fase8, chefe2, fase9, fase10, fase11];
-  const labels = ['1', '2', '3', '4', 'CHEFE', '5', '6', '7', '8', 'CHEFE 2', '9', '10', '11'];
+  function chefe3() {
+    const L = builder(24, 'monotomias', 'MATHEUS LARP GAMER MONOTOMIAS', 'monotomias');
+    L.intro = 'Escolha um amigo. Pule sobre o chefe depois dos ataques, quando ele estiver vulnerável.';
+    L.boss = true; L.finalBoss = true; L.bossName = L.name; L.bossSub = 'O DUELO FINAL';
+    L.ground(0, 23);
+    L.fill(0, 0, 0, 11, 'X'); L.fill(23, 0, 23, 11, 'X');
+    L.put(3, 7, '===='); L.put(17, 7, '====');
+    L.put(11, 8, '?M?');
+    L.e('boss3', 17, 11);
+    return L;
+  }
+
+  const list = [fase1, fase2, fase3, fase4, chefe, fase5, fase6, fase7, fase8, chefe2, fase9, fase10, fase11, chefe3];
+  const labels = ['1', '2', '3', '4', 'CHEFE', '5', '6', '7', '8', 'CHEFE 2', '9', '10', '11', 'CHEFE 3'];
   return { list, labels };
 })();
