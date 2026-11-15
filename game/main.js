@@ -1225,6 +1225,45 @@
     }
   }
 
+  // enfeites pequenos em cima do chão (não atrapalham o jogo)
+  function drawDeco(theme, tx, ty) {
+    const h = ((tx * 73856093) ^ (ty * 19349663)) >>> 0, k = h % 9;
+    if (k > 4) return;
+    const x = tx * T + 3 + (h % 9), y = ty * T;
+    const px = (col, dx, dy, w = 1, hh = 1) => { ctx.fillStyle = col; ctx.fillRect(x + dx, y + dy, w, hh); };
+    const sway = Math.round(Math.sin(G.t * 0.05 + tx) * 1);
+    switch (theme) {
+      case 'tropical': case 'grass': case 'sky':
+        if (k === 0 || k === 4) { px('#1f7a2a', 0, -4, 1, 4); px('#1f7a2a', 2 + sway, -6, 1, 6); px('#1f7a2a', 4, -4, 1, 4); px('#8ef06a', 2 + sway, -6, 1, 1); }
+        else if (k === 1) { px('#2a9a3a', 1, -4, 1, 4); px(['#ffffff', '#ffd23f', '#ff8fd8'][h % 3], 0, -6, 3, 2); px('#ffd23f', 1, -6, 1, 1); }
+        else if (k === 2) { px('#8a8fa8', 0, -2, 4, 2); px('#c8ccd8', 1, -2, 2, 1); }
+        break;
+      case 'cave':
+        if (k <= 1) { px('#5fd6ff', 1, -5, 1, 5); px('#5fd6ff', 0, -3, 3, 3); px('#ffffff', 1, -4, 1, 1); }
+        else if (k === 2) { px('#26335f', 0, -2, 4, 2); }
+        break;
+      case 'beach':
+        if (k === 0) { px('#ffc0d8', 0, -3, 4, 3); px('#ff8fb0', 1, -3, 1, 3); px('#ff8fb0', 3, -2, 1, 2); }
+        else if (k === 1) { px('#ff9f1c', 1, -4, 1, 4); px('#ff9f1c', 0, -2, 3, 1); }
+        else if (k === 2) { px('#fff0c0', 0, -1, 3, 1); }
+        break;
+      case 'sea':
+        if (k <= 1) { for (let i = 0; i < 6; i++) px('#2fbf6a', Math.round(Math.sin(G.t * 0.06 + i * 0.7 + tx) * 1.5), -1 - i, 2, 1); }
+        else if (k === 2) { px('#ff7aa8', 0, -3, 1, 3); px('#ff7aa8', 2, -4, 1, 4); px('#ff7aa8', 0, -3, 3, 1); }
+        break;
+      case 'castle':
+        if (k === 0) { px('#5c5c74', 0, -2, 3, 2); px('#9a9ab8', 0, -2, 1, 1); }
+        else if (k === 1) { px('#ff7a2a', 1 + sway, -3, 1, 2); px('#ffcf3a', 1, -2, 1, 1); px('#5a2418', 0, -1, 3, 1); }
+        break;
+      case 'fair':
+        if (k <= 1) { px(['#2fe0ff', '#ff5ab4', '#ffd23f'][(h + (G.t >> 4)) % 3], 1, -1, 2, 1); }
+        break;
+      case 'edit':
+        if (k === 0) { px('#ffd23f', 1, -3, 1, 1); px('#ffd23f', 0, -2, 3, 1); px('#ffd23f', 1, -1, 1, 1); }
+        break;
+      default: break;
+    }
+  }
   function drawTiles() {
     const ts = ART.tiles(G.L.theme);
     const qf = [0, 0, 0, 0, 1, 2, 1, 0][(G.t >> 3) % 8];
@@ -1255,6 +1294,12 @@
         default: break;
       }
       if (im) ctx.drawImage(im, tx * T, ty * T + oy);
+      if (c === '#' || c === 'X' || c === '[' || c === ']') {
+        const th = ART.THEMES[G.L.theme], edge = th.mo || '#1a1020';
+        if (!SOLID.has(tileAt(tx - 1, ty)) && tx > 0) { ctx.fillStyle = edge; ctx.fillRect(tx * T, ty * T, 1, T); }
+        if (!SOLID.has(tileAt(tx + 1, ty)) && tx < G.mw - 1) { ctx.fillStyle = edge; ctx.fillRect(tx * T + T - 1, ty * T, 1, T); }
+        if (c === '#' && tileAt(tx, ty - 1) === '.') drawDeco(G.L.theme, tx, ty);
+      }
     }
   }
 
@@ -1561,6 +1606,9 @@
     drawTiles();
     for (const e of G.ents) if (!e.enemy && !e.dying && e.kind !== 'boss' && e.kind !== 'fb') drawObject(e);
     drawItems(false);
+    ctx.fillStyle = 'rgba(0,0,0,0.22)';
+    for (const e of G.ents) if (e.enemy && e.active && !e.dying && e.onGround && !FLYERS.has(e.kind)) ctx.fillRect(R(e.x + 1), R(e.y + e.h - 1), e.w - 2, 2);
+    if (!P.hidden && !P.dead && P.onGround) ctx.fillRect(R(P.x), R(P.y + P.h - 1), P.w, 2);
     for (const e of G.ents) if ((e.enemy || e.dying) && e.active) drawEnemy(e);
     if (G.boss && !G.boss.gone) drawBoss(G.boss);
     drawPlayer();
@@ -1568,6 +1616,13 @@
     drawShots();
     drawParts();
     ctx.restore();
+    if (!drawWorld.vig) {
+      const c = ART.mk(W, H), x = c.getContext('2d');
+      const g = x.createRadialGradient(W / 2, H / 2, H * 0.45, W / 2, H / 2, W * 0.7);
+      g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,0.28)');
+      x.fillStyle = g; x.fillRect(0, 0, W, H); drawWorld.vig = c;
+    }
+    ctx.drawImage(drawWorld.vig, 0, 0);
     if (G.flash > 0) { ctx.fillStyle = `rgba(255,255,255,${G.flash / 20})`; ctx.fillRect(0, 0, W, H); }
     drawHUD();
     if (G.dialog && (G.state === 'play' || G.state === 'scene')) drawDialog(G.dialog);
