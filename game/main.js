@@ -64,31 +64,45 @@
   window.addEventListener('keyup', (e) => { const k = KMAP[e.code]; if (k) { kb[k] = false; e.preventDefault(); } });
   window.addEventListener('blur', () => { for (const k in kb) kb[k] = false; for (const k in touch) touch[k] = false; });
 
-  // controles de toque
-  document.querySelectorAll('[data-k]').forEach((el) => {
-    const k = el.dataset.k;
-    const on = (e) => { e.preventDefault(); wakeAudio(); touch[k] = true; el.classList.add('on'); if (el.setPointerCapture) try { el.setPointerCapture(e.pointerId); } catch (err) { /* ok */ } };
-    const off = (e) => { e.preventDefault(); touch[k] = false; el.classList.remove('on'); };
-    el.addEventListener('pointerdown', on);
-    el.addEventListener('pointerup', off);
-    el.addEventListener('pointercancel', off);
-    el.addEventListener('lostpointercapture', off);
-    el.addEventListener('contextmenu', (e) => e.preventDefault());
-  });
+  // controles de toque: cada dedo vale pelo botão que está embaixo dele, então dá pra
+  // arrastar o polegar entre os botões (do B pro A) ou apertar os dois juntos
+  const touchZone = document.querySelector('.touch');
   const dpad = document.getElementById('dpad');
-  if (dpad) {
-    const set = (e) => {
-      const r = dpad.getBoundingClientRect();
-      const rx = (e.clientX - r.left) / r.width;
-      touch.left = rx < 0.45; touch.right = rx > 0.55;
-      dpad.dataset.dir = touch.left ? 'l' : touch.right ? 'r' : '';
-    };
-    const clear = () => { touch.left = touch.right = false; dpad.dataset.dir = ''; };
-    dpad.addEventListener('pointerdown', (e) => { e.preventDefault(); wakeAudio(); try { dpad.setPointerCapture(e.pointerId); } catch (err) { /* ok */ } set(e); });
-    dpad.addEventListener('pointermove', (e) => { if (touch.left || touch.right || e.buttons) set(e); });
-    dpad.addEventListener('pointerup', clear);
-    dpad.addEventListener('pointercancel', clear);
-    dpad.addEventListener('lostpointercapture', clear);
+  const fingers = new Map();
+  function keysAt(x, y) {
+    if (dpad) {
+      const r = dpad.getBoundingClientRect(), m = 28;
+      if (x >= r.left - m && x <= r.right + m && y >= r.top - m && y <= r.bottom + m) {
+        const rx = (x - r.left) / r.width;
+        return rx < 0.45 ? ['left'] : rx > 0.55 ? ['right'] : [];
+      }
+    }
+    const out = [];
+    document.querySelectorAll('.touch [data-k]').forEach((el) => {
+      const r = el.getBoundingClientRect(), m = el.dataset.k === 'start' ? 4 : 16;
+      if (x >= r.left - m && x <= r.right + m && y >= r.top - m && y <= r.bottom + m) out.push(el.dataset.k);
+    });
+    return out;
+  }
+  function syncTouch() {
+    const held = new Set();
+    for (const ks of fingers.values()) ks.forEach((k) => held.add(k));
+    for (const k of BTN) {
+      const v = held.has(k);
+      if (v && !touch[k] && navigator.vibrate) { try { navigator.vibrate(8); } catch (err) { /* ok */ } }
+      touch[k] = v;
+    }
+    document.querySelectorAll('.touch [data-k]').forEach((el) => el.classList.toggle('on', held.has(el.dataset.k)));
+    if (dpad) dpad.dataset.dir = held.has('left') ? 'l' : held.has('right') ? 'r' : '';
+  }
+  if (touchZone) {
+    const down = (e) => { e.preventDefault(); wakeAudio(); try { touchZone.setPointerCapture(e.pointerId); } catch (err) { /* ok */ } fingers.set(e.pointerId, keysAt(e.clientX, e.clientY)); syncTouch(); };
+    const move = (e) => { if (!fingers.has(e.pointerId)) return; e.preventDefault(); fingers.set(e.pointerId, keysAt(e.clientX, e.clientY)); syncTouch(); };
+    const up = (e) => { fingers.delete(e.pointerId); syncTouch(); };
+    touchZone.addEventListener('pointerdown', down);
+    touchZone.addEventListener('pointermove', move);
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((t) => touchZone.addEventListener(t, up));
+    touchZone.addEventListener('contextmenu', (e) => e.preventDefault());
   }
   // clique / toque nos menus do canvas
   let click = null;
@@ -336,7 +350,8 @@
     const water = !!G.L.water;
 
     const jumpHeld = I.jump || I.up, jumpPressed = I.jumpP || I.upP;
-    const run = I.run;
+    // no celular o Matheus corre sozinho ao segurar a direção (o B fica pro CD)
+    const run = I.run || touch.left || touch.right;
     const max = water ? (run ? 1.7 : 1.2) : run ? 2.6 : 1.45;
     const acc = p.onGround ? (run ? 0.1 : 0.08) : 0.07;
     const dir = (I.right ? 1 : 0) - (I.left ? 1 : 0);
