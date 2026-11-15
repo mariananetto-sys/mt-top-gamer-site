@@ -329,16 +329,16 @@ window.LEVELS = (() => {
 
   function fase10() {
     const miguel = 64, martbuz = 130, rafa = 190, scott = 254, jackson = 318;
-    const L = builder(jackson + 62, 'bat', 'FESTA DOS INSCRITOS', 'city');
+    const L = builder(jackson + 62, 'babsGarden', 'FESTA DOS INSCRITOS', 'city');
     L.intro = 'Cada inscrito ganhou a sua parte da fase. Bora visitar todo mundo!';
     L.time = 460;
     // Trechos: [começa no x, tema, música, nome da zona, gelo].
     L.zones = [
-      [0, 'bat', 'city', 'ZONA DA BABS'],
-      [miguel, 'speedway', 'speedway', 'ZONA DO MIGUEL'],
-      [martbuz, 'castle', 'castle', 'QG DA MARTBUZ'],
-      [rafa, 'roofs', 'roofs', 'ZONA DO RAFARL E DO SCOTT'],
-      [scott, 'snowCity', 'snowCity', 'ZONA DO RAFARL E DO SCOTT', true],
+      [0, 'babsGarden', 'city', 'ZONA DA BABS'],
+      [miguel, 'sonicHills', 'speedway', 'ZONA DO MIGUEL'],
+      [martbuz, 'martbuz', 'castle', 'QG DA MARTBUZ'],
+      [rafa, 'roofs', 'roofs', 'ZONA DO RafaRL'],
+      [scott, 'snowCity', 'snowCity', 'ZONA DO SCOTT', true],
       [jackson, 'grotto', 'grotto', 'CAVERNA DO JACKSON'],
     ];
     L.start = { x: 3, y: 9 };
@@ -349,8 +349,8 @@ window.LEVELS = (() => {
     L.e('m', 50, 6); L.put(52, 6, 'B?B'); L.e('m', 58, 4);
     // --- pista do Miguel
     L.ground(miguel, miguel + 36); L.ground(miguel + 41, martbuz - 1);
-    L.e('npc', miguel + 3, 11, { who: 'miguel', say: 'Pegue a energia azul e vire o Sonic! Você corre sozinho e logo vira uma bola. Use Z para pular o buraco.' });
-    L.e('sonic', miguel + 8, 11); L.put(miguel + 12, 9, 'oooooo'); L.e('b', miguel + 20, 11);
+    L.e('npc', miguel + 3, 11, { who: 'miguel', say: 'Bem-vindo à minha zona do Sonic! Embale para virar uma bola e use Z para pular o buraco.' });
+    L.put(miguel + 12, 9, 'oooooo'); L.e('b', miguel + 20, 11);
     L.put(miguel + 28, 8, 'oooooo'); L.put(miguel + 37, 7, 'oooo'); L.e('g', miguel + 50, 11);
     L.e('spring', miguel + 56, 11); for (let y = 2; y <= 6; y += 2) L.put(miguel + 56, y, 'o'); L.e('b', miguel + 61, 11);
     // --- QG da Martbuz

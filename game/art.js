@@ -556,7 +556,9 @@ window.ART = (() => {
 
   // ----------------------------------------------------------------- TILES
   const THEMES = {
-    speedway: { g1: '#201a41', g2: '#14102e', g3: '#453473', t1: '#15a9db', t2: '#1465a0', tL: '#a4fffa', br: '#6e4191', brL: '#b88ceb', brD: '#332364', mo: '#12102b', hd: '#3b285d', hdL: '#8b79bb', hdD: '#211838', semi: 'metal', style: 'plate' },
+    sonicHills: { g1: '#bb692d', g2: '#8d461d', g3: '#e6984f', t1: '#4bd940', t2: '#238c3a', tL: '#c2fc74', br: '#c67431', brL: '#faab59', brD: '#85441d', mo: '#512c22', hd: '#b47a35', hdL: '#f9be65', hdD: '#784923', semi: 'wood', style: 'checker' },
+    babsGarden: { g1: '#453255', g2: '#2b2042', g3: '#6b547a', t1: '#a278b4', t2: '#643e83', tL: '#ffd0eb', br: '#5b416e', brL: '#9671ac', brD: '#38264e', mo: '#1c142a', hd: '#554169', hdL: '#987baa', hdD: '#322640', semi: 'metal', style: 'stone' },
+    martbuz: { g1: '#393349', g2: '#241e34', g3: '#594e65', t1: '#b87b71', t2: '#713b4a', tL: '#ffd57a', br: '#65394c', brL: '#ac6977', brD: '#412338', mo: '#261928', hd: '#54425d', hdL: '#a27987', hdD: '#2e253d', semi: 'metal', style: 'plate' },
     grotto: { g1: '#1d746e', g2: '#104c58', g3: '#409b8f', t1: '#6cdfa4', t2: '#327f70', tL: '#c8fbc1', br: '#41667e', brL: '#89b6b7', brD: '#214155', mo: '#073743', hd: '#315d69', hdL: '#6baba3', hdD: '#254251', semi: 'cloud', style: 'stone' },
     monotomias: { g1: '#353049', g2: '#21172d', g3: '#59506e', t1: '#d06c49', t2: '#692c48', tL: '#ffd083', br: '#864964', brL: '#df897b', brD: '#4f2a47', mo: '#21152c', hd: '#4b3351', hdL: '#94717f', hdD: '#23182f', semi: 'metal', style: 'plate' },
     roofs: { g1: '#a47154', g2: '#754a40', g3: '#d19768', t1: '#e9ad73', t2: '#a86244', tL: '#ffe0a0', br: '#944f3b', brL: '#db9060', brD: '#613037', mo: '#563740', hd: '#917260', hdL: '#ddab7d', hdD: '#65433e', semi: 'wood', style: 'stone' },
@@ -610,8 +612,14 @@ window.ART = (() => {
         const r = rng(23);
         for (let i = 0; i < 14; i++) { x.fillStyle = i % 3 ? th.g2 : th.g3; x.fillRect((r() * 15) | 0, (r() * 15) | 0, 1, 1); }
         if (top) { x.fillStyle = th.t2; x.fillRect(0, 3, 16, 2); x.fillStyle = th.t1; x.fillRect(0, 0, 16, 3); x.fillStyle = th.tL; x.fillRect(0, 0, 16, 1); for (let i = 3; i < 16; i += 6) x.fillRect(i, 1, 2, 1); }
-      } else if (th.style === 'bands') {
-        for (let j = 0; j < 16; j++) { x.fillStyle = Math.floor(j / 4) % 2 ? th.g2 : th.g1; x.fillRect(0, j, 16, 1); }
+      } else if (th.style === 'bands' || th.style === 'checker') {
+        if (th.style === 'checker') {
+          x.fillStyle = th.g1; x.fillRect(0, 0, 16, 16);
+          x.fillStyle = th.g2; x.fillRect(8, 0, 8, 8); x.fillRect(0, 8, 8, 8);
+          x.fillStyle = th.g3; x.fillRect(0, 8, 8, 1); x.fillRect(8, 0, 8, 1);
+        } else {
+          for (let j = 0; j < 16; j++) { x.fillStyle = Math.floor(j / 4) % 2 ? th.g2 : th.g1; x.fillRect(0, j, 16, 1); }
+        }
         x.fillStyle = th.g3; [[3, 1], [11, 2], [7, 9], [14, 10], [1, 13]].forEach(([a, b]) => x.fillRect(a, b, 2, 1));
         x.fillStyle = th.g2; [[6, 5], [12, 6], [2, 14]].forEach(([a, b]) => x.fillRect(a, b, 1, 1));
         if (top) {
@@ -831,6 +839,7 @@ window.ART = (() => {
     ];
     const palette = { ...BASE, u: '#287aff', U: '#1842a3', s: '#ffbd80', g: '#36c483' };
     const run = feet.map((frame) => both(fromRows([...head, ...frame], palette, 18)));
+    const idle = both(fromRows([...head, '......kuukuk......', '......kuk.kuk.....', '.....krrk.krrk....', '.....kwwk.kwwk....'], palette, 18));
     const ball = Array.from({ length: 8 }, (_, frame) => {
       const c = mk(16, 16), x = c.getContext('2d');
       for (let py = 0; py < 16; py++) for (let px = 0; px < 16; px++) {
@@ -842,7 +851,7 @@ window.ART = (() => {
       }
       return c;
     });
-    return { run, ball };
+    return { idle, run, ball };
   })();
 
   const props = {
@@ -941,7 +950,7 @@ window.ART = (() => {
   }
   // detalhes animados de cada cenário
   function animExtras(ctx, name, camX, t, W, H) {
-    if (name === 'tropical' || name === 'title' || name === 'grass' || name === 'beach') {
+    if (name === 'tropical' || name === 'sonicHills' || name === 'title' || name === 'grass' || name === 'beach') {
       for (let i = 0; i < 3; i++) bird(ctx, wrapX(i * 140 + t * (0.35 + i * 0.08) - camX * 0.1, 460) - 40, 36 + i * 14 + Math.sin(t * 0.03 + i) * 4, t + i * 5);
     } else if (name === 'cave') {
       for (let i = 0; i < 7; i++) {
@@ -951,14 +960,21 @@ window.ART = (() => {
       }
     } else if (name === 'sky') {
       for (let i = 0; i < 26; i++) { if ((t + i * 13) % 90 < 60) { ctx.fillStyle = i % 4 ? 'rgba(255,255,255,0.8)' : '#ffd23f'; ctx.fillRect(wrapX(i * 47 - camX * 0.04, W), (i * 29) % 70 + 4, 1, 1); } }
-    } else if (name === 'castle') {
+    } else if (name === 'grotto') {
+      for (let i = 0; i < 21; i++) {
+        const px = wrapX(i * 73 - camX * (0.23 + (i % 2) * 0.14) + Math.sin(t * 0.026 + i) * 6, W);
+        const py = 192 - ((t * (0.17 + i % 4 * 0.06) + i * 31) % 88);
+        ctx.fillStyle = i % 3 ? 'rgba(114,235,190,0.62)' : 'rgba(236,163,246,0.72)';
+        ctx.fillRect(Math.round(px), Math.round(py), 1, 1);
+      }
+    } else if (name === 'castle' || name === 'martbuz') {
       for (let i = 0; i < 16; i++) { const life = (t * (0.6 + (i % 4) * 0.15) + i * 37) % H; ctx.fillStyle = i % 3 ? 'rgba(255,140,40,0.75)' : 'rgba(255,220,90,0.85)'; ctx.fillRect(Math.round(wrapX(i * 61 - camX * 0.5 + Math.sin((t + i * 20) * 0.03) * 6, W)), Math.round(H - life), 1, 2); }
     } else if (name === 'fair') {
       const off = -camX * 0.6;
       ctx.fillStyle = '#0c0a1c';
       for (let x = 0; x < W + 64; x += 2) { const sx = wrapX(x + off, W + 64) - 32; const yy = 14 + Math.round(Math.sin((x / 64) * Math.PI) * 10); ctx.fillRect(Math.round(sx), yy, 2, 1); }
       for (let x = 8; x < W + 64; x += 16) { const sx = wrapX(x + off, W + 64) - 32; const yy = 15 + Math.round(Math.sin((x / 64) * Math.PI) * 10); const on = ((x / 16 + (t >> 4)) % 3); ctx.fillStyle = ['#ff5ab4', '#ffd23f', '#2fe0ff'][on]; ctx.fillRect(Math.round(sx) - 1, yy + 1, 3, 3); }
-    } else if (name === 'bat') {
+    } else if (name === 'bat' || name === 'babsGarden') {
       // morcegos voando na frente da lua
       for (let i = 0; i < 7; i++) {
         const x = wrapX(i * 67 + t * (0.5 + (i % 3) * 0.25) - camX * 0.15, W + 40) - 20, y = 30 + (i * 23) % 70 + Math.sin(t * 0.06 + i) * 6, up = ((t >> 3) + i) % 2;
@@ -1023,6 +1039,12 @@ window.ART = (() => {
       } else {
         x.fillStyle = masonry[0];
         for (let col = bx + 2; col + 4 < bx + bw; col += 8) x.fillRect(col, top - 4, 4, 5);
+      }
+      if (near && type === 3) {
+        x.fillStyle = '#4c2d40'; x.fillRect(bx + 4, top + 5, 12, 24);
+        x.fillStyle = '#a44454'; x.fillRect(bx + 5, top + 6, 10, 21);
+        x.fillStyle = '#e8b077'; x.fillRect(bx + 5, top + 8, 10, 1);
+        x.fillRect(bx + 9, top + 13, 2, 8);
       }
       for (let wy = top + 11; wy < h; wy += 15) {
         for (let wx = bx + 5; wx + 4 < bx + bw - 4; wx += 11) {
@@ -1110,36 +1132,7 @@ window.ART = (() => {
     }
     const LW = 512;
     let layers = [], sky, extra = null;
-    if (name === 'speedway') {
-      sky = gradient(W, H, [[0, '#0c112e'], [0.62, '#29205e'], [1, '#7e327e']]);
-      extra = mk(W, H);
-      const x = extra.getContext('2d'), sunX = Math.round(W * 0.72);
-      blob(x, sunX, 98, 35, '#ef6697');
-      x.fillStyle = '#b34485';
-      for (let py = 86; py <= 130; py += 6) {
-        const span = Math.floor(Math.sqrt(35 ** 2 - (py + 1 - 98) ** 2));
-        x.fillRect(sunX - span, py, span * 2, 2);
-      }
-      const skyline = mk(LW, H), s = skyline.getContext('2d'), random = rng(62);
-      for (let bx = 0; bx < LW;) {
-        const w = 10 + Math.floor(random() * 22), y = 169 - Math.floor(random() * 49);
-        s.fillStyle = '#1b1740'; s.fillRect(bx, y, w, H - y);
-        s.fillStyle = bx % 2 ? '#46367d' : '#653465'; s.fillRect(bx, y, w, 2);
-        for (let i = bx + 3; i < bx + w - 2; i += 4) for (let py = y + 8; py < 172; py += 7) {
-          if (random() < 0.4) { s.fillStyle = random() < 0.5 ? '#b4528d' : '#338bac'; s.fillRect(i, py, 2, 2); }
-        }
-        bx += w + 3;
-      }
-      const rail = mk(LW, H), r = rail.getContext('2d');
-      r.fillStyle = '#131730'; r.fillRect(0, 161, LW, 7);
-      r.fillStyle = '#40c9eb'; r.fillRect(0, 161, LW, 1);
-      r.fillStyle = '#83568e'; r.fillRect(0, 168, LW, 1);
-      for (let j = 0; j < LW; j += 16) {
-        r.fillStyle = '#44365e'; r.fillRect(j, 169, 2, 23);
-        r.fillStyle = '#af63c6'; r.fillRect(j + 2, 169, 1, 17);
-      }
-      layers = [[skyline, 0.15, 0], [rail, 0.53, 0]];
-    } else if (name === 'grotto') {
+    if (name === 'grotto') {
       sky = gradient(W, H, [[0, '#071c37'], [0.42, '#18415b'], [1, '#256962']]);
       const far = ridge(LW, H, '#17304a', 84, [[34, 3, 0.8], [13, 9, 1.6]], true);
       const cave = mk(LW, H), x = cave.getContext('2d');
@@ -1192,7 +1185,8 @@ window.ART = (() => {
       { const x = near.getContext('2d'); x.globalCompositeOperation = 'source-atop'; x.fillStyle = '#46a84f'; for (let i = 0; i < LW; i += 12) for (let j = H - 60; j < H; j += 10) x.fillRect(i + ((j / 10) % 2) * 6, j, 2, 2); }
       extra = mk(W, H); { const x = extra.getContext('2d'); const glow = x.createRadialGradient(W * 0.2, 40, 4, W * 0.2, 40, 60); glow.addColorStop(0, 'rgba(255,250,210,0.9)'); glow.addColorStop(1, 'rgba(255,240,170,0)'); x.fillStyle = glow; x.fillRect(0, 0, W * 0.5, 110); blob(x, W * 0.2, 40, 11, '#fffbe0'); }
       layers = [[far, 0.12, 0], [clouds, 0.2, 0.15], [near, 0.35, 0]];
-    } else if (name === 'tropical' || name === 'title') {
+    } else if (name === 'tropical' || name === 'title' || name === 'sonicHills') {
+      const sonic = name === 'sonicHills';
       sky = gradient(W, H, [[0, '#1f7fff'], [0.62, '#8fd8ff'], [0.63, '#2a8ff0'], [1, '#1a6ad0']]);
       extra = mk(W, H); {
         const x = extra.getContext('2d'); const hz = Math.round(H * 0.63);
@@ -1236,6 +1230,16 @@ window.ART = (() => {
         x.globalCompositeOperation = 'source-atop';
         for (let j = H - 70; j < H; j += 6) { x.fillStyle = (j / 6) % 2 ? '#c4691f' : '#8e4513'; x.fillRect(0, j + 20, LW, 3); }
         x.globalCompositeOperation = 'source-over';
+        if (sonic) {
+          // A volta quadriculada é parte da paisagem das colinas.
+          const cx = 222, cy = H - 61;
+          for (let dy = -27; dy <= 27; dy++) for (let dx = -27; dx <= 27; dx++) {
+            const r = Math.hypot(dx, dy);
+            if (r < 19 || r > 27) continue;
+            x.fillStyle = r > 25 ? '#56da46' : (Math.floor((dx + 27) / 5) + Math.floor((dy + 27) / 5)) % 2 ? '#ad591f' : '#d79240';
+            x.fillRect(cx + dx, cy + dy, 1, 1);
+          }
+        }
         const palm = (px, py, h) => {
           for (let i = 0; i < h; i += 3) { x.fillStyle = (i / 3) % 2 ? '#8a5a2a' : '#b07a3a'; x.fillRect(px + Math.round(Math.sin(i / 10) * 2), py - i, 4, 3); }
           const tx = px + Math.round(Math.sin(h / 10) * 2) + 2, ty = py - h;
@@ -1268,6 +1272,34 @@ window.ART = (() => {
       const near = ridge(LW, H, '#ffffff', 28, [[8, 5, 0.3], [5, 13, 1.1]]);
       { const x = near.getContext('2d'); x.globalCompositeOperation = 'source-atop'; x.fillStyle = '#ffd6ec'; x.fillRect(0, H - 14, LW, 14); }
       layers = [[far, 0.08, 0.05], [isl, 0.2, 0], [near, 0.4, 0]];
+    } else if (name === 'martbuz') {
+      sky = gradient(W, H, [[0, '#151124'], [0.58, '#342038'], [1, '#612f40']]);
+      const panels = mk(LW, H), x = panels.getContext('2d');
+      for (let i = 0; i < 4; i++) {
+        const px = 128 * i;
+        x.fillStyle = '#231829'; x.fillRect(px + 10, 24, 106, 164);
+        x.fillStyle = '#624650'; x.fillRect(px + 11, 25, 104, 2); x.fillRect(px + 11, 25, 2, 160);
+        x.fillStyle = '#3c2c44'; x.fillRect(px + 16, 30, 94, 151);
+        x.fillStyle = '#4d374f';
+        for (let y = 38; y < 180; y += 8) x.fillRect(px + 16, y, 94, 1);
+        x.fillStyle = '#251d32'; x.fillRect(px + 29, 53, 68, 54);
+        x.fillStyle = '#9b5463'; x.fillRect(px + 31, 55, 64, 50);
+        x.fillStyle = '#542c44'; x.fillRect(px + 34, 58, 58, 44);
+        x.font = 'bold 13px monospace'; x.textAlign = 'center'; x.textBaseline = 'top';
+        x.fillStyle = '#ffcf8c'; x.fillText(i % 2 ? 'MARTBUZ' : 'QG', px + 63, 64);
+        x.fillStyle = '#d3866a'; x.fillRect(px + 41, 86, 44, 1);
+        x.fillStyle = '#e17c52'; x.fillRect(px + 29, 147, 68, 2);
+        for (let k = 0; k < 5; k++) {
+          x.fillStyle = k % 2 ? '#422a42' : '#634052'; x.fillRect(px + 42 + 9 * k, 157, 4, 15);
+        }
+      }
+      const beams = mk(LW, H), b = beams.getContext('2d');
+      for (let px = 0; px < LW; px += 128) {
+        b.fillStyle = '#211626'; b.fillRect(px, 0, 13, H);
+        b.fillStyle = '#82545c'; b.fillRect(px + 1, 0, 2, H);
+        b.fillStyle = '#f5b870'; b.fillRect(px + 8, 45, 7, 3); b.fillRect(px + 8, 126, 7, 3);
+      }
+      layers = [[panels, 0.24, 0], [beams, 0.51, 0]];
     } else if (name === 'castle') {
       sky = gradient(W, H, [[0, '#12050c'], [1, '#3a0d18']]);
       const wall = mk(LW, H); {
@@ -1355,7 +1387,14 @@ window.ART = (() => {
       const moon = extra.getContext('2d');
       blob(moon, Math.round(W * 0.77), 56, 16, '#fff0dc');
       const distant = ridge(LW, H, '#697bb3', 103, [[43, 3, 0.1], [22, 7, 0.9], [9, 13, 2.5]]);
-      layers = [[distant, 0.08, 0], [snowPeaks(LW, H), 0.17, 0], [winterStreet(LW, H), 0.46, 0]];
+      const skyline = mk(LW, H), x = skyline.getContext('2d');
+      for (const px of [112, 370]) {
+        x.fillStyle = '#364164'; x.fillRect(px, 89, 5, 100); x.fillRect(px + 2, 59, 2, 30);
+        x.fillRect(px - 7, 90, 20, 5); x.fillRect(px - 4, 95, 14, 2);
+        x.fillStyle = '#9aa5c8'; x.fillRect(px - 6, 90, 18, 1);
+        x.fillStyle = '#f3a99e'; x.fillRect(px + 2, 59, 2, 2);
+      }
+      layers = [[distant, 0.08, 0], [snowPeaks(LW, H), 0.17, 0], [skyline, 0.30, 0], [winterStreet(LW, H), 0.46, 0]];
     } else if (name === 'snow') {
       sky = gradient(W, H, [[0, '#0e1a4a'], [0.55, '#3a5aa8'], [1, '#a8c8f0']]);
       extra = mk(W, H); { const x = extra.getContext('2d'); const r = rng(9); for (let i = 0; i < 60; i++) { x.fillStyle = r() > 0.8 ? '#ffffff' : 'rgba(255,255,255,0.6)'; x.fillRect((r() * W) | 0, (r() * H * 0.45) | 0, 1, 1); } }
@@ -1400,13 +1439,14 @@ window.ART = (() => {
       const near = ridge(LW, H, '#f6c88a', 30, [[8, 4, 1.4], [4, 9, 0.6]]);
       { const x = near.getContext('2d'); const r = rng(33); for (let i = 0; i < 7; i++) { const cx = (r() * LW) | 0, h = 14 + ((r() * 12) | 0), b = H - 22; x.fillStyle = '#2f7a3e'; x.fillRect(cx, b - h, 4, h); x.fillRect(cx - 5, b - h + 5, 5, 3); x.fillRect(cx - 5, b - h, 3, 6); x.fillRect(cx + 4, b - h + 8, 5, 3); x.fillRect(cx + 7, b - h + 3, 3, 6); x.fillStyle = '#4a9a5a'; x.fillRect(cx + 1, b - h, 1, h); } }
       layers = [[mesas, 0.08, 0], [mid, 0.2, 0], [near, 0.38, 0]];
-    } else if (name === 'bat') {
-      sky = gradient(W, H, [[0, '#07031a'], [0.6, '#2a1050'], [1, '#5a2a8a']]);
+    } else if (name === 'bat' || name === 'babsGarden') {
+      const garden = name === 'babsGarden';
+      sky = gradient(W, H, garden ? [[0, '#110b29'], [0.59, '#42284f'], [1, '#a45c85']] : [[0, '#07031a'], [0.6, '#2a1050'], [1, '#5a2a8a']]);
       extra = mk(W, H); {
         const x = extra.getContext('2d'); const r = rng(17);
         for (let i = 0; i < 70; i++) { x.fillStyle = 'rgba(255,255,255,' + (0.3 + r() * 0.6) + ')'; x.fillRect((r() * W) | 0, (r() * H * 0.55) | 0, 1, 1); }
         const mx = W * 0.72, my = 52; const g = x.createRadialGradient(mx, my, 10, mx, my, 70); g.addColorStop(0, 'rgba(255,240,180,0.55)'); g.addColorStop(1, 'rgba(255,240,180,0)');
-        x.fillStyle = g; x.fillRect(mx - 70, my - 70, 140, 140); blob(x, mx, my, 26, '#fff4c8'); x.fillStyle = '#e8dca8'; x.fillRect(mx - 9, my - 6, 5, 4); x.fillRect(mx + 6, my + 6, 7, 4); x.fillRect(mx - 2, my + 12, 4, 3);
+        x.fillStyle = g; x.fillRect(mx - 70, my - 70, 140, 140); blob(x, mx, my, 26, garden ? '#ffcee8' : '#fff4c8'); x.fillStyle = garden ? '#e9a5d1' : '#e8dca8'; x.fillRect(mx - 9, my - 6, 5, 4); x.fillRect(mx + 6, my + 6, 7, 4); x.fillRect(mx - 2, my + 12, 4, 3);
       }
       const towers = (seed, base, top, body, win) => {
         const c = mk(LW, H), x = c.getContext('2d'), r = rng(seed);
@@ -1420,7 +1460,24 @@ window.ART = (() => {
         }
         return c;
       };
-      layers = [[towers(5, 80, 60, '#1a0e30', '#b48aff'), 0.1, 0], [towers(9, 44, 50, '#0c0618', '#ffd27a'), 0.28, 0]];
+      if (garden) {
+        const iron = mk(LW, H), x = iron.getContext('2d');
+        x.fillStyle = '#201532';
+        x.fillRect(0, 148, LW, 2); x.fillRect(0, 167, LW, 2);
+        for (let px = 2; px < LW; px += 12) {
+          x.fillStyle = '#201532'; x.fillRect(px, 141, 2, H - 141); x.fillRect(px - 1, 143, 4, 2);
+          if (px % 5 === 0) {
+            x.fillStyle = '#ac6b9f'; x.fillRect(px - 2, 153, 5, 3); x.fillStyle = '#e5a6c9'; x.fillRect(px, 151, 1, 2);
+          }
+        }
+        for (const px of [22, 199, 364]) {
+          x.fillStyle = '#301d3d'; x.fillRect(px, 107, 5, H - 107);
+          x.fillRect(px - 11, 114, 13, 3); x.fillRect(px + 5, 119, 13, 3);
+          blob(x, px + 1, 105, 11, '#3b2448');
+          blob(x, px - 11, 115, 9, '#321e42'); blob(x, px + 15, 113, 9, '#382347');
+        }
+        layers = [[towers(8, 52, 46, '#33203f', '#c080ac'), 0.12, 0], [iron, 0.42, 0]];
+      } else layers = [[towers(5, 80, 60, '#1a0e30', '#b48aff'), 0.1, 0], [towers(9, 44, 50, '#0c0618', '#ffd27a'), 0.28, 0]];
     } else if (name === 'buffer') {
       sky = gradient(W, H, [[0, '#0a0a10'], [1, '#22222c']]);
     } else if (name === 'boss') {

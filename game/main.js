@@ -5,8 +5,7 @@
 // =====================================================================
 (() => {
   const W = 384, H = 224, T = 16;
-  const SONIC_TIME = 260, SONIC_RUN_FRAMES = 34;
-  const isRolling = (p) => p.sonic > 0 && p.sonic <= SONIC_TIME - SONIC_RUN_FRAMES;
+  const isRolling = (p) => p.sonic && Math.abs(p.vx) >= 4.2;
   const cv = document.getElementById('game');
   const ctx = cv.getContext('2d');
   const { HERO, ENEMY, ITEM } = ART;
@@ -274,7 +273,6 @@
       case 'k': return { ...base, kind: 'k', x: bx + 1, y: by - 15, w: 14, h: 15, enemy: true, state: 'walk', shellT: 0, kickT: 0 };
       case 'f': return { ...base, kind: 'f', x: bx + 1, y: by - 12, w: 14, h: 12, enemy: true, baseY: by - 12 };
       case 'm': return { ...base, kind: 'm', x: bx + 1, y: by - 10, w: 14, h: 10, enemy: true, baseY: by - 10 };
-      case 'sonic': return { ...base, kind: 'sonic', active: true, x: bx, y: by - 18, w: 18, h: 18 };
       case 'tram': case 'mph': return { ...base, kind: 'mp', tram: d.type === 'tram', plat: true, active: true, axis: 'x', x: bx, y: d.y * T, w: 48, h: 8, a: bx, b: bx + d.range * T, dir: 1, speed: 0.8, dx: 0, dy: 0 };
       case 'mpv': return { ...base, kind: 'mp', plat: true, active: true, axis: 'y', x: bx, y: d.y * T, w: 48, h: 8, a: d.y * T, b: (d.y + d.range) * T, dir: 1, speed: 0.7, dx: 0, dy: 0 };
       case 'fall': return { ...base, kind: 'fall', plat: true, active: true, x: bx, y: d.y * T, w: 32, h: 8, timer: 0, falling: false, dx: 0, dy: 0 };
@@ -302,7 +300,7 @@
       for (const e of G.ents) if (e.kind === 'K' && e.tx <= G.check.x) e.on = true;
     } else if (G.check && G.check.level !== idx) G.check = null;
     P = { x: start.x * T + 2, y: (start.y + 1) * T - 15, w: 12, h: 15, vx: 0, vy: 0, face: 1, onGround: false, power: 0, inv: 0, star: 0,
-      coyote: 0, jumpBuf: 0, sonic: 0, anim: 0, combo: 0, dead: false, pit: false, onPlat: null, cdCool: 0, prevBottom: 0, hidden: false, skid: false };
+      coyote: 0, jumpBuf: 0, sonic: false, anim: 0, combo: 0, dead: false, pit: false, onPlat: null, cdCool: 0, prevBottom: 0, hidden: false, skid: false };
     setPower(G.power);
     G.time = def.time; G.timeAcc = 0; G.hurry = false; G.freeze = 0; G.shake = 0; G.flash = 0;
     G.tallyDone = false; G.look = 0; G.zone = null; G.zoneBanner = null;
@@ -315,10 +313,15 @@
     const h = n > 0 && !P.sonic ? 30 : 15;
     P.y += P.h - h; P.h = h; P.power = n;
   }
-  function endSonic() {
-    P.sonic = 0;
+  function syncSonicForm() {
+    const sonic = themeAt(P.x + P.w / 2) === 'sonicHills';
+    if (P.sonic === sonic) return;
+    P.sonic = sonic;
     setPower(P.power);
-    P.vx = clamp(P.vx, -2.6, 2.6);
+    if (sonic) {
+      G.flash = 7;
+      AUDIO.sfx('boost');
+    } else P.vx = clamp(P.vx, -2.6, 2.6);
   }
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
@@ -402,7 +405,7 @@
   }
   function killPlayer(pit) {
     if (P.dead || G.state !== 'play') return;
-    P.sonic = 0; P.dead = true; P.pit = pit; P.vx = 0; P.vy = 0; P.star = 0; P.onPlat = null;
+    P.sonic = false; P.dead = true; P.pit = pit; P.vx = 0; P.vy = 0; P.star = 0; P.onPlat = null;
     setPower(0);
     G.power = 0;
     AUDIO.stopMusic(); AUDIO.sfx('die');
@@ -426,7 +429,7 @@
 
   function updatePlayer() {
     const p = P;
-    if (p.sonic && (--p.sonic === 0 || G.L.zones?.[G.zone]?.[1] !== 'speedway')) endSonic();
+    syncSonicForm();
     if (p.inv > 0) p.inv--;
     if (p.star > 0) {
       p.star--;
@@ -441,23 +444,22 @@
     const jumpHeld = I.jump || I.up, jumpPressed = I.jumpP || I.upP;
     // no celular o Matheus corre sozinho ao segurar a direção (o B fica pro CD)
     const run = I.run || touch.left || touch.right;
-    const max = p.sonic ? (isRolling(p) ? 6.7 : 5.9)
+    const max = p.sonic ? (run ? 7.4 : 5.4)
       : G.ally?.boost > 0 ? 3.8 : water ? (run ? 1.7 : 1.2) : run ? 2.6 : 1.45;
     const ice = p.onGround && (G.L.ice || G.L.zones?.[G.zone]?.[4]);
     const acc = p.sonic || G.ally?.boost > 0 ? (p.onGround ? 0.28 : 0.16)
       : (p.onGround ? (run ? 0.1 : 0.08) : 0.07) * (ice ? 0.45 : 1);
     let dir = (I.right ? 1 : 0) - (I.left ? 1 : 0);
-    if (p.sonic && dir === 0) dir = 1;
     if (G.glitch && G.glitch.kind === 'invert') dir = -dir;
     p.skid = false;
     if (dir !== 0) {
       p.face = dir;
       if (p.onGround && Math.sign(p.vx) === -dir && Math.abs(p.vx) > 0.8) {
-        p.vx += dir * (ice ? 0.07 : 0.2); p.skid = true;
+        p.vx += dir * (p.sonic ? 0.37 : ice ? 0.07 : 0.2); p.skid = true;
         if (G.t % 4 === 0) G.parts.push({ type: 'dust', x: p.x + p.w / 2, y: p.y + p.h - 2, vx: -dir * 0.3, vy: -0.3, life: 14 });
       } else if (p.vx * dir < max) p.vx = dir > 0 ? Math.min(p.vx + acc, max) : Math.max(p.vx - acc, -max);
     } else {
-      const fr = p.onGround ? (ice ? 0.015 : 0.1) : 0.02;
+      const fr = p.sonic ? (p.onGround ? 0.34 : 0.09) : p.onGround ? (ice ? 0.015 : 0.1) : 0.02;
       p.vx = Math.abs(p.vx) <= fr ? 0 : p.vx - Math.sign(p.vx) * fr;
     }
     if (Math.abs(p.vx) > max) p.vx -= Math.sign(p.vx) * Math.min(0.06, Math.abs(p.vx) - max);
@@ -525,6 +527,7 @@
       p.combo = 0;
       if (wasAir && fallV > 3) for (let i = 0; i < 3; i++) G.parts.push({ type: 'dust', x: p.x + p.w / 2 + (i - 1) * 5, y: p.y + p.h - 2, vx: (i - 1) * 0.5, vy: -0.2, life: 14 });
     }
+    syncSonicForm();
     // fichas, espinhos e lava
     const x0 = Math.floor((p.x + 1) / T), x1 = Math.floor((p.x + p.w - 2) / T);
     const y0 = Math.floor((p.y + 1) / T), y1 = Math.floor((p.y + p.h - 1) / T);
@@ -604,10 +607,7 @@
   function touchPlayer(e) {
     const p = P;
     if (p.dead || G.state !== 'play' || !overlap(p, e)) return;
-    if (p.sonic) {
-      if (isRolling(p)) { flipKill(e); comboScore(e.x, e.y); }
-      return;
-    }
+    if (isRolling(p)) { flipKill(e); comboScore(e.x, e.y); return; }
     if (p.star > 0) { flipKill(e); comboScore(e.x, e.y); return; }
     const stomp = p.vy > 0 && p.prevBottom <= e.y + 6;
     if (e.kind === 'k') {
@@ -772,13 +772,6 @@
       if (!e.on && overlap(P, e)) {
         e.on = true; G.check = { level: G.levelIdx, x: e.tx, y: e.ty }; AUDIO.sfx('check');
         for (let i = 0; i < 10; i++) G.parts.push({ type: 'spark', x: e.x + 4, y: e.y + 4, vx: (Math.random() - 0.5) * 3, vy: -Math.random() * 3, life: 30, color: '#ffd23f' });
-      }
-    } else if (e.kind === 'sonic') {
-      if (!P.sonic && overlap(P, e)) {
-        P.sonic = SONIC_TIME; P.vx = 4.8; P.face = 1;
-        setPower(P.power);
-        G.flash = 7; AUDIO.sfx('boost');
-        pop('SONIC!', e.x - 15, e.y - 21, '#80eeff');
       }
     } else if (e.kind === 'G') {
       if (G.state === 'play' && P.x + P.w > e.x + 6 && P.y + P.h > e.y) levelClear();
@@ -1541,17 +1534,20 @@
   }
   function drawPlayer() {
     const p = P;
-    if (p.hidden) return;
+    if (p.hidden || (p.inv > 0 && !p.dead && (G.t >> 1) % 2 && G.state === 'play' && p.inv < 9000)) return;
     if (p.sonic) {
-      const facing = p.face < 0 ? 'l' : 'r';
-      const sprite = isRolling(p) ? ART.SONIC.ball[(G.t * p.face) & 7] : ART.SONIC.run[(G.t >> 1) & 1][facing];
+      const rolling = isRolling(p), running = Math.abs(p.vx) > 0.4;
+      const dir = p.vx < 0 ? -1 : 1, facing = p.face < 0 ? 'l' : 'r';
+      const sprite = rolling ? ART.SONIC.ball[(G.t * dir) & 7]
+        : running ? ART.SONIC.run[(G.t >> 1) & 1][facing] : ART.SONIC.idle[facing];
       const foot = p.y + p.h;
-      rect('rgba(51,162,255,0.28)', p.x - p.face * 15 - 4, foot - 11, 10, 2);
-      rect('rgba(114,233,255,0.52)', p.x - p.face * 10 - 4, foot - 7, 9, 2);
+      if (rolling) {
+        rect('rgba(51,162,255,0.28)', p.x - dir * 15 - 4, foot - 11, 10, 2);
+        rect('rgba(114,233,255,0.52)', p.x - dir * 10 - 4, foot - 7, 9, 2);
+      }
       img(sprite, p.x + (p.w - sprite.width) / 2, foot - sprite.height);
       return;
     }
-    if (p.inv > 0 && !p.dead && (G.t >> 1) % 2 && G.state === 'play' && p.inv < 9000) return;
     let force = null;
     if (G.freeze > 0 && (G.freezeKind === 'grow' || G.freezeKind === 'shrink')) {
       force = ((G.freeze >> 2) % 2 === 0) === (G.freezeKind === 'grow');
@@ -1579,8 +1575,17 @@
         else if (k === 1) { px('#2a9a3a', 1, -4, 1, 4); px(['#ffffff', '#ffd23f', '#ff8fd8'][h % 3], 0, -6, 3, 2); px('#ffd23f', 1, -6, 1, 1); }
         else if (k === 2) { px('#8a8fa8', 0, -2, 4, 2); px('#c8ccd8', 1, -2, 2, 1); }
         break;
-      case 'speedway':
-        if (k === 0) { px('#374872', 0, -4, 4, 4); px('#75efff', 1, -4, 2, 1); }
+      case 'sonicHills':
+        if (k <= 1) {
+          px('#218745', 2, -5, 1, 5); px('#ffcc42', 0, -8, 5, 3); px('#a26627', 2, -7);
+          px('#fff39c', 1, -9, 3, 1);
+        }
+        break;
+      case 'babsGarden':
+        if (k <= 1) { px('#655082', 1, -4, 1, 4); px('#ed88c6', 0, -6, 3, 2); px('#ffe2ff', 1, -6); }
+        break;
+      case 'martbuz':
+        if (k === 0) { px('#74818e', 0, -3, 5, 3); px('#ffc154', 1, -2, 2, 1); }
         break;
       case 'grotto':
         if (k <= 1) {
@@ -1757,14 +1762,7 @@
   }
 
   function drawObject(e) {
-    if (e.kind === 'sonic') {
-      if (P.sonic) return;
-      const oy = Math.round(Math.sin(e.t * 0.11) * 3);
-      rect('rgba(52,173,255,0.26)', e.x - 4, e.y - 4 + oy, 24, 23);
-      img(ART.SONIC.ball[(e.t >> 2) & 7], e.x, e.y + oy);
-      rect('#c6fbff', e.x + 1, e.y - 1 + oy, 3, 1);
-      rect('#c6fbff', e.x + 2, e.y - 2 + oy, 1, 3);
-    } else if (e.kind === 'hay') img(ART.props.hay, e.x, e.y);
+    if (e.kind === 'hay') img(ART.props.hay, e.x, e.y);
     else if (e.kind === 'venue') img(ART.props.venue, e.x, e.y);
     else if (e.tram) img(ART.props.tram, e.x, e.y);
     else if (e.kind === 'mp') {
