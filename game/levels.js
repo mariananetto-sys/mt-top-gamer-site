@@ -305,7 +305,68 @@ window.LEVELS = (() => {
     return L;
   }
 
-  const list = [fase1, fase2, fase3, fase4, chefe, fase5, fase6, fase7, fase8, chefe2];
-  const labels = ['1', '2', '3', '4', 'CHEFE', '5', '6', '7', '8', 'CHEFE 2'];
+  // ================================================= MUNDO 3
+  function fase9() {
+    const L = builder(190, 'snow', 'PICO CONGELADO', 'snow');
+    L.intro = 'Mundo 3! O chao aqui e de gelo: o Matheus escorrega.';
+    L.ice = true;
+    L.ground(0, 30); L.ground(34, 60); L.ground(64, 95); L.ground(100, 130); L.ground(134, 189);
+    L.e('npc', 4, 11, { who: 'axo', say: 'Brrr! O gelo escorrega! Solte a direcao antes das beiradas pra parar a tempo.' });
+    L.put(10, 8, '?M?'); L.e('g', 18, 11); L.e('b', 26, 11);
+    L.put(31, 9, 'ooo');
+    L.stairs(44, [1, 2, 3]); L.e('g', 51, 11); L.put(53, 8, 'B?B'); L.e('f', 57, 7);
+    L.put(61, 9, 'ooo');
+    L.e('K', 66, 11); L.e('s', 72, 11); L.put(75, 8, 'oooo');
+    L.e('spring', 80, 11); L.put(82, 4, '======'); L.put(83, 3, 'oooo'); L.e('b', 91, 11);
+    L.e('fall', 96, 10);
+    L.secret(103); L.e('g', 114, 11); L.e('g', 116, 11); L.put(118, 8, '?*?'); L.e('f', 124, 6);
+    L.put(131, 9, 'ooo');
+    L.stairs(140, [1, 2, 3, 4]); L.e('s', 150, 11); L.e('b', 158, 11); L.put(161, 8, 'B1B');
+    L.stairs(170, [1, 2, 3, 4, 5]);
+    L.e('G', 182, 11);
+    return L;
+  }
+
+  function fase10() {
+    const L = builder(200, 'city', 'CIDADE NEON', 'city');
+    L.intro = 'Pule de telhado em telhado... e nao olhe pra baixo!';
+    L.start = { x: 3, y: 9 };
+    L.ground(0, 22, 10); L.ground(26, 44, 9); L.ground(48, 70, 11); L.ground(81, 100, 10); L.ground(104, 126, 8); L.ground(130, 150, 10); L.ground(154, 199, 9);
+    L.put(8, 6, '?M?'); L.e('h', 30, 4); L.e('g', 36, 8); L.put(23, 7, 'ooo');
+    L.put(45, 6, 'ooo'); L.e('w', 56, 10); L.e('n', 61, 5); L.put(58, 7, 'B?B');
+    L.e('mph', 71, 10, { range: 5 }); L.put(73, 7, 'oooo');
+    L.e('K', 83, 9); L.e('b', 89, 9); L.e('g', 94, 9);
+    L.put(101, 6, 'ooo');
+    L.secret(108, 8); L.e('s', 118, 7); L.e('h', 121, 3); L.put(116, 4, '?*?');
+    L.put(127, 7, 'ooo');
+    L.fill(134, 10, 142, 10, '>'); L.e('w', 145, 9);
+    L.put(151, 7, 'ooo');
+    L.e('B', 161, 8); L.e('g', 167, 8);
+    L.stairs(175, [1, 2, 3], 9);
+    L.e('G', 190, 8);
+    return L;
+  }
+
+  function fase11() {
+    const L = builder(200, 'desert', 'DESERTO DOS PIXELS', 'desert');
+    L.intro = 'Calor de 50 graus! Cuidado com os caranguejos do deserto.';
+    L.ground(0, 40); L.ground(44, 80); L.ground(87, 120); L.ground(125, 160); L.ground(164, 199);
+    L.put(8, 8, '?M?'); L.e('c', 16, 11); L.e('w', 24, 11); L.pillar(30, 3); L.e('c', 36, 11);
+    L.put(41, 9, 'ooo');
+    L.e('spring', 50, 11); L.put(52, 6, '======'); L.put(53, 5, 'oooo'); L.e('b', 62, 11);
+    L.stairs(68, [1, 2, 3]); L.e('s', 75, 11);
+    L.lava(81, 86); L.e('mph', 81, 9, { range: 3 }); L.put(82, 7, 'ooo');
+    L.e('K', 89, 11); L.secret(95); L.e('c', 104, 11); L.e('w', 108, 11); L.put(111, 8, '?*?'); L.e('n', 115, 5);
+    L.e('fall', 122, 10); L.put(121, 7, 'ooo');
+    L.e('h', 130, 4); L.pillar(136, 4); L.e('c', 142, 11); L.put(146, 8, 'B?B?B'); L.e('B', 152, 11);
+    L.put(161, 9, 'ooo');
+    L.e('s', 170, 11); L.e('c', 174, 11);
+    L.stairs(178, [1, 2, 3, 4, 5, 6]);
+    L.e('G', 192, 11);
+    return L;
+  }
+
+  const list = [fase1, fase2, fase3, fase4, chefe, fase5, fase6, fase7, fase8, chefe2, fase9, fase10, fase11];
+  const labels = ['1', '2', '3', '4', 'CHEFE', '5', '6', '7', '8', 'CHEFE 2', '9', '10', '11'];
   return { list, labels };
 })();

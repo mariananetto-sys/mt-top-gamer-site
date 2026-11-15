@@ -390,17 +390,18 @@
     // no celular o Matheus corre sozinho ao segurar a direção (o B fica pro CD)
     const run = I.run || touch.left || touch.right;
     const max = water ? (run ? 1.7 : 1.2) : run ? 2.6 : 1.45;
-    const acc = p.onGround ? (run ? 0.1 : 0.08) : 0.07;
+    const ice = !!G.L.ice && p.onGround;
+    const acc = (p.onGround ? (run ? 0.1 : 0.08) : 0.07) * (ice ? 0.45 : 1);
     const dir = (I.right ? 1 : 0) - (I.left ? 1 : 0);
     p.skid = false;
     if (dir !== 0) {
       p.face = dir;
       if (p.onGround && Math.sign(p.vx) === -dir && Math.abs(p.vx) > 0.8) {
-        p.vx += dir * 0.2; p.skid = true;
+        p.vx += dir * (ice ? 0.07 : 0.2); p.skid = true;
         if (G.t % 4 === 0) G.parts.push({ type: 'dust', x: p.x + p.w / 2, y: p.y + p.h - 2, vx: -dir * 0.3, vy: -0.3, life: 14 });
       } else if (p.vx * dir < max) p.vx = dir > 0 ? Math.min(p.vx + acc, max) : Math.max(p.vx - acc, -max);
     } else {
-      const fr = p.onGround ? 0.1 : 0.02;
+      const fr = p.onGround ? (ice ? 0.015 : 0.1) : 0.02;
       p.vx = Math.abs(p.vx) <= fr ? 0 : p.vx - Math.sign(p.vx) * fr;
     }
     if (Math.abs(p.vx) > max) p.vx -= Math.sign(p.vx) * Math.min(0.06, Math.abs(p.vx) - max);
@@ -986,7 +987,7 @@
   function openMap(sel) { toState('map'); G.mapSel = clamp(sel, 0, save.unlocked - 1); AUDIO.music('title'); }
   function enterLevel(i) { G.check = null; loadLevel(i, false); toState('intro'); AUDIO.stopMusic(); AUDIO.sfx('start'); }
   // posições dos pontos no mapa (Mundo 1 em cima, Mundo 2 embaixo)
-  const MAP_PTS = [[56, 80], [116, 66], [176, 84], [236, 66], [312, 78], [56, 156], [116, 142], [176, 160], [236, 142], [312, 154]];
+  const MAP_PTS = [[60, 58], [118, 46], [176, 60], [234, 46], [312, 54], [60, 108], [118, 96], [176, 110], [234, 96], [312, 104], [118, 152], [196, 146], [274, 154]];
   function updateMap() {
     const n = LEVELS.list.length;
     const mv = (d) => { let k = G.mapSel + d; if (k < 0 || k >= n || k >= save.unlocked) return; G.mapSel = k; AUDIO.sfx('select'); };
@@ -1175,12 +1176,14 @@
         updateParts();
         P.vx = 0; P.vy = Math.min(P.vy + 0.42, 6); { const pb = P.y + P.h; P.y += P.vy; collideY(P, pb); }
         if (e.t > 50 && e.t <= 85) { e.bx = Math.min(e.bx + 0.35, e.x + 12); e.mx = Math.max(e.mx - 0.35, e.x + 26); }
+        if (e.t > 85 && e.t <= 92) { e.bx = Math.min(e.bx + 0.4, e.x + 14); e.mx = Math.max(e.mx - 0.6, e.x + 22); } // o beijo: rostos encostados
+        if (e.t === 92) pop('SMACK!', e.x + 2, e.y - 20, '#ff5ab4');
         if (e.t === 88) { AUDIO.sfx('kiss'); for (let i = 0; i < 6; i++) G.parts.push({ type: 'heart', x: (e.bx + e.mx) / 2 + 8 + (Math.random() - 0.5) * 16, y: e.y + 2, vx: (Math.random() - 0.5) * 0.6, vy: -0.5 - Math.random() * 0.5, life: 70 }); }
         if (e.t > 88 && e.t < 150 && e.t % 10 === 0) G.parts.push({ type: 'heart', x: (e.bx + e.mx) / 2 + 8, y: e.y, vx: (Math.random() - 0.5) * 0.4, vy: -0.6, life: 60 });
         if (e.t === 160) AUDIO.sfx('cry');
         if (e.t > 160 && e.t % 5 === 0) G.parts.push({ type: 'tear', x: P.x + P.w / 2 + (e.t % 10 ? 4 : -2), y: P.y + P.h - 9, vx: (e.t % 10 ? 0.6 : -0.6), vy: -0.6, life: 26 });
         G.dialog = e.t > 165 ? { who: 'matheus', name: 'MATHEUS', txt: 'Eu sou carente... :(' } : null;
-        if (e.t > 340 || (e.t > 190 && (I.selP || I.runP))) { e.phase = 'done'; e.bx = e.x + 12; e.mx = e.x + 26; G.scene = null; G.dialog = null; toState('play'); }
+        if (e.t > 340 || (e.t > 190 && (I.selP || I.runP))) { e.phase = 'done'; e.bx = e.x + 14; e.mx = e.x + 22; G.scene = null; G.dialog = null; toState('play'); }
         break;
       }
       case 'ending':
@@ -1276,6 +1279,19 @@
         if (k === 0) { px('#5c5c74', 0, -2, 3, 2); px('#9a9ab8', 0, -2, 1, 1); }
         else if (k === 1) { px('#ff7a2a', 1 + sway, -3, 1, 2); px('#ffcf3a', 1, -2, 1, 1); px('#5a2418', 0, -1, 3, 1); }
         break;
+      case 'snow':
+        if (k === 0) { px('#ffffff', 0, -2, 5, 2); px('#e0f0ff', 1, -3, 3, 1); }
+        else if (k === 1) { px('#4a3020', 2, -2, 1, 2); px('#1f4a3a', 0, -6, 5, 4); px('#1f4a3a', 1, -8, 3, 2); px('#ffffff', 1, -8, 3, 1); }
+        else if (k === 2) { px('#bfe6ff', 0, -3, 1, 3); px('#bfe6ff', 2, -4, 1, 4); }
+        break;
+      case 'city':
+        if (k <= 1) { px('#3a3458', 0, -3, 4, 3); px(['#2fe0ff', '#ff5ab4'][h % 2], 1, -2, 2, 1); }
+        break;
+      case 'desert':
+        if (k === 0) { px('#2f7a3e', 1, -6, 2, 6); px('#2f7a3e', 0, -4, 1, 2); px('#2f7a3e', 3, -5, 1, 2); }
+        else if (k === 1) { px('#c8a06a', 0, -2, 4, 2); px('#e8c890', 1, -2, 2, 1); }
+        else if (k === 2) { px('#f0e0c0', 0, -1, 3, 1); px('#f0e0c0', 1, -2, 1, 1); }
+        break;
       case 'fair':
         if (k <= 1) { px(['#2fe0ff', '#ff5ab4', '#ffd23f'][(h + (G.t >> 4)) % 3], 1, -1, 2, 1); }
         break;
@@ -1307,7 +1323,7 @@
         case ']': im = tileAt(tx, ty - 1) === ']' ? ts.pillarBody[1] : ts.pillarCap[Math.floor((tx - 1) / 2) % 3][1]; break;
         case '^': im = ts.spikes; break;
         case '~': im = tileAt(tx, ty - 1) === '~' ? ts.lava : ts.lavaTop[lf]; break;
-        case 'o': im = ITEM.coin[[0, 1, 2, 3, 2, 1][(G.t >> 3) % 6]]; break;
+        case 'o': im = ITEM.coin[[0, 1, 2, 3, 2, 1][(G.t >> 3) % 6]]; if ((G.t + tx * 13) % 90 < 8) { ctx.drawImage(im, tx * T, ty * T); im = null; ctx.fillStyle = '#ffffff'; ctx.fillRect(tx * T + 10, ty * T + 3, 1, 3); ctx.fillRect(tx * T + 9, ty * T + 4, 3, 1); } break;
         case '>': im = ts.conv[(G.t >> 2) % 4]; break;
         case '<': im = ts.conv[3 - ((G.t >> 2) % 4)]; break;
         case 'w': im = ts.water[(G.t >> 4) % 2]; break;
@@ -1422,9 +1438,16 @@
     } else if (e.kind === 'kiss') {
       img(ART.NPC.babs.r, e.bx, e.y);
       img(ART.NPC.miguel.l, e.mx, e.y);
+      if (e.phase !== 'wait' && (e.phase === 'done' || e.t > 90)) {
+        // coraçãozinho entre os dois durante o beijo
+        const hx = R((e.bx + e.mx) / 2 + 8), hy = R(e.y - 6 - (e.phase === 'done' ? 0 : Math.min(6, (e.t - 90) * 0.3)));
+        const big = e.phase === 'done' ? 0 : 1;
+        rect('#1a1020', hx - 4 - big, hy - 1, 9 + big * 2, 7 + big);
+        rect('#ff5ab4', hx - 3 - big, hy, 3 + big, 2); rect('#ff5ab4', hx + 1, hy, 3 + big, 2); rect('#ff5ab4', hx - 3 - big, hy + 2, 7 + big * 2, 2); rect('#ff5ab4', hx - 2, hy + 4, 5, 1); rect('#ff5ab4', hx, hy + 5, 1, 1); rect('#ffffff', hx - 2, hy, 1, 1);
+      }
       if (e.phase !== 'wait') {
-        text('BABS MARY', R(e.bx + 12), R(e.y - 9), { size: 6, align: 'right', color: '#ff8fd8' });
-        text('MIGUEL', R(e.mx + 4), R(e.y - 9), { size: 6, color: '#7cf0ff' });
+        text('BABS MARY', R(e.bx + 6), R(e.y - 9), { size: 6, align: 'right', color: '#ff8fd8' });
+        text('MIGUEL', R(e.mx + 11), R(e.y - 9), { size: 6, color: '#7cf0ff' });
       }
     } else if (e.kind === 'npc' && e.who === 'couple') {
       img(ART.NPC.babs.r, e.x - 7, e.y);
@@ -1713,7 +1736,7 @@
     const rnd = ART.rng(42);
     for (let i = 0; i < 50; i++) rect(i % 3 ? '#4a58b0' : '#ffd23f', Math.floor(rnd() * W), Math.floor(rnd() * H), 1, 1);
     const boss = G.L.boss;
-    text(boss ? 'CHEFÃO!' : 'FASE ' + (G.levelIdx + 1), W / 2, 44, { color: boss ? '#ff3b3b' : '#ffd23f', size: 16, align: 'center', outline: '#1a1020' });
+    text(boss ? 'CHEFÃO!' : 'FASE ' + LEVELS.labels[G.levelIdx], W / 2, 44, { color: boss ? '#ff3b3b' : '#ffd23f', size: 16, align: 'center', outline: '#1a1020' });
     text(G.L.name, W / 2, 70, { color: '#ffffff', align: 'center' });
     const s = HERO.n.s.idle.r;
     ctx.drawImage(s, W / 2 - 30, 100);
@@ -1731,11 +1754,12 @@
     ART.background('title', W, H).draw(ctx, G.t * 0.4, G.t);
     rect('rgba(11,16,51,0.78)', 0, 0, W, H);
     text('MAPA DOS MUNDOS', W / 2, 10, { color: '#ffd23f', align: 'center', outline: '#1a1020' });
-    text('MUNDO 1', 16, 44, { color: '#ff8fd8' });
-    text('MUNDO 2', 16, 120, { color: '#2fe0ff' });
+    text('MUNDO 1', 8, 28, { color: '#ff8fd8', size: 6 });
+    text('MUNDO 2', 8, 80, { color: '#2fe0ff', size: 6 });
+    text('MUNDO 3', 8, 130, { color: '#a6ff5a', size: 6 });
     ctx.fillStyle = '#4a58b0';
     for (let i = 0; i < MAP_PTS.length - 1; i++) {
-      if (i === 4) continue;
+      if (i === 4 || i === 9) continue;
       const [ax, ay] = MAP_PTS[i], [bx, by] = MAP_PTS[i + 1];
       for (let k = 0; k <= 10; k++) ctx.fillRect(R(ax + (bx - ax) * k / 10) - 1, R(ay + (by - ay) * k / 10) - 1, 2, 2);
     }
@@ -1743,11 +1767,11 @@
       const open = i < save.unlocked, done = save.done[i], sel = i === G.mapSel, boss = i === 4 || i === 9;
       rect('#1a1020', x - 9, y - 9, 18, 18);
       rect(!open ? '#3a3f52' : done ? '#ffd23f' : boss ? '#e8402e' : '#2f7bff', x - 8, y - 8, 16, 16);
-      text(boss ? '!' : String(i < 4 ? i + 1 : i), x + 1, y - 4, { color: open ? '#ffffff' : '#6b7190', align: 'center' });
-      if (sel) { const bob = (G.t >> 3) % 2; ctx.drawImage(HERO.n.s.idle.r, x - 8, y - 28 - bob); }
+      text(boss ? '!' : LEVELS.labels[i], x + 1, y - 4, { color: open ? '#ffffff' : '#6b7190', align: 'center' });
+      if (sel) { const bob = (G.t >> 3) % 2; ctx.drawImage(HERO.n.s.idle.r, x - 8, y - 26 - bob); }
     });
     const i = G.mapSel, L = (LV_INFO[i] = LV_INFO[i] || LEVELS.list[i]());
-    rect('rgba(0,0,0,0.5)', 0, H - 40, W, 40);
+    rect('rgba(0,0,0,0.55)', 0, H - 38, W, 38);
     text((L.boss ? 'CHEFAO: ' : 'FASE ' + LEVELS.labels[i] + ': ') + L.name, W / 2, H - 34, { color: '#ffffff', align: 'center' });
     const tot = L.ents.filter((d) => d.type === 'npc' && d.who === 'discord').length;
     const info = (save.done[i] ? 'ZERADA' : 'NOVA') + (tot ? '   SEGREDOS ' + (save.sec[i] || 0) + '/' + tot : '');
