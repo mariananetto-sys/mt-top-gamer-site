@@ -1170,9 +1170,9 @@
   const credits = [
     ['CRIAÇÃO', creator],
     ['PROGRAMAÇÃO', 'CLAUDE'],
-    ['DESIGN DE FASES', creator],
-    ['ARTE E ANIMAÇÃO', creator],
-    ['MÚSICA E EFEITOS', creator],
+    ['DESIGN DE FASES', 'CLAUDE E LUCAS'],
+    ['ARTE E ANIMAÇÃO', 'CLAUDE E LUCAS'],
+    ['MÚSICA E EFEITOS', 'CLAUDE E LUCAS'],
     ['HISTÓRIA', creator],
     ['IDEIAS DE FASES', creator],
   ];
