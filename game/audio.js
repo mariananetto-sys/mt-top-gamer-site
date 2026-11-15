@@ -102,6 +102,7 @@ window.AUDIO = (() => {
     select() { const t = ctx.currentTime; tone(880, t, 0.05, { wave: 'p25', vol: 0.09 }); },
     start() { seq(['C6', 'G5', 'C6', 'E6', 'G6'], 0.05, { wave: 'p25', vol: 0.1 }); },
     thud() { const t = ctx.currentTime; tone(110, t, 0.3, { wave: 'triangle', slide: 40, vol: 0.5 }); noise(t, 0.25, { freq: 600, vol: 0.3 }); },
+    boost() { const t = ctx.currentTime; tone(300, t, 0.18, { wave: 'p25', slide: 1400, vol: 0.12 }); noise(t, 0.15, { type: 'highpass', freq: 3000, vol: 0.08 }); },
     dash() { const t = ctx.currentTime; noise(t, 0.4, { type: 'bandpass', freq: 600, sweep: 2400, vol: 0.25 }); },
     orb() { const t = ctx.currentTime; tone(900, t, 0.18, { wave: 'p12', slide: 200, vol: 0.1 }); },
     bossHit() { const t = ctx.currentTime; noise(t, 0.15, { freq: 3000, vol: 0.3 }); tone(300, t, 0.2, { slide: 70, vol: 0.18 }); },

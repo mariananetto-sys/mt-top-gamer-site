@@ -54,6 +54,7 @@
   function wakeAudio() {
     if (!audioReady) { AUDIO.init(); audioReady = true; }
     AUDIO.resume();
+    if (typeof liveKick === 'function') liveKick();
   }
   window.addEventListener('keydown', (e) => {
     wakeAudio();
@@ -179,7 +180,7 @@
   let P = null;
 
   const SOLID = new Set(['#', 'B', 'M', 'X', '[', ']', '?', '1', '*', 'E', 'F', '<', '>']);
-  const FLYERS = new Set(['f', 'p', 'n', 'h']);
+  const FLYERS = new Set(['f', 'p', 'n', 'h', 'm']);
   function tileAt(tx, ty) {
     if (tx < 0 || tx >= G.mw) return 'X';
     if (ty < 0 || ty >= 14) return '.';
@@ -242,6 +243,8 @@
       case 'boss2': return { ...base, kind: 'boss', b2: true, active: true, x: bx - 12, y: -60, w: 40, h: 40, hp: 12, maxHp: 12, state: 'intro', face: -1, inv: 0, landed: false, last: '', baseY: 52 };
       case 'k': return { ...base, kind: 'k', x: bx + 1, y: by - 15, w: 14, h: 15, enemy: true, state: 'walk', shellT: 0, kickT: 0 };
       case 'f': return { ...base, kind: 'f', x: bx + 1, y: by - 12, w: 14, h: 12, enemy: true, baseY: by - 12 };
+      case 'm': return { ...base, kind: 'm', x: bx + 1, y: by - 10, w: 14, h: 10, enemy: true, baseY: by - 10 };
+      case 'dash': return { ...base, kind: 'dash', active: true, x: bx, y: by - 3, w: 16, h: 3, cool: 0 };
       case 'mph': return { ...base, kind: 'mp', plat: true, active: true, axis: 'x', x: bx, y: d.y * T, w: 48, h: 8, a: bx, b: bx + d.range * T, dir: 1, speed: 0.8, dx: 0, dy: 0 };
       case 'mpv': return { ...base, kind: 'mp', plat: true, active: true, axis: 'y', x: bx, y: d.y * T, w: 48, h: 8, a: d.y * T, b: (d.y + d.range) * T, dir: 1, speed: 0.7, dx: 0, dy: 0 };
       case 'fall': return { ...base, kind: 'fall', plat: true, active: true, x: bx, y: d.y * T, w: 32, h: 8, timer: 0, falling: false, dx: 0, dy: 0 };
@@ -270,7 +273,7 @@
       coyote: 0, jumpBuf: 0, anim: 0, combo: 0, dead: false, pit: false, onPlat: null, cdCool: 0, prevBottom: 0, hidden: false, skid: false };
     setPower(G.power);
     G.time = def.time; G.timeAcc = 0; G.hurry = false; G.freeze = 0; G.shake = 0; G.flash = 0;
-    G.tallyDone = false; G.look = 0;
+    G.tallyDone = false; G.look = 0; G.zone = null; G.zoneBanner = null;
     G.cam = clamp(P.x + P.w / 2 - W / 2, 0, G.mw * T - W);
     AUDIO.setTempo(1);
     if (idx + 1 > save.unlocked) { save.unlocked = idx + 1; persist(); }
@@ -656,6 +659,10 @@
     } else if (e.kind === 'f') {
       e.x -= 0.45;
       e.y = e.baseY + Math.sin(e.t * 0.045) * 18;
+    } else if (e.kind === 'm') {
+      // morcego: voa em zigue-zague indo atrás do jogador
+      e.x += Math.sign(P.x - e.x) * 0.6; e.dir = P.x < e.x ? -1 : 1;
+      e.y = e.baseY + Math.sin(e.t * 0.08) * 14;
     }
     touchPlayer(e);
   }
@@ -678,7 +685,14 @@
   // ------------------------------------------------------------ OBJETOS
   function updatePlatform(e) {
     const ox = e.x, oy = e.y;
-    if (e.kind === 'mp') {
+    if (e.kind === 'dash') {
+      const x = R(e.x), y = R(e.y);
+      const ph = (G.t >> 2) % 3;
+      rect('rgba(255,180,40,0.25)', x - 2, y - 6, 20, 9);
+      rect('#1a1020', x - 1, y - 3, 18, 6); rect('#2a2a44', x, y - 2, 16, 4);
+      for (let i = 0; i < 3; i++) { const c = i === ph ? '#fff3a0' : '#ffb02e', ax = x + 2 + i * 5; rect(c, ax, y - 2, 2, 1); rect(c, ax + 1, y - 1, 2, 1); rect(c, ax, y, 2, 1); }
+    }
+    else if (e.kind === 'mp') {
       if (e.axis === 'x') { e.x += e.dir * e.speed; if (e.x >= e.b) { e.x = e.b; e.dir = -1; } if (e.x <= e.a) { e.x = e.a; e.dir = 1; } }
       else { e.y += e.dir * e.speed; if (e.y >= e.b) { e.y = e.b; e.dir = -1; } if (e.y <= e.a) { e.y = e.a; e.dir = 1; } }
     } else if (e.kind === 'fall') {
@@ -697,6 +711,12 @@
       if (!e.on && overlap(P, e)) {
         e.on = true; G.check = { level: G.levelIdx, x: e.tx, y: e.ty }; AUDIO.sfx('check');
         for (let i = 0; i < 10; i++) G.parts.push({ type: 'spark', x: e.x + 4, y: e.y + 4, vx: (Math.random() - 0.5) * 3, vy: -Math.random() * 3, life: 30, color: '#ffd23f' });
+      }
+    } else if (e.kind === 'dash') {
+      if (e.cool > 0) e.cool--;
+      if (P.onGround && P.x + P.w > e.x && P.x < e.x + e.w && Math.abs(P.y + P.h - (e.y + e.h)) < 4 && P.vx > -1) {
+        P.vx = Math.max(P.vx, 5.6); P.face = 1;
+        if (e.cool === 0) { AUDIO.sfx('boost'); e.cool = 20; for (let i = 0; i < 6; i++) G.parts.push({ type: 'spark', x: e.x + 8, y: e.y, vx: -1 - Math.random() * 2, vy: -Math.random() * 1.5, life: 18, color: '#ffb02e' }); }
       }
     } else if (e.kind === 'G') {
       if (G.state === 'play' && P.x + P.w > e.x + 6 && P.y + P.h > e.y) levelClear();
@@ -752,7 +772,7 @@
     else if (e.who === 'discord') {
       txt = 'Salve, Matheus! Sou da galera do Discord. Toma uma vida pra ajudar!';
       if (!e.done) { e.done = true; G.secrets++; oneUp(e.x, e.y - 10); pop('SEGREDO!', e.x - 16, e.y - 22, '#ffd23f'); }
-    } else if (e.who === 'babs') {
+    } else if (e.who === 'babs' && !e.say) {
       if (e.met < 110 && !e.done) txt = 'MATHEUS!! O BUGSOFT VOLTOU E TA BEM ATRAS DE VOCE!!';
       else {
         txt = 'E brincadeira, Matheus! Kkkkk' + (e.gift ? '' : ' Toma 10 fichas!');
@@ -1046,9 +1066,19 @@
     if (g.kind === 'lag') { g.n++; if (g.n % 3) return true; }
     return false;
   }
+  function updateZones() {
+    if (!G.L.zones) return;
+    const k = zoneAt(P.x + P.w / 2);
+    if (k !== G.zone) {
+      const first = G.zone == null; G.zone = k; const z = G.L.zones[k];
+      if (!first) { G.zoneBanner = { txt: z[3], t: 150 }; if (P.star <= 0) AUDIO.music(z[2]); }
+    }
+    if (G.zoneBanner && --G.zoneBanner.t <= 0) G.zoneBanner = null;
+  }
   function updateWorld() {
     if (G.freeze > 0) { G.freeze--; return; }
     if (updateGlitch()) return;
+    updateZones();
     G.t++;
     if (G.shake > 0) G.shake--;
     if (G.flash > 0) G.flash--;
@@ -1324,13 +1354,14 @@
     }
   }
   function drawTiles() {
-    const ts = ART.tiles(G.L.theme);
+    let ts = ART.tiles(G.L.theme);
     const qf = [0, 0, 0, 0, 1, 2, 1, 0][(G.t >> 3) % 8];
     const lf = (G.t >> 3) % 4;
     const x0 = Math.max(0, Math.floor(G.cam / T) - 1), x1 = Math.min(G.mw - 1, x0 + W / T + 2);
     for (let ty = 0; ty < 14; ty++) for (let tx = x0; tx <= x1; tx++) {
       const c = G.map[ty][tx];
       if (c === '.') continue;
+      if (G.L.zones) ts = ART.tiles(themeAt(tx * T));
       let im = null, oy = 0;
       for (const b of G.bumps) if (b.tx === tx && b.ty === ty) oy = -Math.round(Math.sin((b.t / 10) * Math.PI) * 5);
       switch (c) {
@@ -1354,10 +1385,10 @@
       }
       if (im) ctx.drawImage(im, tx * T, ty * T + oy);
       if (c === '#' || c === 'X' || c === '[' || c === ']') {
-        const th = ART.THEMES[G.L.theme], edge = th.mo || '#1a1020';
+        const th = ART.THEMES[G.L.zones ? themeAt(tx * T) : G.L.theme], edge = th.mo || '#1a1020';
         if (!SOLID.has(tileAt(tx - 1, ty)) && tx > 0) { ctx.fillStyle = edge; ctx.fillRect(tx * T, ty * T, 1, T); }
         if (!SOLID.has(tileAt(tx + 1, ty)) && tx < G.mw - 1) { ctx.fillStyle = edge; ctx.fillRect(tx * T + T - 1, ty * T, 1, T); }
-        if (c === '#' && tileAt(tx, ty - 1) === '.') drawDeco(G.L.theme, tx, ty);
+        if (c === '#' && tileAt(tx, ty - 1) === '.') drawDeco(G.L.zones ? themeAt(tx * T) : G.L.theme, tx, ty);
       }
     }
   }
@@ -1372,6 +1403,13 @@
     } else if (e.kind === 'k') {
       if (e.state === 'walk' && !flipY) img(face(ENEMY.cart[(e.t >> 3) & 1]), dx, by - 16);
       else { const shake = e.state === 'shell' && e.shellT > 290 ? ((e.t >> 1) % 2 ? 1 : -1) : 0; img(ENEMY.shell.r, dx + shake, by - 16, flipY); }
+    } else if (e.kind === 'm') {
+      const up = (e.t >> 2) & 1, x = R(dx), y = R(e.y);
+      rect('#1a1020', x + 4, y + 2, 7, 6); rect('#3a2a5a', x + 5, y + 3, 5, 4);
+      rect('#1a1020', x + 5, y + 1, 1, 2); rect('#1a1020', x + 9, y + 1, 1, 2);
+      if (!flipY) { rect('#ff3b3b', x + 6, y + 4, 1, 1); rect('#ff3b3b', x + 8, y + 4, 1, 1); }
+      rect('#1a1020', x - 1, y + 2 - up * 2, 6, 3); rect('#4a3a6a', x, y + 3 - up * 2, 4, 1);
+      rect('#1a1020', x + 10, y + 2 - up * 2, 6, 3); rect('#4a3a6a', x + 11, y + 3 - up * 2, 4, 1);
     } else if (e.kind === 'f') {
       const flap = (e.t >> 3) & 1;
       if (!flipY) {
@@ -1642,7 +1680,16 @@
     for (const s of G.pops) text(s.txt, R(s.x), R(s.y), { color: s.color, size: 8 });
   }
 
+  function drawZoneBanner() {
+    const b = G.zoneBanner; if (!b) return;
+    const a = Math.min(1, b.t / 30, (150 - b.t) / 15);
+    ctx.globalAlpha = Math.max(0, a);
+    rect('rgba(11,16,51,0.8)', W / 2 - 100, 92, 200, 24); rect('#ffd23f', W / 2 - 100, 92, 200, 1); rect('#ffd23f', W / 2 - 100, 115, 200, 1);
+    text(b.txt, W / 2, 100, { color: '#ffd23f', align: 'center', outline: '#1a1020' });
+    ctx.globalAlpha = 1;
+  }
   function drawHUD() {
+    drawZoneBanner();
     text('MATHEUS', 12, 8, { color: '#ffd23f' });
     text(pad0(G.score, 6), 12, 18);
     ctx.drawImage(ITEM.coin[[0, 1, 2, 3, 2, 1][(G.t >> 3) % 6]], 104, 12);
@@ -1663,8 +1710,20 @@
     }
   }
 
+  function zoneAt(px) {
+    const z = G.L.zones; if (!z) return null;
+    let k = 0; for (let i = 0; i < z.length; i++) if (px >= z[i][0] * T) k = i;
+    return k;
+  }
+  function themeAt(px) { const k = zoneAt(px); return k == null ? G.L.theme : G.L.zones[k][1]; }
   function drawWorld() {
-    ART.background(G.L.theme, W, H).draw(ctx, G.cam, G.t);
+    const cx = G.cam + W / 2, zk = zoneAt(cx);
+    if (zk == null) ART.background(G.L.theme, W, H).draw(ctx, G.cam, G.t);
+    else {
+      ART.background(G.L.zones[zk][1], W, H).draw(ctx, G.cam, G.t);
+      const nx = G.L.zones[zk + 1];
+      if (nx) { const d = nx[0] * T - cx; if (d < 60) { ctx.globalAlpha = Math.max(0, Math.min(1, 1 - d / 60)); ART.background(nx[1], W, H).draw(ctx, G.cam, G.t); ctx.globalAlpha = 1; } }
+    }
     ctx.save();
     const sx = G.shake ? Math.round((Math.random() - 0.5) * 4) : 0, sy = G.shake ? Math.round((Math.random() - 0.5) * 4) : 0;
     ctx.translate(-R(G.cam) + sx, sy);
@@ -1885,15 +1944,18 @@
     liveCmd = func;
     try { liveFrame.contentWindow.postMessage(JSON.stringify({ event: 'command', func, args: [] }), '*'); } catch (e) { /* ok */ }
   }
+  function liveKick() { if (liveFrame && G.state === 'play') { liveCmd = ''; liveSend('playVideo'); } }
   function syncLive() {
     if (!liveBox) return;
-    const want = G.L && G.L.live && ['intro', 'play', 'pause', 'dying', 'clear', 'scene'].includes(G.state);
+    if (liveFrame && G.state === 'play' && G.stateT % 120 === 30) liveCmd = '';
+    const want = G.L && G.L.live && ['play', 'pause', 'dying', 'clear', 'scene'].includes(G.state);
     if (want && !liveFrame) {
       const v = G.L.live;
       liveFrame = document.createElement('iframe');
       liveFrame.src = `https://www.youtube.com/embed/${v.id}?start=${v.start}&autoplay=1&controls=0&rel=0&playsinline=1&enablejsapi=1&modestbranding=1&iv_load_policy=3${save.muted ? '&mute=1' : ''}`; liveMuted = !!save.muted;
       liveFrame.allow = 'autoplay; encrypted-media';
       liveFrame.title = 'Live do Jackson';
+      liveFrame.addEventListener('load', () => { liveCmd = ''; });
       liveBox.appendChild(liveFrame); liveBox.hidden = false; liveCmd = 'playVideo';
       document.body.classList.add('live-on');
     } else if (!want && liveFrame) {

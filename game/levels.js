@@ -328,22 +328,36 @@ window.LEVELS = (() => {
   }
 
   function fase10() {
-    const L = builder(200, 'city', 'CIDADE NEON', 'city');
-    L.intro = 'Pule de telhado em telhado... e nao olhe pra baixo!';
+    const L = builder(252, 'bat', 'FESTA DOS INSCRITOS', 'city');
+    L.intro = 'Cada inscrito ganhou a sua parte da fase. Bora visitar todo mundo!';
+    // zonas: [começa no x, tema, música, nome]
+    L.zones = [[0, 'bat', 'city', 'ZONA DA BABS'], [64, 'tropical', 'grass', 'ZONA DO MIGUEL'], [130, 'castle', 'castle', 'QG DA MARTBUZ'], [190, 'cave', 'cave', 'CAVERNA DO JACKSON']];
     L.start = { x: 3, y: 9 };
-    L.ground(0, 22, 10); L.ground(26, 44, 9); L.ground(48, 70, 11); L.ground(81, 100, 10); L.ground(104, 126, 8); L.ground(130, 150, 10); L.ground(154, 199, 9);
-    L.put(8, 6, '?M?'); L.e('h', 30, 4); L.e('g', 36, 8); L.put(23, 7, 'ooo');
-    L.put(45, 6, 'ooo'); L.e('w', 56, 10); L.e('n', 61, 5); L.put(58, 7, 'B?B');
-    L.e('mph', 71, 10, { range: 5 }); L.put(73, 7, 'oooo');
-    L.e('K', 83, 9); L.e('b', 89, 9); L.e('g', 94, 9);
-    L.put(101, 6, 'ooo');
-    L.secret(108, 8); L.e('s', 118, 7); L.e('h', 121, 3); L.put(116, 4, '?*?');
-    L.put(127, 7, 'ooo');
-    L.fill(134, 10, 142, 10, '>'); L.e('w', 145, 9);
-    L.put(151, 7, 'ooo');
-    L.e('B', 161, 8); L.e('g', 167, 8);
-    L.stairs(175, [1, 2, 3], 9);
-    L.e('G', 190, 8);
+    // --- zona da Babs (noite, morcegos, roxo)
+    L.ground(0, 20, 10); L.ground(24, 40, 9); L.ground(44, 63, 10);
+    L.e('npc', 6, 9, { who: 'babs', say: 'Essa parte e MINHA! Noite, lua cheia e morcegos. Cuidado com eles, Matheus!' });
+    L.put(11, 6, '?M?'); L.put(21, 7, 'ooo'); L.e('m', 30, 5); L.e('g', 36, 8); L.put(41, 6, 'ooo');
+    L.e('m', 50, 6); L.put(52, 6, 'B?B'); L.e('m', 58, 4);
+    // --- zona do Miguel (velocidade, setas, molas e muitas fichas)
+    L.ground(64, 100); L.ground(105, 129);
+    L.e('npc', 67, 11, { who: 'miguel', say: 'Bem-vindo na minha zona! Aqui e so velocidade: pisa nas setas e vai com tudo!' });
+    L.e('dash', 72, 11); L.put(76, 9, 'oooooo'); L.e('b', 84, 11); L.e('dash', 90, 11); L.put(92, 8, 'oooooo');
+    L.put(101, 7, 'oooo'); L.e('dash', 108, 11); L.e('g', 114, 11);
+    L.e('spring', 120, 11); for (let y = 2; y <= 6; y += 2) L.put(120, y, 'o'); L.e('b', 125, 11);
+    // --- QG da Martbuz (Rafael e Scott)
+    L.ground(130, 150); L.lava(151, 155); L.ground(156, 189);
+    L.e('K', 131, 11);
+    L.e('npc', 134, 11, { who: 'rafael', say: 'Bem-vindo ao QG da tropa da Martbuz! Hoje a gente so veio curtir a festa... por enquanto.' });
+    L.e('npc', 138, 11, { who: 'scott', say: 'E isso ai. Mas cuidado com a lava, Matheus...' });
+    L.fill(145, 10, 145, 11, 'X'); L.e('fb', 145, 9, { len: 4, speed: 0.035 });
+    L.put(153, 9, 'ooo'); L.e('s', 162, 11); L.put(164, 8, '?*?'); L.e('k', 170, 11); L.e('g', 178, 11); L.e('g', 181, 11);
+    // --- caverna do Jackson
+    L.ground(190, 215); L.ground(219, 251);
+    L.fill(190, 0, 251, 1, '#');
+    L.e('npc', 193, 11, { who: 'jackson', say: 'Zubba lorpi! Caverna do Jackson, kranka fuu! Bli-bli, Matheus, zonk-zonk!' });
+    L.secret(199); L.e('f', 208, 7); L.put(216, 9, 'ooo'); L.e('c', 225, 11); L.e('w', 231, 11);
+    L.stairs(238, [1, 2, 3, 4]);
+    L.e('G', 246, 11);
     return L;
   }
 
