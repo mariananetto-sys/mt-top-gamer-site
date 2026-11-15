@@ -329,12 +329,12 @@ window.LEVELS = (() => {
 
   function fase10() {
     const miguel = 64, rafa = 130, scott = 194, jackson = 258;
-    const L = builder(jackson + 62, 'babsGarden', 'FESTA DOS INSCRITOS', 'city');
+    const L = builder(jackson + 62, 'bat', 'FESTA DOS INSCRITOS', 'city');
     L.intro = 'Cada inscrito ganhou a sua parte da fase. Bora visitar todo mundo!';
     L.time = 460;
     // Trechos: [começa no x, tema, música, nome da zona, gelo].
     L.zones = [
-      [0, 'babsGarden', 'city', 'ZONA DA BABS'],
+      [0, 'bat', 'city', 'ZONA DA BABS'],
       [miguel, 'sonicHills', 'speedway', 'ZONA DO MIGUEL'],
       [rafa, 'roofs', 'roofs', 'ZONA DO RafaRL'],
       [scott, 'snowCity', 'snowCity', 'ZONA DO SCOTT', true],

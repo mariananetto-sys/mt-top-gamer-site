@@ -1581,9 +1581,6 @@
           px('#fff39c', 1, -9, 3, 1);
         }
         break;
-      case 'babsGarden':
-        if (k <= 1) { px('#655082', 1, -4, 1, 4); px('#ed88c6', 0, -6, 3, 2); px('#ffe2ff', 1, -6); }
-        break;
       case 'grotto':
         if (k <= 1) {
           px('#38a797', 0, -4, 4, 4); px('#75efd0', 1, -7, 2, 6); px('#b1ffdc', 1, -7, 1, 3);

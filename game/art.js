@@ -557,7 +557,6 @@ window.ART = (() => {
   // ----------------------------------------------------------------- TILES
   const THEMES = {
     sonicHills: { g1: '#bb692d', g2: '#8d461d', g3: '#e6984f', t1: '#4bd940', t2: '#238c3a', tL: '#c2fc74', br: '#c67431', brL: '#faab59', brD: '#85441d', mo: '#512c22', hd: '#b47a35', hdL: '#f9be65', hdD: '#784923', semi: 'wood', style: 'checker' },
-    babsGarden: { g1: '#453255', g2: '#2b2042', g3: '#6b547a', t1: '#a278b4', t2: '#643e83', tL: '#ffd0eb', br: '#5b416e', brL: '#9671ac', brD: '#38264e', mo: '#1c142a', hd: '#554169', hdL: '#987baa', hdD: '#322640', semi: 'metal', style: 'stone' },
     grotto: { g1: '#1d746e', g2: '#104c58', g3: '#409b8f', t1: '#6cdfa4', t2: '#327f70', tL: '#c8fbc1', br: '#41667e', brL: '#89b6b7', brD: '#214155', mo: '#073743', hd: '#315d69', hdL: '#6baba3', hdD: '#254251', semi: 'cloud', style: 'stone' },
     monotomias: { g1: '#353049', g2: '#21172d', g3: '#59506e', t1: '#d06c49', t2: '#692c48', tL: '#ffd083', br: '#864964', brL: '#df897b', brD: '#4f2a47', mo: '#21152c', hd: '#4b3351', hdL: '#94717f', hdD: '#23182f', semi: 'metal', style: 'plate' },
     roofs: { g1: '#a47154', g2: '#754a40', g3: '#d19768', t1: '#e9ad73', t2: '#a86244', tL: '#ffe0a0', br: '#944f3b', brL: '#db9060', brD: '#613037', mo: '#563740', hd: '#917260', hdL: '#ddab7d', hdD: '#65433e', semi: 'wood', style: 'stone' },
@@ -973,7 +972,7 @@ window.ART = (() => {
       ctx.fillStyle = '#0c0a1c';
       for (let x = 0; x < W + 64; x += 2) { const sx = wrapX(x + off, W + 64) - 32; const yy = 14 + Math.round(Math.sin((x / 64) * Math.PI) * 10); ctx.fillRect(Math.round(sx), yy, 2, 1); }
       for (let x = 8; x < W + 64; x += 16) { const sx = wrapX(x + off, W + 64) - 32; const yy = 15 + Math.round(Math.sin((x / 64) * Math.PI) * 10); const on = ((x / 16 + (t >> 4)) % 3); ctx.fillStyle = ['#ff5ab4', '#ffd23f', '#2fe0ff'][on]; ctx.fillRect(Math.round(sx) - 1, yy + 1, 3, 3); }
-    } else if (name === 'bat' || name === 'babsGarden') {
+    } else if (name === 'bat') {
       // morcegos voando na frente da lua
       for (let i = 0; i < 7; i++) {
         const x = wrapX(i * 67 + t * (0.5 + (i % 3) * 0.25) - camX * 0.15, W + 40) - 20, y = 30 + (i * 23) % 70 + Math.sin(t * 0.06 + i) * 6, up = ((t >> 3) + i) % 2;
@@ -1410,14 +1409,13 @@ window.ART = (() => {
       const near = ridge(LW, H, '#f6c88a', 30, [[8, 4, 1.4], [4, 9, 0.6]]);
       { const x = near.getContext('2d'); const r = rng(33); for (let i = 0; i < 7; i++) { const cx = (r() * LW) | 0, h = 14 + ((r() * 12) | 0), b = H - 22; x.fillStyle = '#2f7a3e'; x.fillRect(cx, b - h, 4, h); x.fillRect(cx - 5, b - h + 5, 5, 3); x.fillRect(cx - 5, b - h, 3, 6); x.fillRect(cx + 4, b - h + 8, 5, 3); x.fillRect(cx + 7, b - h + 3, 3, 6); x.fillStyle = '#4a9a5a'; x.fillRect(cx + 1, b - h, 1, h); } }
       layers = [[mesas, 0.08, 0], [mid, 0.2, 0], [near, 0.38, 0]];
-    } else if (name === 'bat' || name === 'babsGarden') {
-      const garden = name === 'babsGarden';
-      sky = gradient(W, H, garden ? [[0, '#110b29'], [0.59, '#42284f'], [1, '#a45c85']] : [[0, '#07031a'], [0.6, '#2a1050'], [1, '#5a2a8a']]);
+    } else if (name === 'bat') {
+      sky = gradient(W, H, [[0, '#07031a'], [0.6, '#2a1050'], [1, '#5a2a8a']]);
       extra = mk(W, H); {
         const x = extra.getContext('2d'); const r = rng(17);
         for (let i = 0; i < 70; i++) { x.fillStyle = 'rgba(255,255,255,' + (0.3 + r() * 0.6) + ')'; x.fillRect((r() * W) | 0, (r() * H * 0.55) | 0, 1, 1); }
         const mx = W * 0.72, my = 52; const g = x.createRadialGradient(mx, my, 10, mx, my, 70); g.addColorStop(0, 'rgba(255,240,180,0.55)'); g.addColorStop(1, 'rgba(255,240,180,0)');
-        x.fillStyle = g; x.fillRect(mx - 70, my - 70, 140, 140); blob(x, mx, my, 26, garden ? '#ffcee8' : '#fff4c8'); x.fillStyle = garden ? '#e9a5d1' : '#e8dca8'; x.fillRect(mx - 9, my - 6, 5, 4); x.fillRect(mx + 6, my + 6, 7, 4); x.fillRect(mx - 2, my + 12, 4, 3);
+        x.fillStyle = g; x.fillRect(mx - 70, my - 70, 140, 140); blob(x, mx, my, 26, '#fff4c8'); x.fillStyle = '#e8dca8'; x.fillRect(mx - 9, my - 6, 5, 4); x.fillRect(mx + 6, my + 6, 7, 4); x.fillRect(mx - 2, my + 12, 4, 3);
       }
       const towers = (seed, base, top, body, win) => {
         const c = mk(LW, H), x = c.getContext('2d'), r = rng(seed);
@@ -1431,24 +1429,7 @@ window.ART = (() => {
         }
         return c;
       };
-      if (garden) {
-        const iron = mk(LW, H), x = iron.getContext('2d');
-        x.fillStyle = '#201532';
-        x.fillRect(0, 148, LW, 2); x.fillRect(0, 167, LW, 2);
-        for (let px = 2; px < LW; px += 12) {
-          x.fillStyle = '#201532'; x.fillRect(px, 141, 2, H - 141); x.fillRect(px - 1, 143, 4, 2);
-          if (px % 5 === 0) {
-            x.fillStyle = '#ac6b9f'; x.fillRect(px - 2, 153, 5, 3); x.fillStyle = '#e5a6c9'; x.fillRect(px, 151, 1, 2);
-          }
-        }
-        for (const px of [22, 199, 364]) {
-          x.fillStyle = '#301d3d'; x.fillRect(px, 107, 5, H - 107);
-          x.fillRect(px - 11, 114, 13, 3); x.fillRect(px + 5, 119, 13, 3);
-          blob(x, px + 1, 105, 11, '#3b2448');
-          blob(x, px - 11, 115, 9, '#321e42'); blob(x, px + 15, 113, 9, '#382347');
-        }
-        layers = [[towers(8, 52, 46, '#33203f', '#c080ac'), 0.12, 0], [iron, 0.42, 0]];
-      } else layers = [[towers(5, 80, 60, '#1a0e30', '#b48aff'), 0.1, 0], [towers(9, 44, 50, '#0c0618', '#ffd27a'), 0.28, 0]];
+      layers = [[towers(5, 80, 60, '#1a0e30', '#b48aff'), 0.1, 0], [towers(9, 44, 50, '#0c0618', '#ffd27a'), 0.28, 0]];
     } else if (name === 'buffer') {
       sky = gradient(W, H, [[0, '#0a0a10'], [1, '#22222c']]);
     } else if (name === 'boss') {
