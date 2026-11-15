@@ -328,7 +328,7 @@ window.LEVELS = (() => {
   }
 
   function fase10() {
-    const miguel = 64, martbuz = 130, rafa = 190, scott = 254, jackson = 318;
+    const miguel = 64, rafa = 130, scott = 194, jackson = 258;
     const L = builder(jackson + 62, 'babsGarden', 'FESTA DOS INSCRITOS', 'city');
     L.intro = 'Cada inscrito ganhou a sua parte da fase. Bora visitar todo mundo!';
     L.time = 460;
@@ -336,7 +336,6 @@ window.LEVELS = (() => {
     L.zones = [
       [0, 'babsGarden', 'city', 'ZONA DA BABS'],
       [miguel, 'sonicHills', 'speedway', 'ZONA DO MIGUEL'],
-      [martbuz, 'martbuz', 'castle', 'QG DA MARTBUZ'],
       [rafa, 'roofs', 'roofs', 'ZONA DO RafaRL'],
       [scott, 'snowCity', 'snowCity', 'ZONA DO SCOTT', true],
       [jackson, 'grotto', 'grotto', 'CAVERNA DO JACKSON'],
@@ -348,19 +347,11 @@ window.LEVELS = (() => {
     L.put(11, 6, '?M?'); L.put(21, 7, 'ooo'); L.e('m', 30, 5); L.e('g', 36, 8); L.put(41, 6, 'ooo');
     L.e('m', 50, 6); L.put(52, 6, 'B?B'); L.e('m', 58, 4);
     // --- pista do Miguel
-    L.ground(miguel, miguel + 36); L.ground(miguel + 41, martbuz - 1);
+    L.ground(miguel, miguel + 36); L.ground(miguel + 41, rafa - 1);
     L.e('npc', miguel + 3, 11, { who: 'miguel', say: 'Bem-vindo à minha zona do Sonic! Embale para virar uma bola e use Z para pular o buraco.' });
     L.put(miguel + 12, 9, 'oooooo'); L.e('b', miguel + 20, 11);
     L.put(miguel + 28, 8, 'oooooo'); L.put(miguel + 37, 7, 'oooo'); L.e('g', miguel + 50, 11);
     L.e('spring', miguel + 56, 11); for (let y = 2; y <= 6; y += 2) L.put(miguel + 56, y, 'o'); L.e('b', miguel + 61, 11);
-    // --- QG da Martbuz
-    L.ground(martbuz, martbuz + 20); L.lava(martbuz + 21, martbuz + 25); L.ground(martbuz + 26, rafa - 1);
-    L.e('K', martbuz + 1, 11);
-    L.e('npc', martbuz + 4, 11, { who: 'rafael', say: 'Bem-vindo ao QG da tropa da Martbuz! Hoje a gente so veio curtir a festa... por enquanto.' });
-    L.e('npc', martbuz + 8, 11, { who: 'scott', say: 'E isso ai. Mas cuidado com a lava, Matheus...' });
-    L.fill(martbuz + 15, 10, martbuz + 15, 11, 'X'); L.e('fb', martbuz + 15, 9, { len: 4, speed: 0.035 });
-    L.put(martbuz + 23, 9, 'ooo'); L.e('s', martbuz + 32, 11); L.put(martbuz + 34, 8, '?*?');
-    L.e('k', martbuz + 40, 11); L.e('g', martbuz + 48, 11); L.e('g', martbuz + 51, 11);
     // --- RafaRL e Scott: telhados, depois a cidade nevada
     L.ground(rafa, rafa + 15); L.ground(rafa + 16, rafa + 24, 10);
     L.ground(rafa + 29, rafa + 39, 9); L.ground(rafa + 40, rafa + 49, 11);
@@ -394,7 +385,6 @@ window.LEVELS = (() => {
       [jackson + 43, 13], [jackson + 17, 13],
       [scott + 54, 3], [scott + 12, 3],
       [rafa + 60, 3], [rafa + 14, 3],
-      [martbuz + 43, 4], [martbuz + 12, 4],
       [miguel + 51, 9], [miguel + 18, 9],
       [48, 4], [15, 4],
     ];

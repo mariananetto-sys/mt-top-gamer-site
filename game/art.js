@@ -558,7 +558,6 @@ window.ART = (() => {
   const THEMES = {
     sonicHills: { g1: '#bb692d', g2: '#8d461d', g3: '#e6984f', t1: '#4bd940', t2: '#238c3a', tL: '#c2fc74', br: '#c67431', brL: '#faab59', brD: '#85441d', mo: '#512c22', hd: '#b47a35', hdL: '#f9be65', hdD: '#784923', semi: 'wood', style: 'checker' },
     babsGarden: { g1: '#453255', g2: '#2b2042', g3: '#6b547a', t1: '#a278b4', t2: '#643e83', tL: '#ffd0eb', br: '#5b416e', brL: '#9671ac', brD: '#38264e', mo: '#1c142a', hd: '#554169', hdL: '#987baa', hdD: '#322640', semi: 'metal', style: 'stone' },
-    martbuz: { g1: '#393349', g2: '#241e34', g3: '#594e65', t1: '#b87b71', t2: '#713b4a', tL: '#ffd57a', br: '#65394c', brL: '#ac6977', brD: '#412338', mo: '#261928', hd: '#54425d', hdL: '#a27987', hdD: '#2e253d', semi: 'metal', style: 'plate' },
     grotto: { g1: '#1d746e', g2: '#104c58', g3: '#409b8f', t1: '#6cdfa4', t2: '#327f70', tL: '#c8fbc1', br: '#41667e', brL: '#89b6b7', brD: '#214155', mo: '#073743', hd: '#315d69', hdL: '#6baba3', hdD: '#254251', semi: 'cloud', style: 'stone' },
     monotomias: { g1: '#353049', g2: '#21172d', g3: '#59506e', t1: '#d06c49', t2: '#692c48', tL: '#ffd083', br: '#864964', brL: '#df897b', brD: '#4f2a47', mo: '#21152c', hd: '#4b3351', hdL: '#94717f', hdD: '#23182f', semi: 'metal', style: 'plate' },
     roofs: { g1: '#a47154', g2: '#754a40', g3: '#d19768', t1: '#e9ad73', t2: '#a86244', tL: '#ffe0a0', br: '#944f3b', brL: '#db9060', brD: '#613037', mo: '#563740', hd: '#917260', hdL: '#ddab7d', hdD: '#65433e', semi: 'wood', style: 'stone' },
@@ -967,7 +966,7 @@ window.ART = (() => {
         ctx.fillStyle = i % 3 ? 'rgba(114,235,190,0.62)' : 'rgba(236,163,246,0.72)';
         ctx.fillRect(Math.round(px), Math.round(py), 1, 1);
       }
-    } else if (name === 'castle' || name === 'martbuz') {
+    } else if (name === 'castle') {
       for (let i = 0; i < 16; i++) { const life = (t * (0.6 + (i % 4) * 0.15) + i * 37) % H; ctx.fillStyle = i % 3 ? 'rgba(255,140,40,0.75)' : 'rgba(255,220,90,0.85)'; ctx.fillRect(Math.round(wrapX(i * 61 - camX * 0.5 + Math.sin((t + i * 20) * 0.03) * 6, W)), Math.round(H - life), 1, 2); }
     } else if (name === 'fair') {
       const off = -camX * 0.6;
@@ -1272,34 +1271,6 @@ window.ART = (() => {
       const near = ridge(LW, H, '#ffffff', 28, [[8, 5, 0.3], [5, 13, 1.1]]);
       { const x = near.getContext('2d'); x.globalCompositeOperation = 'source-atop'; x.fillStyle = '#ffd6ec'; x.fillRect(0, H - 14, LW, 14); }
       layers = [[far, 0.08, 0.05], [isl, 0.2, 0], [near, 0.4, 0]];
-    } else if (name === 'martbuz') {
-      sky = gradient(W, H, [[0, '#151124'], [0.58, '#342038'], [1, '#612f40']]);
-      const panels = mk(LW, H), x = panels.getContext('2d');
-      for (let i = 0; i < 4; i++) {
-        const px = 128 * i;
-        x.fillStyle = '#231829'; x.fillRect(px + 10, 24, 106, 164);
-        x.fillStyle = '#624650'; x.fillRect(px + 11, 25, 104, 2); x.fillRect(px + 11, 25, 2, 160);
-        x.fillStyle = '#3c2c44'; x.fillRect(px + 16, 30, 94, 151);
-        x.fillStyle = '#4d374f';
-        for (let y = 38; y < 180; y += 8) x.fillRect(px + 16, y, 94, 1);
-        x.fillStyle = '#251d32'; x.fillRect(px + 29, 53, 68, 54);
-        x.fillStyle = '#9b5463'; x.fillRect(px + 31, 55, 64, 50);
-        x.fillStyle = '#542c44'; x.fillRect(px + 34, 58, 58, 44);
-        x.font = 'bold 13px monospace'; x.textAlign = 'center'; x.textBaseline = 'top';
-        x.fillStyle = '#ffcf8c'; x.fillText(i % 2 ? 'MARTBUZ' : 'QG', px + 63, 64);
-        x.fillStyle = '#d3866a'; x.fillRect(px + 41, 86, 44, 1);
-        x.fillStyle = '#e17c52'; x.fillRect(px + 29, 147, 68, 2);
-        for (let k = 0; k < 5; k++) {
-          x.fillStyle = k % 2 ? '#422a42' : '#634052'; x.fillRect(px + 42 + 9 * k, 157, 4, 15);
-        }
-      }
-      const beams = mk(LW, H), b = beams.getContext('2d');
-      for (let px = 0; px < LW; px += 128) {
-        b.fillStyle = '#211626'; b.fillRect(px, 0, 13, H);
-        b.fillStyle = '#82545c'; b.fillRect(px + 1, 0, 2, H);
-        b.fillStyle = '#f5b870'; b.fillRect(px + 8, 45, 7, 3); b.fillRect(px + 8, 126, 7, 3);
-      }
-      layers = [[panels, 0.24, 0], [beams, 0.51, 0]];
     } else if (name === 'castle') {
       sky = gradient(W, H, [[0, '#12050c'], [1, '#3a0d18']]);
       const wall = mk(LW, H); {
