@@ -47,13 +47,37 @@
   else save.unlocked = Math.min(save.unlocked, finalIndex);
   function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) { /* sem storage */ } }
   AUDIO.setMuted(!!save.muted);
+  const DEF_KEYS = {
+    left: ['ArrowLeft', 'KeyA'], right: ['ArrowRight', 'KeyD'], up: ['ArrowUp', 'KeyW'], down: ['ArrowDown', 'KeyS'],
+    jump: ['KeyZ', 'Space'], run: ['KeyX', 'ShiftLeft'], start: ['Enter', 'Escape'],
+  };
+  const DEF_CFG = { keys: DEF_KEYS, tsize: 100, talpha: 72, lefty: false, autorun: true, vibrate: true, tpos: {}, music: 100, sfx: 100, shake: true };
+  const clone = (o) => JSON.parse(JSON.stringify(o));
+  save.cfg = { ...clone(DEF_CFG), ...(save.cfg && typeof save.cfg === 'object' ? save.cfg : {}) };
+  save.cfg.keys = { ...clone(DEF_KEYS), ...(save.cfg.keys || {}) };
+  if (!save.cfg.tpos || typeof save.cfg.tpos !== 'object') save.cfg.tpos = {};
+  const CFG = save.cfg;
+  AUDIO.setVolumes(CFG.music / 100, CFG.sfx / 100);
 
   // ------------------------------------------------------------ ENTRADA
-  const KMAP = {
-    ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', ArrowUp: 'up', KeyW: 'up', ArrowDown: 'down', KeyS: 'down',
-    Space: 'jump', KeyZ: 'jump', KeyK: 'jump', KeyX: 'run', KeyJ: 'run', ShiftLeft: 'run', ShiftRight: 'run',
-    Enter: 'start', Escape: 'start', KeyP: 'start',
-  };
+  let KMAP = {};
+  function buildKmap() {
+    KMAP = {};
+    for (const k in CFG.keys) for (const c of CFG.keys[k]) if (c) KMAP[c] = k;
+  }
+  buildKmap();
+  // nome da tecla para mostrar na tela do jogo (só letras simples)
+  function keyName(code, fancy) {
+    if (!code) return '-';
+    const arrows = { ArrowLeft: '←', ArrowRight: '→', ArrowUp: '↑', ArrowDown: '↓' };
+    if (arrows[code]) return fancy ? arrows[code] : code.slice(5).replace('Left', 'ESQ').replace('Right', 'DIR').replace('Up', 'CIMA').replace('Down', 'BAIXO');
+    if (/^Key[A-Z]$/.test(code)) return code.slice(3);
+    if (/^Digit\d$/.test(code)) return code.slice(5);
+    if (/^Numpad/.test(code)) return 'NUM ' + code.slice(6).toUpperCase();
+    const names = { Space: fancy ? 'Espaço' : 'ESPACO', Enter: 'ENTER', Escape: 'ESC', ShiftLeft: 'SHIFT', ShiftRight: 'SHIFT D', ControlLeft: 'CTRL', ControlRight: 'CTRL D', AltLeft: 'ALT', AltRight: 'ALT GR', Tab: 'TAB', Backspace: 'APAGAR', CapsLock: 'CAPS' };
+    return names[code] || code.toUpperCase();
+  }
+  const kn = (k) => keyName(CFG.keys[k][0] || CFG.keys[k][1]);
   const kb = {}, touch = {}, pad = {}, presses = {};
   const I = {}, prev = {};
   const BTN = ['left', 'right', 'up', 'down', 'jump', 'run', 'start'];
@@ -64,6 +88,7 @@
     liveKick();
   }
   window.addEventListener('keydown', (e) => {
+    if (cfgKeyDown(e)) return;
     wakeAudio();
     if (e.code === 'KeyM') { if (!e.repeat) toggleMute(); return; }
     const k = KMAP[e.code];
@@ -99,7 +124,7 @@
       const v = held.has(k);
       if (v && !touch[k]) {
         presses[k] = true;
-        if (navigator.vibrate) { try { navigator.vibrate(8); } catch (err) { /* ok */ } }
+        if (CFG.vibrate && navigator.vibrate) { try { navigator.vibrate(8); } catch (err) { /* ok */ } }
       }
       touch[k] = v;
     }
@@ -109,13 +134,15 @@
   if (touchZone) {
     const down = (e) => {
       e.preventDefault();
+      if (editStart(e)) return;
       if (e.pointerType === 'mouse') wakeAudio();
       try { touchZone.setPointerCapture(e.pointerId); } catch (err) { /* ok */ }
       fingers.set(e.pointerId, keysAt(e.clientX, e.clientY));
       syncTouch();
     };
-    const move = (e) => { if (!fingers.has(e.pointerId)) return; e.preventDefault(); fingers.set(e.pointerId, keysAt(e.clientX, e.clientY)); syncTouch(); };
+    const move = (e) => { if (editMove(e)) return; if (!fingers.has(e.pointerId)) return; e.preventDefault(); fingers.set(e.pointerId, keysAt(e.clientX, e.clientY)); syncTouch(); };
     const up = (e) => {
+      if (editEnd(e)) return;
       const wasHeld = fingers.delete(e.pointerId);
       // Para toque e caneta, a ativação do áudio vem ao soltar.
       if (wasHeld && e.type === 'pointerup' && e.pointerType !== 'mouse') wakeAudio();
@@ -184,6 +211,194 @@
     else if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
     fullBtn.blur();
   });
+
+  // ------------------------------------------------------------ CONFIGURAÇÕES (painel HTML)
+  const ACTIONS = [['left', 'Andar pra esquerda'], ['right', 'Andar pra direita'], ['up', 'Cima (menus)'], ['down', 'Baixo (menus)'], ['jump', 'Pular / confirmar'], ['run', 'Correr / jogar CD'], ['start', 'Pausar']];
+  let cfgOpen = false, waitKey = null;
+  const cfgEl = document.createElement('div');
+  cfgEl.className = 'cfg'; cfgEl.id = 'cfg'; cfgEl.hidden = true;
+  const range = (id, label, min, max, step, unit) => `<label class="cfg-row"><span>${label}</span><span class="cfg-range"><input type="range" data-cfg="${id}" min="${min}" max="${max}" step="${step}"><output data-out="${id}"></output>${unit ? '' : ''}</span></label>`;
+  const check = (id, label, hint) => `<label class="cfg-row cfg-check"><span>${label}${hint ? `<small>${hint}</small>` : ''}</span><input type="checkbox" data-cfg="${id}"></label>`;
+  cfgEl.innerHTML = `
+    <div class="cfg-box" role="dialog" aria-modal="true" aria-label="Configurações">
+      <header class="cfg-head"><h2>⚙ Configurações</h2><button class="cfg-x" data-act="close" aria-label="Fechar">✕</button></header>
+      <nav class="cfg-tabs">
+        <button data-tab="touch">📱 Celular</button><button data-tab="keys">⌨ Teclado</button><button data-tab="gen">🔊 Som e tela</button>
+      </nav>
+      <section class="cfg-pane" data-pane="touch">
+        ${isTouch ? '' : '<p class="cfg-note">Os botões de toque só aparecem no celular ou tablet. As opções ficam salvas para quando você jogar lá.</p>'}
+        ${range('tsize', 'Tamanho dos botões', 60, 150, 5)}
+        ${range('talpha', 'Transparência (celular deitado)', 25, 100, 5)}
+        ${check('lefty', 'Modo canhoto', 'pular e CD na esquerda, setas na direita')}
+        ${check('autorun', 'Correr sozinho', 'o Matheus corre ao segurar a seta')}
+        ${check('vibrate', 'Vibrar ao apertar')}
+        <div class="cfg-btns"><button class="cfg-b yellow" data-act="move" ${isTouch ? '' : 'disabled'}>✋ Mover botões</button><button class="cfg-b" data-act="pos-reset">Posição padrão</button></div>
+      </section>
+      <section class="cfg-pane" data-pane="keys">
+        <p class="cfg-note">Clique numa tecla e aperte a nova. Clique de novo para cancelar. Controle (gamepad) também funciona.</p>
+        <div class="cfg-keys">${ACTIONS.map(([k, l]) => `<div class="cfg-key"><span>${l}</span><button data-key="${k}" data-slot="0"></button><button data-key="${k}" data-slot="1"></button></div>`).join('')}</div>
+        <div class="cfg-btns"><button class="cfg-b" data-act="keys-reset">Teclas padrão</button></div>
+      </section>
+      <section class="cfg-pane" data-pane="gen">
+        ${check('sound', 'Som ligado', 'atalho: tecla M')}
+        ${range('music', 'Volume da música', 0, 100, 5)}
+        ${range('sfx', 'Volume dos efeitos', 0, 100, 5)}
+        ${check('shake', 'Tremer a tela', 'nos chefões e explosões')}
+        <div class="cfg-btns"><button class="cfg-b" data-act="all-reset">Restaurar tudo</button></div>
+      </section>
+      <footer class="cfg-foot"><button class="cfg-b yellow big" data-act="close">Pronto</button></footer>
+    </div>`;
+  document.body.appendChild(cfgEl);
+  const editBar = document.createElement('div');
+  editBar.className = 'tedit'; editBar.hidden = true;
+  editBar.innerHTML = '<span>Arraste os botões para onde quiser</span><button class="cfg-b" data-act="pos-reset">Padrão</button><button class="cfg-b yellow" data-act="edit-done">Pronto</button>';
+  document.body.appendChild(editBar);
+
+  const orient = () => (window.innerHeight > window.innerWidth ? 'port' : 'land');
+  const tEls = () => ({ dpad, b: document.querySelector('.touch [data-k=run]'), a: document.querySelector('.touch [data-k=jump]') });
+  function applyTouchCfg() {
+    const tz = document.querySelector('.touch');
+    if (tz) { tz.style.setProperty('--ts', CFG.tsize / 100); tz.style.setProperty('--ta', CFG.talpha / 100); }
+    document.body.classList.toggle('lefty', !!CFG.lefty);
+    const pos = CFG.tpos[orient()];
+    document.body.classList.toggle('touch-custom', !!pos);
+    const els = tEls();
+    for (const n in els) {
+      const el = els[n]; if (!el) continue;
+      if (pos && pos[n]) { el.style.left = (pos[n][0] * 100) + 'vw'; el.style.top = (pos[n][1] * 100) + 'vh'; } else { el.style.left = ''; el.style.top = ''; }
+    }
+  }
+  window.addEventListener('resize', applyTouchCfg);
+
+  // modo de mover os botões: arrasta com o dedo, salva a posição para celular deitado e em pé separadas
+  let editing = false, drag = null;
+  function startEdit() {
+    const o = orient();
+    if (!CFG.tpos[o]) {
+      const els = tEls(), p = {};
+      for (const n in els) { const r = els[n].getBoundingClientRect(); p[n] = [(r.left + r.width / 2) / innerWidth, (r.top + r.height / 2) / innerHeight]; }
+      CFG.tpos[o] = p;
+    }
+    editing = true; closeCfg(true); editBar.hidden = false; document.body.classList.add('touch-edit'); applyTouchCfg();
+  }
+  function endEdit() { editing = false; drag = null; editBar.hidden = true; document.body.classList.remove('touch-edit'); persist(); openCfg('touch'); }
+  function editStart(e) {
+    if (!editing) return false;
+    const els = tEls();
+    for (const n in els) {
+      const r = els[n].getBoundingClientRect();
+      if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) {
+        drag = { n, id: e.pointerId, dx: e.clientX - (r.left + r.width / 2), dy: e.clientY - (r.top + r.height / 2) };
+        try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) { /* ok */ }
+        els[n].classList.add('drag');
+        break;
+      }
+    }
+    return true;
+  }
+  function editMove(e) {
+    if (!editing) return false;
+    if (drag && drag.id === e.pointerId) {
+      e.preventDefault();
+      const el = tEls()[drag.n], r = el.getBoundingClientRect();
+      const hw = r.width / 2 / innerWidth, hh = r.height / 2 / innerHeight;
+      const x = Math.min(1 - hw, Math.max(hw, (e.clientX - drag.dx) / innerWidth));
+      const y = Math.min(1 - hh, Math.max(hh, (e.clientY - drag.dy) / innerHeight));
+      CFG.tpos[orient()][drag.n] = [x, y];
+      applyTouchCfg();
+    }
+    return true;
+  }
+  function editEnd(e) {
+    if (!editing) return false;
+    if (drag && drag.id === e.pointerId) { tEls()[drag.n].classList.remove('drag'); drag = null; persist(); }
+    return true;
+  }
+
+  function renderCfg() {
+    cfgEl.querySelectorAll('[data-cfg]').forEach((el) => {
+      const id = el.dataset.cfg;
+      const v = id === 'sound' ? !save.muted : CFG[id];
+      if (el.type === 'checkbox') el.checked = !!v; else el.value = v;
+      const out = cfgEl.querySelector(`[data-out="${id}"]`);
+      if (out) out.textContent = v + '%';
+    });
+    cfgEl.querySelectorAll('[data-key]').forEach((b) => {
+      const k = b.dataset.key, s = +b.dataset.slot;
+      const isWait = waitKey && waitKey[0] === k && waitKey[1] === s;
+      b.textContent = isWait ? 'aperte...' : keyName(CFG.keys[k][s], true);
+      b.classList.toggle('wait', !!isWait);
+      b.classList.toggle('empty', !CFG.keys[k][s] && !isWait);
+    });
+    cfgEl.querySelector('[data-act=pos-reset]').disabled = !CFG.tpos.land && !CFG.tpos.port;
+  }
+  function showTab(t) {
+    cfgEl.querySelectorAll('[data-tab]').forEach((b) => b.classList.toggle('on', b.dataset.tab === t));
+    cfgEl.querySelectorAll('[data-pane]').forEach((p) => { p.hidden = p.dataset.pane !== t; });
+    waitKey = null; renderCfg();
+  }
+  function openCfg(tab) {
+    cfgOpen = true; cfgEl.hidden = false;
+    for (const k in kb) kb[k] = false;
+    showTab(tab || (isTouch ? 'touch' : 'keys'));
+    const live = document.querySelector('#live iframe');
+    if (live) try { live.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }), '*'); } catch (e) { /* ok */ }
+  }
+  function closeCfg(keepGameFrozen) {
+    cfgEl.hidden = true; waitKey = null; persist();
+    if (!keepGameFrozen) { cfgOpen = false; liveCmd = ''; }
+    for (const k of BTN) { kb[k] = false; presses[k] = false; }
+  }
+  function cfgKeyDown(e) {
+    if (!cfgOpen) return false;
+    if (waitKey) {
+      e.preventDefault();
+      const [k, s] = waitKey;
+      for (const a in CFG.keys) CFG.keys[a] = CFG.keys[a].map((c) => (c === e.code ? '' : c));
+      CFG.keys[k][s] = e.code;
+      waitKey = null; buildKmap(); persist(); renderCfg();
+      return true;
+    }
+    if (e.code === 'Escape' && !editing) { e.preventDefault(); closeCfg(); }
+    return true;
+  }
+  cfgEl.addEventListener('click', (e) => {
+    const t = e.target.closest('button');
+    if (e.target === cfgEl) { closeCfg(); return; }
+    if (!t) return;
+    if (t.dataset.tab) { showTab(t.dataset.tab); return; }
+    if (t.dataset.key) {
+      const w = [t.dataset.key, +t.dataset.slot];
+      waitKey = waitKey && waitKey[0] === w[0] && waitKey[1] === w[1] ? null : w;
+      renderCfg(); return;
+    }
+    const act = t.dataset.act;
+    if (act === 'close') closeCfg();
+    else if (act === 'move') startEdit();
+    else if (act === 'pos-reset') { CFG.tpos = {}; applyTouchCfg(); persist(); renderCfg(); }
+    else if (act === 'keys-reset') { CFG.keys = clone(DEF_KEYS); buildKmap(); persist(); renderCfg(); }
+    else if (act === 'all-reset') {
+      Object.assign(CFG, clone(DEF_CFG)); buildKmap(); applyTouchCfg(); AUDIO.setVolumes(1, 1);
+      if (save.muted) toggleMute();
+      persist(); renderCfg();
+    }
+  });
+  editBar.addEventListener('click', (e) => {
+    const t = e.target.closest('button'); if (!t) return;
+    if (t.dataset.act === 'edit-done') endEdit();
+    else if (t.dataset.act === 'pos-reset') { delete CFG.tpos[orient()]; applyTouchCfg(); const p = {}; const els = tEls(); for (const n in els) { const r = els[n].getBoundingClientRect(); p[n] = [(r.left + r.width / 2) / innerWidth, (r.top + r.height / 2) / innerHeight]; } CFG.tpos[orient()] = p; applyTouchCfg(); persist(); }
+  });
+  cfgEl.addEventListener('input', (e) => {
+    const id = e.target.dataset.cfg; if (!id) return;
+    if (id === 'sound') { if (e.target.checked === !!save.muted) toggleMute(); }
+    else if (e.target.type === 'checkbox') CFG[id] = e.target.checked;
+    else CFG[id] = +e.target.value;
+    if (id === 'music' || id === 'sfx') { AUDIO.setVolumes(CFG.music / 100, CFG.sfx / 100); if (id === 'sfx') { wakeAudio(); AUDIO.sfx('coin'); } }
+    applyTouchCfg(); renderCfg(); persist();
+  });
+  const cfgBtn = document.getElementById('btn-cfg');
+  if (cfgBtn) cfgBtn.addEventListener('click', () => { cfgBtn.blur(); openCfg(); });
+  applyTouchCfg();
 
   // avatar do Matheus em pixel art para a tela de título
   let avatar = null;
@@ -443,7 +658,7 @@
 
     const jumpHeld = I.jump || I.up, jumpPressed = I.jumpP || I.upP;
     // no celular o Matheus corre sozinho ao segurar a direção (o B fica pro CD)
-    const run = I.run || touch.left || touch.right;
+    const run = I.run || (CFG.autorun && (touch.left || touch.right));
     const max = p.sonic ? (run ? 7.4 : 5.4)
       : G.ally?.boost > 0 ? 3.8 : water ? (run ? 1.7 : 1.2) : run ? 2.6 : 1.45;
     const ice = p.onGround && (G.L.ice || G.L.zones?.[G.zone]?.[4]);
@@ -1317,7 +1532,7 @@
   function titleItems() {
     const items = [{ label: 'JOGAR', act: () => newGame(0) }];
     if (save.unlocked > 1) items.push({ label: 'CONTINUAR (MAPA)', act: () => { G.score = 0; G.coins = 0; G.lives = 5; G.power = 0; openMap(save.unlocked - 1); } });
-    items.push({ label: 'SOM: ' + (save.muted ? 'DESLIGADO' : 'LIGADO'), act: () => { toggleMute(); AUDIO.sfx('select'); } });
+    items.push({ label: 'CONFIGURAÇÕES', accents: true, act: () => { AUDIO.sfx('select'); openCfg(); } });
     items.push({ label: 'CRÉDITOS', accents: true, act: () => { toState('credits'); AUDIO.sfx('select'); } });
     return items;
   }
@@ -1341,6 +1556,7 @@
       AUDIO.music(P.star > 0 ? 'star' : G.boss?.state === 'intro' ? '' : levelSong());
     } },
     { label: 'MAPA', act: () => openMap(G.levelIdx) },
+    { label: 'CONFIGURAÇÕES', accents: true, act: () => { AUDIO.sfx('select'); openCfg(); } },
     { label: 'SAIR PARA O MENU', act: () => { toState('title'); AUDIO.music('title'); } },
   ];
   const overItems = [
@@ -1352,6 +1568,7 @@
   // ------------------------------------------------------------ UPDATE
   function update() {
     pollInput();
+    if (cfgOpen) { click = null; return; }
     syncLive();
     G.stateT++;
     switch (G.state) {
@@ -2076,7 +2293,8 @@
       if (nx) { const d = nx[0] * T - cx; if (d < 60) { ctx.globalAlpha = Math.max(0, Math.min(1, 1 - d / 60)); ART.background(nx[1], W, H).draw(ctx, G.cam, G.t); ctx.globalAlpha = 1; } }
     }
     ctx.save();
-    const sx = G.shake ? Math.round((Math.random() - 0.5) * 4) : 0, sy = G.shake ? Math.round((Math.random() - 0.5) * 4) : 0;
+    const shk = G.shake && CFG.shake;
+    const sx = shk ? Math.round((Math.random() - 0.5) * 4) : 0, sy = shk ? Math.round((Math.random() - 0.5) * 4) : 0;
     ctx.translate(-R(G.cam) + sx, sy);
     drawItems(true);
     drawTiles();
@@ -2129,7 +2347,7 @@
     const lines = d.lines || wrap(d.txt, 38), firstLine = (d.page || 0) * 3;
     lines.slice(firstLine, firstLine + 3).forEach((l, i) => text(l, x + 46, y + 16 + i * 9, { color: '#ffffff', size: 8 }));
     if (d.npc || d.advance) {
-      const hint = isTouch ? 'TOQUE AQUI' : 'Z / ENTER';
+      const hint = isTouch ? 'TOQUE AQUI' : kn('jump') + ' / ' + kn('start');
       text(hint + (firstLine + 3 < lines.length || d.advance ? ' >' : ''), x + w - 6, y + h - 7, { color: '#ffd23f', size: 6, align: 'right' });
     }
   }
@@ -2164,7 +2382,7 @@
     text('GAMER', W / 2 + 28, 92, { color: '#ffd23f', size: 16, align: 'center', outline: '#1a1020' });
     text('A AVENTURA 100% GAMER', W / 2, 114, { color: '#ff8fd8', align: 'center', outline: '#1a1020' });
     drawMenu(titleItems(), 127, 13);
-    const hint = isTouch ? 'TOQUE NA OPÇÃO OU USE A/B' : 'SETAS: MOVER  Z: PULAR  X: CORRER/CD';
+    const hint = isTouch ? 'TOQUE NA OPÇÃO OU USE A/B' : `SETAS: MOVER  ${kn('jump')}: PULAR  ${kn('run')}: CORRER/CD`;
     text(hint, W / 2, H - 13, { color: '#ffffff', align: 'center', outline: '#1a1020' });
     if (save.best) text('RECORDE ' + pad0(save.best, 6), W - 6, 6, { color: '#ffffff', align: 'right', size: 8, outline: '#1a1020' });
   }
@@ -2200,7 +2418,7 @@
       text(label, x + 38, y + 6, { color: sel ? color : '#ffffff' });
       text(effect, W - x - 8, y + 8, { size: 6, color: '#ddd3ef', align: 'right' });
     });
-    text(isTouch ? 'TOQUE EM UM AMIGO' : 'SETAS PARA ESCOLHER   Z OU ENTER PARA CONFIRMAR', W / 2, 194, { color: '#cbb6db', size: 6, align: 'center' });
+    text(isTouch ? 'TOQUE EM UM AMIGO' : `SETAS PARA ESCOLHER   ${kn('jump')} OU ${kn('start')} PARA CONFIRMAR`, W / 2, 194, { color: '#cbb6db', size: 6, align: 'center' });
   }
 
   function drawIntro() {
@@ -2218,7 +2436,7 @@
     for (const w of words) { if ((line + ' ' + w).trim().length > 34) { lines.push(line.trim()); line = w; } else line += ' ' + w; }
     lines.push(line.trim());
     lines.forEach((l, i) => text(l, W / 2, 140 + i * 14, { color: '#ff8fd8', align: 'center' }));
-    if (G.stateT > 40 && (G.stateT >> 4) % 2) text(isTouch ? 'TOQUE EM A' : 'APERTE Z OU ENTER', W / 2, 196, { color: '#aab3e6', align: 'center' });
+    if (G.stateT > 40 && (G.stateT >> 4) % 2) text(isTouch ? 'TOQUE EM A' : `APERTE ${kn('jump')} OU ${kn('start')}`, W / 2, 196, { color: '#aab3e6', align: 'center' });
   }
 
   const LV_INFO = {};
@@ -2248,7 +2466,7 @@
     const tot = L.ents.filter((d) => d.type === 'npc' && d.who === 'discord').length;
     const info = (save.done[i] ? 'ZERADA' : 'NOVA') + (tot ? '   SEGREDOS ' + (save.sec[i] || 0) + '/' + tot : '');
     text(info, W / 2, H - 22, { color: save.done[i] ? '#ffd23f' : '#aab3e6', align: 'center' });
-    if ((G.t >> 4) % 2) text(isTouch ? 'A: JOGAR' : 'Z: JOGAR   ENTER: MENU', W / 2, H - 10, { color: '#aab3e6', align: 'center', size: 8 });
+    if ((G.t >> 4) % 2) text(isTouch ? 'A: JOGAR' : `${kn('jump')}: JOGAR   ${kn('start')}: MENU`, W / 2, H - 10, { color: '#aab3e6', align: 'center', size: 8 });
   }
 
   function drawEnding() {

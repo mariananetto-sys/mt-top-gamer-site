@@ -4,7 +4,7 @@
 // =====================================================================
 window.AUDIO = (() => {
   let ctx = null, master, musicGain, sfxGain, pulse12, pulse25, noiseBuf;
-  let muted = false;
+  let muted = false, volM = 1, volS = 1;
 
   const NOTE = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
   function midi(name) {
@@ -25,14 +25,14 @@ window.AUDIO = (() => {
     ctx = new AC();
     master = ctx.createGain(); master.gain.value = muted ? 0 : 0.5; master.connect(ctx.destination);
     // música: filtro suave + eco curto para o chiptune ficar mais redondo
-    musicGain = ctx.createGain(); musicGain.gain.value = 0.34;
+    musicGain = ctx.createGain(); musicGain.gain.value = 0.34 * volM;
     const soft = ctx.createBiquadFilter(); soft.type = 'lowpass'; soft.frequency.value = 3600; soft.Q.value = 0.4;
     const echo = ctx.createDelay(1); echo.delayTime.value = 0.21;
     const fb = ctx.createGain(); fb.gain.value = 0.28;
     const wet = ctx.createGain(); wet.gain.value = 0.22;
     musicGain.connect(soft); soft.connect(master);
     soft.connect(echo); echo.connect(fb); fb.connect(echo); echo.connect(wet); wet.connect(master);
-    sfxGain = ctx.createGain(); sfxGain.gain.value = 0.55; sfxGain.connect(master);
+    sfxGain = ctx.createGain(); sfxGain.gain.value = 0.55 * volS; sfxGain.connect(master);
     const pulse = (duty) => {
       const n = 48, real = new Float32Array(n), imag = new Float32Array(n);
       for (let i = 1; i < n; i++) real[i] = (2 / (i * Math.PI)) * Math.sin(i * Math.PI * duty);
@@ -250,5 +250,11 @@ window.AUDIO = (() => {
     if (master) master.gain.setTargetAtTime(m ? 0 : 0.5, ctx.currentTime, 0.02);
   }
 
-  return { init, resume, suspend, sfx, music, stopMusic, setTempo, setMuted, get muted() { return muted; }, get current() { return songName; } };
+  function setVolumes(m, s) {
+    volM = m; volS = s;
+    if (musicGain) musicGain.gain.setTargetAtTime(0.34 * m, ctx.currentTime, 0.02);
+    if (sfxGain) sfxGain.gain.setTargetAtTime(0.55 * s, ctx.currentTime, 0.02);
+  }
+
+  return { init, resume, suspend, sfx, music, stopMusic, setTempo, setMuted, setVolumes, get muted() { return muted; }, get current() { return songName; } };
 })();
