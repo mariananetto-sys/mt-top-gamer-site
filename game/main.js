@@ -1932,6 +1932,9 @@
     requestAnimationFrame(loop);
   }
   resize();
+  // atalho de teste (só no localhost): jogo.html?fase=11 abre direto na fase
+  { const f = new URLSearchParams(location.search).get('fase');
+    if (f && /^(localhost|127\.0\.0\.1)$/.test(location.hostname)) { const i = LEVELS.labels.indexOf(f.toUpperCase()); if (i >= 0) newGame(i); } }
   const fontReady = document.fonts && document.fonts.load ? document.fonts.load('8px "Press Start 2P"') : Promise.resolve();
   Promise.race([fontReady, new Promise((r) => setTimeout(r, 1500))]).then(() => requestAnimationFrame(loop));
 
