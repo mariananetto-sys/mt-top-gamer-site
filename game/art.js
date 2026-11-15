@@ -812,6 +812,43 @@ window.ART = (() => {
     x.fillStyle = '#6b3a1e'; x.fillRect(tx - 2, ty + 2, 3, 3); x.fillRect(tx + 1, ty + 3, 3, 3);
   }
 
+  // névoa leve antes da camada mais próxima (dá sensação de distância)
+  const HAZE = {
+    tropical: 'rgba(190,230,255,0.16)', title: 'rgba(190,230,255,0.16)', grass: 'rgba(200,235,255,0.16)',
+    beach: 'rgba(255,220,180,0.14)', sky: 'rgba(255,200,230,0.12)', cave: 'rgba(8,6,26,0.25)', castle: 'rgba(30,5,10,0.22)',
+    fair: 'rgba(20,10,50,0.2)', sea: 'rgba(20,70,150,0.2)',
+  };
+  const wrapX = (v, span) => ((v % span) + span) % span;
+  function bird(ctx, x, y, t) {
+    const up = (t >> 3) % 2;
+    ctx.fillStyle = '#2a3050';
+    ctx.fillRect(Math.round(x) - 3, Math.round(y) - up, 3, 1); ctx.fillRect(Math.round(x) + 1, Math.round(y) - up, 3, 1); ctx.fillRect(Math.round(x), Math.round(y), 1, 1);
+  }
+  // detalhes animados de cada cenário
+  function animExtras(ctx, name, camX, t, W, H) {
+    if (name === 'tropical' || name === 'title' || name === 'grass' || name === 'beach') {
+      for (let i = 0; i < 3; i++) bird(ctx, wrapX(i * 140 + t * (0.35 + i * 0.08) - camX * 0.1, 460) - 40, 36 + i * 14 + Math.sin(t * 0.03 + i) * 4, t + i * 5);
+    } else if (name === 'cave') {
+      for (let i = 0; i < 7; i++) {
+        const x = wrapX(i * 83 - camX * 0.2, W + 40) - 20, y = 120 + ((i * 37) % 60), a = 0.12 + 0.1 * Math.sin(t * 0.05 + i * 1.3);
+        const g = ctx.createRadialGradient(x, y, 0, x, y, 18); g.addColorStop(0, i % 2 ? `rgba(95,214,255,${a})` : `rgba(255,90,180,${a})`); g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g; ctx.fillRect(x - 18, y - 18, 36, 36);
+      }
+    } else if (name === 'sky') {
+      for (let i = 0; i < 26; i++) { if ((t + i * 13) % 90 < 60) { ctx.fillStyle = i % 4 ? 'rgba(255,255,255,0.8)' : '#ffd23f'; ctx.fillRect(wrapX(i * 47 - camX * 0.04, W), (i * 29) % 70 + 4, 1, 1); } }
+    } else if (name === 'castle') {
+      for (let i = 0; i < 16; i++) { const life = (t * (0.6 + (i % 4) * 0.15) + i * 37) % H; ctx.fillStyle = i % 3 ? 'rgba(255,140,40,0.75)' : 'rgba(255,220,90,0.85)'; ctx.fillRect(Math.round(wrapX(i * 61 - camX * 0.5 + Math.sin((t + i * 20) * 0.03) * 6, W)), Math.round(H - life), 1, 2); }
+    } else if (name === 'fair') {
+      const off = -camX * 0.6;
+      ctx.fillStyle = '#0c0a1c';
+      for (let x = 0; x < W + 64; x += 2) { const sx = wrapX(x + off, W + 64) - 32; const yy = 14 + Math.round(Math.sin((x / 64) * Math.PI) * 10); ctx.fillRect(Math.round(sx), yy, 2, 1); }
+      for (let x = 8; x < W + 64; x += 16) { const sx = wrapX(x + off, W + 64) - 32; const yy = 15 + Math.round(Math.sin((x / 64) * Math.PI) * 10); const on = ((x / 16 + (t >> 4)) % 3); ctx.fillStyle = ['#ff5ab4', '#ffd23f', '#2fe0ff'][on]; ctx.fillRect(Math.round(sx) - 1, yy + 1, 3, 3); }
+    } else if (name === 'sea') {
+      ctx.fillStyle = 'rgba(10,40,100,0.55)';
+      for (let i = 0; i < 9; i++) { const x = wrapX(i * 31 + t * 0.4 - camX * 0.3, W + 120) - 60 + (i % 3) * 8, y = 70 + (i % 3) * 7 + Math.sin(t * 0.04 + i) * 2; ctx.fillRect(Math.round(x), Math.round(y), 5, 2); ctx.fillRect(Math.round(x) - 2, Math.round(y) - 1, 2, 4); }
+    }
+  }
+
   const bgCache = {};
   function background(name, W, H) {
     const key = name + W + 'x' + H;
@@ -825,6 +862,7 @@ window.ART = (() => {
       const clouds = mk(LW, H); { const x = clouds.getContext('2d'); [[40, 34, 1], [170, 58, 0.8], [290, 28, 1.1], [420, 50, 0.9]].forEach(([cx, cy, s]) => cloud(x, cx, cy, s, '#ffffff', '#d6efff')); }
       const near = ridge(LW, H, '#58c25e', 44, [[14, 3, 0.5], [7, 7, 2.0]]);
       { const x = near.getContext('2d'); x.globalCompositeOperation = 'source-atop'; x.fillStyle = '#46a84f'; for (let i = 0; i < LW; i += 12) for (let j = H - 60; j < H; j += 10) x.fillRect(i + ((j / 10) % 2) * 6, j, 2, 2); }
+      extra = mk(W, H); { const x = extra.getContext('2d'); const glow = x.createRadialGradient(W * 0.2, 40, 4, W * 0.2, 40, 60); glow.addColorStop(0, 'rgba(255,250,210,0.9)'); glow.addColorStop(1, 'rgba(255,240,170,0)'); x.fillStyle = glow; x.fillRect(0, 0, W * 0.5, 110); blob(x, W * 0.2, 40, 11, '#fffbe0'); }
       layers = [[far, 0.12, 0], [clouds, 0.2, 0.15], [near, 0.35, 0]];
     } else if (name === 'tropical' || name === 'title') {
       sky = gradient(W, H, [[0, '#1f7fff'], [0.62, '#8fd8ff'], [0.63, '#2a8ff0'], [1, '#1a6ad0']]);
@@ -854,7 +892,12 @@ window.ART = (() => {
         };
         [[40, 26], [150, 34], [300, 22], [420, 30]].forEach(([px, h]) => { let top = H; for (let j = 0; j < H; j++) { if (x.getImageData(px + 1, j, 1, 1).data[3] > 0) { top = j; break; } } palm(px, top + 2, h); });
       }
-      layers = [[clouds, 0.08, 0.1], [far, 0.15, 0], [near, 0.35, 0]];
+      { const x = extra.getContext('2d'); const sx = W * 0.78, sy = 46;
+        const glow = x.createRadialGradient(sx, sy, 4, sx, sy, 70); glow.addColorStop(0, 'rgba(255,250,210,0.9)'); glow.addColorStop(0.25, 'rgba(255,240,170,0.45)'); glow.addColorStop(1, 'rgba(255,240,170,0)');
+        x.fillStyle = glow; x.fillRect(sx - 70, sy - 70, 140, 140); blob(x, sx, sy, 13, '#fffbe0'); }
+      const dist = ridge(LW, H, '#7ab8e8', 108, [[22, 1, 0.3], [12, 3, 1.4], [6, 7, 2.2]]);
+      { const x = dist.getContext('2d'); x.globalCompositeOperation = 'source-atop'; x.fillStyle = '#e8f6ff'; for (let i = 0; i < LW; i++) { const top = H - (108 + 22 * Math.sin((i / LW) * Math.PI * 2 + 0.3) + 12 * Math.sin((i / LW) * Math.PI * 6 + 1.4) + 6 * Math.sin((i / LW) * Math.PI * 14 + 2.2)); x.fillRect(i, Math.round(top), 1, 5); } }
+      layers = [[dist, 0.05, 0], [clouds, 0.08, 0.1], [far, 0.15, 0], [near, 0.35, 0]];
     } else if (name === 'cave') {
       sky = gradient(W, H, [[0, '#07061a'], [1, '#1b1446']]);
       const far = ridge(LW, H, '#15113a', 90, [[30, 4, 0.2], [14, 9, 1.4], [6, 23, 0.7]]);
@@ -907,6 +950,9 @@ window.ART = (() => {
       const isl = ridge(LW, H, '#e8a86a', 70, [[10, 2, 0.4], [6, 5, 1.2]]);
       { const x = isl.getContext('2d'); x.globalCompositeOperation = 'source-atop'; x.fillStyle = '#f2c88a'; x.fillRect(0, H - 70, LW, 8); }
       const palms = mk(LW, H); { const x = palms.getContext('2d'); [[30, 60], [190, 70], [340, 54], [470, 66]].forEach(([px, h]) => palmTree(x, px, H - 2, h)); }
+      { const x = extra.getContext('2d'); const bx = W * 0.62, by = Math.round(H * 0.6) - 1;
+        x.fillStyle = '#5a3a5a'; x.fillRect(bx, by - 3, 16, 3); x.fillRect(bx + 2, by, 12, 1); x.fillRect(bx + 7, by - 14, 1, 11);
+        x.fillStyle = '#fff3e0'; for (let j = 0; j < 9; j++) x.fillRect(bx + 8, by - 13 + j, Math.ceil(j * 0.7), 1); }
       layers = [[clouds, 0.06, 0.08], [isl, 0.15, 0], [palms, 0.45, 0]];
     } else if (name === 'fair') {
       sky = gradient(W, H, [[0, '#0a0620'], [1, '#2a1450']]);
@@ -955,11 +1001,13 @@ window.ART = (() => {
       draw(ctx, camX, t) {
         ctx.drawImage(sky, 0, 0);
         if (extra) ctx.drawImage(extra, 0, 0);
-        for (const [img, f, drift] of layers) {
+        layers.forEach(([img, f, drift], i) => {
+          if (i === layers.length - 1 && HAZE[name]) { ctx.fillStyle = HAZE[name]; ctx.fillRect(0, 0, W, H); }
           let off = -Math.round((camX * f + t * drift) % LW);
           if (off > 0) off -= LW;
           for (let x = off; x < W; x += LW) ctx.drawImage(img, x, 0);
-        }
+        });
+        animExtras(ctx, name, camX, t, W, H);
         if (name === 'boss') {
           const r = rng(Math.floor(t / 6));
           for (let i = 0; i < 6; i++) { ctx.fillStyle = r() > 0.5 ? 'rgba(255,90,180,0.18)' : 'rgba(47,224,255,0.16)'; ctx.fillRect((r() * W) | 0, (r() * H * 0.6) | 0, (8 + r() * 60) | 0, (2 + r() * 6) | 0); }
