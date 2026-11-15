@@ -884,16 +884,22 @@ window.ART = (() => {
         for (const f of falls) {
           let sx = -Math.round((camX * 0.15) % LW) + f.x; if (sx > W) sx -= LW; if (sx < -20) sx += LW;
           if (sx < -12 || sx > W + 4) continue;
-          const top = f.top, w = 8;
-          ctx.fillStyle = '#5a8a6a'; ctx.fillRect(sx - 2, top - 2, w + 4, 3);
-          for (let y = top; y < H; y++) {
-            const k = (y - Math.floor(t * 1.6)) % 9;
-            ctx.fillStyle = '#6fbfe8'; ctx.fillRect(sx, y, 1, 1); ctx.fillRect(sx + w - 1, y, 1, 1);
-            ctx.fillStyle = (k + 9) % 9 < 3 ? '#ffffff' : '#bfe8ff'; ctx.fillRect(sx + 1, y, w - 2, 1);
-            if (((y * 7 + f.x) % 5) === 0) { ctx.fillStyle = '#e8f8ff'; ctx.fillRect(sx + 2 + ((y + (t >> 2)) % 4), y, 1, 1); }
+          const top = f.top - 6, bottom = H - 36;
+          // fenda escura no pico de onde a água sai
+          ctx.fillStyle = 'rgba(20,70,50,0.55)'; ctx.fillRect(sx + 1, top - 2, 5, 3);
+          for (let y = top; y < bottom; y++) {
+            const d = y - top, w = d < 6 ? 3 + Math.floor(d / 2) : 7 + (d > 40 ? 1 : 0), x0 = sx + 4 - Math.ceil(w / 2);
+            for (let c = 0; c < w; c++) {
+              const edge = c === 0 || c === w - 1;
+              const streak = !edge && ((y - Math.floor(t * (1.4 + (c % 3) * 0.35)) + c * 13 + f.x) % 17 + 17) % 17 < 6;
+              ctx.fillStyle = edge ? 'rgba(110,190,235,0.75)' : streak ? 'rgba(255,255,255,0.95)' : 'rgba(185,230,255,0.72)';
+              ctx.fillRect(x0 + c, y, 1, 1);
+            }
           }
-          ctx.fillStyle = 'rgba(255,255,255,0.75)';
-          for (let i = 0; i < 4; i++) { const r = 3 + ((t >> 3) + i) % 3; ctx.fillRect(sx - 3 + i * 4, H - 50 - r, r, r); }
+          // laguinho e espuma no pé da montanha
+          ctx.fillStyle = 'rgba(90,170,230,0.85)'; ctx.fillRect(sx - 7, bottom, 22, 3); ctx.fillRect(sx - 4, bottom + 3, 16, 2);
+          ctx.fillStyle = 'rgba(200,240,255,0.9)'; ctx.fillRect(sx - 7, bottom, 22, 1);
+          for (let i = 0; i < 5; i++) { const ph = (t * 0.08 + i * 1.3); const r = 2 + Math.round((Math.sin(ph) + 1) * 1.2); blob(ctx, sx + 4 + (i - 2) * 4, bottom - 1 - r / 2, r, 'rgba(255,255,255,0.8)'); }
         }
       };
       // morros arredondados com palmeiras
