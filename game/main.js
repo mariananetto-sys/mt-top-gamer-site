@@ -1160,21 +1160,21 @@
     const items = [{ label: 'JOGAR', act: () => newGame(0) }];
     if (save.unlocked > 1) items.push({ label: 'CONTINUAR (MAPA)', act: () => { G.score = 0; G.coins = 0; G.lives = 5; G.power = 0; openMap(save.unlocked - 1); } });
     items.push({ label: 'SOM: ' + (save.muted ? 'DESLIGADO' : 'LIGADO'), act: () => { toggleMute(); AUDIO.sfx('select'); } });
-    items.push({ label: 'CRÉDITOS', act: () => { toState('credits'); AUDIO.sfx('select'); } });
+    items.push({ label: 'CRÉDITOS', accents: true, act: () => { toState('credits'); AUDIO.sfx('select'); } });
     return items;
   }
   const creditsItems = [
     { label: 'VOLTAR', act: () => { toState('title'); G.menuSel = titleItems().length - 1; AUDIO.sfx('select'); } },
   ];
-  const creators = 'LUCAS E CLAUDE';
+  const creator = 'LUCAS';
   const credits = [
-    ['CRIAÇÃO', creators],
-    ['PROGRAMAÇÃO', creators],
-    ['DESIGN DE FASES', creators],
-    ['ARTE E ANIMAÇÃO', creators],
-    ['MÚSICA E EFEITOS', creators],
-    ['HISTÓRIA', 'LUCAS'],
-    ['IDEIAS DE FASES', 'LUCAS'],
+    ['CRIAÇÃO', creator],
+    ['PROGRAMAÇÃO', 'CLAUDE'],
+    ['DESIGN DE FASES', creator],
+    ['ARTE E ANIMAÇÃO', creator],
+    ['MÚSICA E EFEITOS', creator],
+    ['HISTÓRIA', creator],
+    ['IDEIAS DE FASES', creator],
   ];
   const pauseItems = [
     { label: 'CONTINUAR', act: () => { toState('play'); AUDIO.music(P.star > 0 ? 'star' : G.boss ? (G.boss.state === 'intro' ? '' : G.boss.b2 ? 'boss2' : 'boss') : levelSong()); } },
@@ -1309,19 +1309,49 @@
     if (!flipY) { ctx.drawImage(c, R(x), R(y)); return; }
     ctx.save(); ctx.translate(R(x), R(y) + c.height); ctx.scale(1, -1); ctx.drawImage(c, 0, 0); ctx.restore();
   }
-  // a fonte pixel não tem acentos em maiúsculas bonitos: tira os acentos
+  // Diacríticos desenhados em pixels para as letras maiúsculas dos créditos.
+  const PIXEL_MARKS = {
+    '\u0301': ['.##', '##.'],
+    '\u0303': ['.##.#', '#.##.'],
+    '\u0327': ['.#.', '..#', '##.'],
+  };
+  function accentPixels(label, base, x, y, size) {
+    const box = ctx.measureText(base);
+    const left = x - (ctx.textAlign === 'center' ? box.width / 2 : ctx.textAlign === 'right' ? box.width : 0);
+    const advance = box.width / base.length, pixel = size / 8;
+    const points = [];
+    [...label.normalize('NFC')].forEach((letter, i) => {
+      const mark = letter.normalize('NFD')[1], pattern = PIXEL_MARKS[mark];
+      if (!pattern) return;
+      const startX = Math.round(left + (i + 0.5) * advance - pattern[0].length * pixel / 2);
+      const startY = Math.round(mark === '\u0327'
+        ? y + box.actualBoundingBoxDescent
+        : y - box.actualBoundingBoxAscent - (pattern.length + 1) * pixel);
+      pattern.forEach((row, dy) => {
+        [...row].forEach((dot, dx) => {
+          if (dot === '#') points.push([startX + dx * pixel, startY + dy * pixel]);
+        });
+      });
+    });
+    return points;
+  }
   const plain = (s) => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '');
   function text(str, x, y, o = {}) {
-    str = plain(str);
-    const size = o.size || 8;
+    const label = String(str);
+    const base = plain(label), size = o.size || 8;
     ctx.font = `${size}px "Press Start 2P", monospace`;
     ctx.textAlign = o.align || 'left'; ctx.textBaseline = 'top';
+    const points = o.accents && accentPixels(label, base, x, y, size);
+    const draw = (dx, dy) => {
+      ctx.fillText(base, x + dx, y + dy);
+      if (points) for (const [px, py] of points) ctx.fillRect(px + dx, py + dy, size / 8, size / 8);
+    };
     if (o.outline) {
       ctx.fillStyle = o.outline;
-      for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, 1], [-1, 1], [1, -1], [2, 2], [1, 2], [2, 1]]) ctx.fillText(str, x + dx, y + dy);
-    } else if (o.shadow !== false) { ctx.fillStyle = o.shadow || '#000'; ctx.fillText(str, x + 1, y + 1); }
+      for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, 1], [-1, 1], [1, -1], [2, 2], [1, 2], [2, 1]]) draw(dx, dy);
+    } else if (o.shadow !== false) { ctx.fillStyle = o.shadow || '#000'; draw(1, 1); }
     ctx.fillStyle = o.color || '#fff';
-    ctx.fillText(str, x, y);
+    draw(0, 0);
   }
   const pad0 = (n, l) => String(Math.max(0, Math.floor(n))).padStart(l, '0');
 
@@ -1873,7 +1903,7 @@
       const w = it.label.length * 8 + 24;
       G.menuRects.push({ x: W / 2 - w / 2, y: y - 4, w, h: 16 });
       if (sel) { rect('rgba(11,16,51,0.75)', W / 2 - w / 2, y - 4, w, 16); text('>', W / 2 - w / 2 + 4 + ((G.stateT >> 4) % 2), y, { color: '#ffd23f' }); }
-      text(it.label, W / 2 + 6, y, { color: sel ? '#ffd23f' : '#ffffff', align: 'center' });
+      text(it.label, W / 2 + 6, y, { color: sel ? '#ffd23f' : '#ffffff', align: 'center', accents: it.accents });
     });
   }
 
@@ -1907,11 +1937,11 @@
     rect('#1a1020', 21, 14, W - 42, H - 28);
     rect('#0b1033', 23, 16, W - 46, H - 32);
     rect('#ffd23f', 23, 16, W - 46, 2);
-    text('CRÉDITOS', W / 2, 29, { size: 16, color: '#ffd23f', align: 'center' });
+    text('CRÉDITOS', W / 2, 29, { size: 16, color: '#ffd23f', align: 'center', accents: true });
     credits.forEach(([role, names], i) => {
       const y = 58 + i * 16;
       rect(i % 2 ? '#152050' : '#101942', 36, y - 3, W - 72, 15);
-      text(role, 44, y, { color: '#a9caff' });
+      text(role, 44, y, { color: '#a9caff', accents: true });
       text(names, W - 44, y, { align: 'right' });
     });
     drawMenu(creditsItems, 184, 17);
@@ -1977,7 +2007,7 @@
     text('O UNIVERSO 100% GAMER ESTA SALVO!', W / 2, 114, { align: 'center' });
     text('PONTOS ' + pad0(G.score, 6), W / 2, 128, { color: '#ffd23f', align: 'center' });
     text('LUCAS: "VALEU POR JOGAR MEU JOGO!"', W / 2, 144, { color: '#7cf0ff', align: 'center' });
-    text('FEITO POR ' + creators, W / 2, 156, { color: '#ffffff', align: 'center' });
+    text('CRIADO POR ' + creator, W / 2, 156, { color: '#ffffff', align: 'center' });
     text('INSCREVA-SE: @MT-TOP-GAMER.2006', W / 2, 170, { color: '#ff8fd8', align: 'center' });
     ctx.drawImage(ART.NPC.inscrito.r, 22, 150); ctx.drawImage(ART.NPC.axo.r, 22, 170); ctx.drawImage(ART.NPC.babs.l, W - 38, 150); ctx.drawImage(ART.NPC.miguel.l, W - 38, 170);
     drawParts();
