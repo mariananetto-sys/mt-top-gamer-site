@@ -328,8 +328,8 @@ window.LEVELS = (() => {
   }
 
   function fase10() {
-    const miguel = 64, martbuz = 146, rafa = 206, scott = 270, jackson = 334;
-    const L = builder(jackson + 86, 'bat', 'FESTA DOS INSCRITOS', 'city');
+    const miguel = 64, martbuz = 130, rafa = 190, scott = 254, jackson = 318;
+    const L = builder(jackson + 62, 'bat', 'FESTA DOS INSCRITOS', 'city');
     L.intro = 'Cada inscrito ganhou a sua parte da fase. Bora visitar todo mundo!';
     L.time = 460;
     // Trechos: [começa no x, tema, música, nome da zona, gelo].
@@ -348,13 +348,11 @@ window.LEVELS = (() => {
     L.put(11, 6, '?M?'); L.put(21, 7, 'ooo'); L.e('m', 30, 5); L.e('g', 36, 8); L.put(41, 6, 'ooo');
     L.e('m', 50, 6); L.put(52, 6, 'B?B'); L.e('m', 58, 4);
     // --- pista do Miguel
-    L.ground(miguel, miguel + 36); L.ground(miguel + 43, miguel + 59); L.ground(miguel + 65, martbuz - 1);
-    L.put(miguel + 37, 12, '======'); L.put(miguel + 60, 12, '=====');
-    L.e('npc', miguel + 3, 11, { who: 'miguel', say: 'Pegue a energia azul e vire o Sonic! Você corre sozinho e logo vira uma bola. Use Z para pular.' });
-    L.e('K', miguel + 6, 11); L.e('sonic', miguel + 9, 11);
-    L.put(miguel + 16, 11, 'ooooooo'); L.e('b', miguel + 29, 11);
-    L.put(miguel + 36, 9, 'oooooooo'); L.put(miguel + 45, 11, 'oooooooo'); L.e('k', miguel + 52, 11);
-    L.put(miguel + 58, 8, 'oooooooo'); L.e('b', miguel + 69, 11); L.put(miguel + 73, 11, 'ooooo');
+    L.ground(miguel, miguel + 36); L.ground(miguel + 41, martbuz - 1);
+    L.e('npc', miguel + 3, 11, { who: 'miguel', say: 'Pegue a energia azul e vire o Sonic! Você corre sozinho e logo vira uma bola. Use Z para pular o buraco.' });
+    L.e('sonic', miguel + 8, 11); L.put(miguel + 12, 9, 'oooooo'); L.e('b', miguel + 20, 11);
+    L.put(miguel + 28, 8, 'oooooo'); L.put(miguel + 37, 7, 'oooo'); L.e('g', miguel + 50, 11);
+    L.e('spring', miguel + 56, 11); for (let y = 2; y <= 6; y += 2) L.put(miguel + 56, y, 'o'); L.e('b', miguel + 61, 11);
     // --- QG da Martbuz
     L.ground(martbuz, martbuz + 20); L.lava(martbuz + 21, martbuz + 25); L.ground(martbuz + 26, rafa - 1);
     L.e('K', martbuz + 1, 11);
@@ -383,15 +381,29 @@ window.LEVELS = (() => {
     L.put(scott + 49, 9, 'oooo'); L.e('venue', scott + 56, 11);
 
     // --- caverna do Jackson
-    L.ground(jackson, jackson + 25); L.ground(jackson + 30, jackson + 45);
-    L.ground(jackson + 50, jackson + 62, 10); L.ground(jackson + 63, L.w - 1);
-    L.e('K', jackson + 1, 11);
-    L.e('npc', jackson + 4, 11, { who: 'jackson', say: 'Zubba lorpi! Kranka fuu, gruta blubba! Bli-bli, Matheus, zonk-zonk!' });
-    L.secret(jackson + 11); L.put(jackson + 20, 8, 'B?B');
-    L.put(jackson + 26, 10, '===='); L.put(jackson + 26, 8, 'oooo'); L.e('c', jackson + 37, 11);
-    L.e('spring', jackson + 43, 11); L.put(jackson + 46, 9, '===='); L.put(jackson + 47, 7, 'ooo'); L.e('m', jackson + 55, 6);
-    L.e('K', jackson + 60, 9); L.e('w', jackson + 69, 11); L.put(jackson + 74, 8, '?1?');
-    L.e('G', jackson + 80, 11);
+    L.ground(jackson, jackson + 25); L.ground(jackson + 29, L.w - 1);
+    L.fill(jackson, 0, L.w - 1, 1, '#');
+    L.e('npc', jackson + 3, 11, { who: 'jackson', say: 'Zubba lorpi! Caverna do Jackson, kranka fuu! Bli-bli, Matheus, zonk-zonk!' });
+    L.secret(jackson + 9); L.e('f', jackson + 18, 7); L.put(jackson + 26, 9, 'ooo'); L.e('c', jackson + 35, 11); L.e('w', jackson + 41, 11);
+    L.stairs(jackson + 48, [1, 2, 3, 4]);
+    L.e('G', jackson + 56, 11);
+
+    // Prolonga só o chão livre de cada trecho, da direita para a esquerda
+    // para manter as coordenadas do mapa acima. Objetos e divisas só mudam de posição.
+    const trechosPlanos = [
+      [jackson + 43, 13], [jackson + 17, 13],
+      [scott + 54, 3], [scott + 12, 3],
+      [rafa + 60, 3], [rafa + 14, 3],
+      [martbuz + 43, 4], [martbuz + 12, 4],
+      [miguel + 51, 9], [miguel + 18, 9],
+      [48, 4], [15, 4],
+    ];
+    for (const [after, count] of trechosPlanos) {
+      for (const row of L.rows) row.splice(after + 1, 0, ...Array(count).fill(row[after]));
+      for (const entity of L.ents) if (entity.x > after) entity.x += count;
+      for (const zone of L.zones) if (zone[0] > after) zone[0] += count;
+      L.w += count;
+    }
     return L;
   }
 
