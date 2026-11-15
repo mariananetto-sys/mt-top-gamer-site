@@ -964,7 +964,7 @@ window.ART = (() => {
           const r = rng(Math.floor(t / 6));
           for (let i = 0; i < 6; i++) { ctx.fillStyle = r() > 0.5 ? 'rgba(255,90,180,0.18)' : 'rgba(47,224,255,0.16)'; ctx.fillRect((r() * W) | 0, (r() * H * 0.6) | 0, (8 + r() * 60) | 0, (2 + r() * 6) | 0); }
         }
-        if (name === 'edit') { const ph = ((t * 0.8) % (W + 40)) - 20; ctx.fillStyle = '#ff3b3b'; ctx.fillRect(Math.round(ph), 0, 2, H); ctx.fillRect(Math.round(ph) - 3, 0, 8, 6); }
+        if (name === 'edit') { const span = W + 40, ph = ((((t * 0.6 - camX * 0.3) % span) + span) % span) - 20; /* a linha anda presa à trilha do fundo, não à tela */ ctx.fillStyle = '#ff3b3b'; ctx.fillRect(Math.round(ph), 0, 2, H); ctx.fillRect(Math.round(ph) - 3, 0, 8, 6); }
         if (name === 'sea') {
           ctx.fillStyle = 'rgba(255,255,255,0.06)'; for (let i = 0; i < 5; i++) { const bx = ((i * 90 - camX * 0.1 + t * 0.2) % (W + 80)) - 40; ctx.beginPath(); ctx.moveTo(bx, 0); ctx.lineTo(bx + 30, 0); ctx.lineTo(bx + 80, H); ctx.lineTo(bx + 40, H); ctx.fill(); }
           ctx.fillStyle = 'rgba(220,240,255,0.7)'; for (let i = 0; i < 18; i++) { const px = ((i * 71 - camX * 0.5) % W + W) % W; const py = H - ((t * (0.4 + (i % 3) * 0.2) + i * 37) % H); ctx.fillRect(Math.round(px), Math.round(py), 2, 2); }
