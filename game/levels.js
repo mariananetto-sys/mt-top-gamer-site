@@ -328,10 +328,19 @@ window.LEVELS = (() => {
   }
 
   function fase10() {
-    const L = builder(252, 'bat', 'FESTA DOS INSCRITOS', 'city');
+    const rafa = 190, scott = 254, jackson = 318;
+    const L = builder(jackson + 62, 'bat', 'FESTA DOS INSCRITOS', 'city');
     L.intro = 'Cada inscrito ganhou a sua parte da fase. Bora visitar todo mundo!';
-    // zonas: [começa no x, tema, música, nome]
-    L.zones = [[0, 'bat', 'city', 'ZONA DA BABS'], [64, 'tropical', 'grass', 'ZONA DO MIGUEL'], [130, 'castle', 'castle', 'QG DA MARTBUZ'], [190, 'cave', 'cave', 'CAVERNA DO JACKSON']];
+    L.time = 420;
+    // Trechos: [começa no x, tema, música, nome da zona, gelo].
+    L.zones = [
+      [0, 'bat', 'city', 'ZONA DA BABS'],
+      [64, 'tropical', 'grass', 'ZONA DO MIGUEL'],
+      [130, 'castle', 'castle', 'QG DA MARTBUZ'],
+      [rafa, 'roofs', 'roofs', 'ZONA DO RAFA E DO SCOTT'],
+      [scott, 'snowCity', 'snowCity', 'ZONA DO RAFA E DO SCOTT', true],
+      [jackson, 'cave', 'cave', 'CAVERNA DO JACKSON'],
+    ];
     L.start = { x: 3, y: 9 };
     // --- zona da Babs (noite, morcegos, roxo)
     L.ground(0, 20, 10); L.ground(24, 40, 9); L.ground(44, 63, 10);
@@ -351,13 +360,32 @@ window.LEVELS = (() => {
     L.e('npc', 138, 11, { who: 'scott', say: 'E isso ai. Mas cuidado com a lava, Matheus...' });
     L.fill(145, 10, 145, 11, 'X'); L.e('fb', 145, 9, { len: 4, speed: 0.035 });
     L.put(153, 9, 'ooo'); L.e('s', 162, 11); L.put(164, 8, '?*?'); L.e('k', 170, 11); L.e('g', 178, 11); L.e('g', 181, 11);
+    // --- Rafa e Scott: telhados, depois a cidade nevada
+    L.ground(rafa, rafa + 15); L.ground(rafa + 16, rafa + 24, 10);
+    L.ground(rafa + 29, rafa + 39, 9); L.ground(rafa + 40, rafa + 49, 11);
+    L.ground(rafa + 54, scott - 1);
+    L.e('K', rafa + 1, 11);
+    L.e('npc', rafa + 5, 11, { who: 'rafael', say: 'Segure Z para subir nos telhados. Do outro lado do mercado começa a cidade do Scott!' });
+    L.put(rafa + 11, 8, '?M?'); L.e('guard', rafa + 20, 9); L.put(rafa + 21, 9, 'ooo');
+    L.put(rafa + 26, 10, '==='); L.put(rafa + 31, 8, 'ooo'); L.e('guard', rafa + 36, 8);
+    L.e('hay', rafa + 42, 10); L.put(rafa + 50, 9, 'oooo');
+    L.e('f', rafa + 58, 6);
+
+    L.ground(scott, scott + 19); L.ground(scott + 28, scott + 46);
+    L.ground(scott + 47, scott + 54, 10); L.ground(scott + 55, jackson - 1);
+    L.e('npc', scott + 4, 11, { who: 'scott', say: 'Bem-vindo! Pegue o bonde para atravessar o canal. Dá para ver as montanhas daqui!' });
+    L.put(scott + 9, 8, 'B?B'); L.e('w', scott + 14, 11);
+    L.e('K', scott + 17, 11); L.e('tram', scott + 19, 11, { range: 7 }); L.put(scott + 22, 9, 'oooooo');
+    L.e('n', scott + 37, 6); L.put(scott + 41, 8, '?1?');
+    L.put(scott + 49, 9, 'oooo'); L.e('venue', scott + 56, 11);
+
     // --- caverna do Jackson
-    L.ground(190, 215); L.ground(219, 251);
-    L.fill(190, 0, 251, 1, '#');
-    L.e('npc', 193, 11, { who: 'jackson', say: 'Zubba lorpi! Caverna do Jackson, kranka fuu! Bli-bli, Matheus, zonk-zonk!' });
-    L.secret(199); L.e('f', 208, 7); L.put(216, 9, 'ooo'); L.e('c', 225, 11); L.e('w', 231, 11);
-    L.stairs(238, [1, 2, 3, 4]);
-    L.e('G', 246, 11);
+    L.ground(jackson, jackson + 25); L.ground(jackson + 29, L.w - 1);
+    L.fill(jackson, 0, L.w - 1, 1, '#');
+    L.e('npc', jackson + 3, 11, { who: 'jackson', say: 'Zubba lorpi! Caverna do Jackson, kranka fuu! Bli-bli, Matheus, zonk-zonk!' });
+    L.secret(jackson + 9); L.e('f', jackson + 18, 7); L.put(jackson + 26, 9, 'ooo'); L.e('c', jackson + 35, 11); L.e('w', jackson + 41, 11);
+    L.stairs(jackson + 48, [1, 2, 3, 4]);
+    L.e('G', jackson + 56, 11);
     return L;
   }
 
@@ -383,52 +411,7 @@ window.LEVELS = (() => {
     return L;
   }
 
-  function fase12() {
-    const L = builder(146, 'roofs', 'TELHADOS DO RAFA', 'roofs');
-    L.intro = 'Do mercado à torre de vigia, siga o Rafa pelos telhados da cidade.';
-    L.ground(0, 22); L.ground(23, 34, 10); L.ground(39, 49, 9);
-    L.ground(50, 64, 11); L.ground(72, 85, 10); L.ground(86, 97, 8);
-    L.ground(98, 109, 11); L.ground(110, 119, 10); L.ground(123, 145, 11);
-
-    L.e('npc', 6, 11, { who: 'rafael', say: 'Siga pelas vigas e pelos telhados. Segure Z no salto para chegar mais alto.' });
-    L.put(13, 8, '?M?'); L.e('guard', 18, 11);
-    L.put(26, 9, 'oooo'); L.e('guard', 32, 9);
-    L.put(35, 8, 'oooo'); L.put(36, 10, '==='); L.e('guard', 45, 8);
-    L.put(52, 7, '====='); L.put(53, 6, 'ooo'); L.e('f', 58, 7);
-    L.e('K', 61, 10); L.put(67, 10, '==='); L.put(67, 8, 'ooo');
-    L.e('guard', 79, 9);
-    L.put(89, 7, 'ooo'); L.put(91, 4, '?*?'); L.e('guard', 94, 7);
-    L.e('hay', 99, 10); L.put(98, 8, 'ooo'); L.secret(103, 11);
-    L.e('guard', 116, 9); L.put(120, 8, 'ooo'); L.e('f', 127, 7);
-    L.e('npc', 131, 10, { who: 'rafael', say: 'Mandou bem, Matheus. O Scott está te esperando do outro lado da serra.' });
-    L.e('G', 139, 10);
-    return L;
-  }
-
-  function fase13() {
-    const L = builder(138, 'snowCity', 'CIDADE NEVADA DO SCOTT', 'snowCity');
-    L.intro = 'Pegue o bonde, atravesse a neve e encontre o Scott na frente da casa de shows.';
-    L.ice = true;
-    L.ground(0, 24); L.ground(29, 51); L.ground(60, 82);
-    L.ground(83, 93, 10); L.ground(94, 102); L.ground(107, 137);
-
-    L.e('npc', 6, 11, { who: 'scott', say: 'Bem-vindo! O bonde cruza o canal. Depois, sobe pela marquise pra chegar na casa de shows.' });
-    L.put(11, 8, '?M?'); L.e('w', 18, 11);
-    L.put(25, 11, '===='); L.put(25, 8, 'oooo'); L.e('n', 37, 6);
-    L.put(42, 8, 'B?B'); L.e('k', 43, 11);
-    L.e('K', 49, 11); L.e('tram', 51, 11, { range: 7 });
-    L.put(54, 9, 'ooooo'); L.e('g', 63, 11);
-    L.secret(67); L.put(75, 8, '?*?'); L.e('w', 78, 11);
-    L.put(84, 9, 'ooooooo'); L.e('f', 92, 6);
-    L.put(97, 8, '?1?'); L.put(103, 10, '===='); L.put(104, 8, 'oo');
-    L.e('w', 111, 11); L.e('n', 117, 7);
-    L.e('venue', 128, 11);
-    L.e('npc', 124, 11, { who: 'scott', say: 'Chegou na hora! O show vai começar. Valeu por jogar, Matheus!' });
-    L.e('G', 131, 11);
-    return L;
-  }
-
-  const list = [fase1, fase2, fase3, fase4, chefe, fase5, fase6, fase7, fase8, chefe2, fase9, fase10, fase11, fase12, fase13];
-  const labels = ['1', '2', '3', '4', 'CHEFE', '5', '6', '7', '8', 'CHEFE 2', '9', '10', '11', '12', '13'];
+  const list = [fase1, fase2, fase3, fase4, chefe, fase5, fase6, fase7, fase8, chefe2, fase9, fase10, fase11];
+  const labels = ['1', '2', '3', '4', 'CHEFE', '5', '6', '7', '8', 'CHEFE 2', '9', '10', '11'];
   return { list, labels };
 })();

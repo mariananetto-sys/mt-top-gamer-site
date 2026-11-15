@@ -38,8 +38,7 @@
   try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s) save = { ...save, ...s }; } catch (e) { /* sem storage */ }
   if (!Array.isArray(save.done)) save.done = [];
   if (!Array.isArray(save.sec)) save.sec = [];
-  const nextFromProgress = save.done.reduce((next, done, index) => done ? index + 2 : next, 1);
-  save.unlocked = Math.min(LEVELS.list.length, Math.max(Number.isInteger(save.unlocked) ? save.unlocked : 1, nextFromProgress));
+  save.unlocked = Math.min(LEVELS.list.length, Math.max(1, Number.isInteger(save.unlocked) ? save.unlocked : 1));
   function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) { /* sem storage */ } }
   AUDIO.setMuted(!!save.muted);
 
@@ -233,7 +232,7 @@
   // ------------------------------------------------------------ FASES
   function spawn(d) {
     const bx = d.x * T, by = (d.y + 1) * T;
-    const base = { t: 0, vx: 0, vy: 0, dir: -1, active: false };
+    const base = { t: 0, vx: 0, vy: 0, dir: -1, active: false, zone: zoneAt(bx) };
     switch (d.type) {
       case 'guard': case 'g': return { ...base, kind: 'g', guard: d.type === 'guard', x: bx + 1, y: by - 14, w: 14, h: 14, enemy: true };
       case 'hay': return { ...base, kind: 'hay', active: true, x: bx, y: by - 10, w: 32, h: 10 };
@@ -398,7 +397,7 @@
     if (p.star > 0) {
       p.star--;
       if (G.t % 3 === 0) G.parts.push({ type: 'spark', x: p.x + Math.random() * p.w, y: p.y + Math.random() * p.h, vx: 0, vy: -0.3, life: 16, color: ['#ffd23f', '#ff8fd8', '#7cf0ff'][G.t % 3] });
-      if (p.star === 0) AUDIO.music(G.L.song);
+      if (p.star === 0) AUDIO.music(levelSong());
     }
     if (p.cdCool > 0) p.cdCool--;
     if (p.onPlat && p.onPlat.ghost) p.onPlat = null;
@@ -409,7 +408,7 @@
     // no celular o Matheus corre sozinho ao segurar a direção (o B fica pro CD)
     const run = I.run || touch.left || touch.right;
     const max = water ? (run ? 1.7 : 1.2) : run ? 2.6 : 1.45;
-    const ice = !!G.L.ice && p.onGround;
+    const ice = p.onGround && (G.L.ice || G.L.zones?.[G.zone]?.[4]);
     const acc = (p.onGround ? (run ? 0.1 : 0.08) : 0.07) * (ice ? 0.45 : 1);
     let dir = (I.right ? 1 : 0) - (I.left ? 1 : 0);
     if (G.glitch && G.glitch.kind === 'invert') dir = -dir;
@@ -622,6 +621,7 @@
     e.t++;
     if (e.dying === 'flat') { if (--e.dt <= 0) e.gone = true; return; }
     if (e.dying === 'flip') { e.vy += 0.3; e.x += e.vx; e.y += e.vy; if (e.y > H + 24) e.gone = true; return; }
+    const playerInZone = e.zone == null || e.zone === G.zone;
     if (e.kind === 'g') walker(e, e.guard ? 0.68 : 0.5, e.guard);
     else if (e.kind === 's') walker(e, 0.55, false);
     else if (e.kind === 'rival') {
@@ -635,9 +635,9 @@
     else if (e.kind === 'w') {
       e.load = (e.t % 160) >= 100;
       if (e.load) { e.vx = 0; e.vy = Math.min(e.vy + 0.35, 6); const pb = e.y + e.h; e.y += e.vy; collideY(e, pb); }
-      else { if (e.t % 160 === 1) e.dir = P.x < e.x ? -1 : 1; walker(e, 1.2, false); e.roll += e.vx; }
+      else { if (playerInZone && e.t % 160 === 1) e.dir = P.x < e.x ? -1 : 1; walker(e, 1.2, false); e.roll += e.vx; }
     } else if (e.kind === 'p') {
-      e.x -= 0.5; e.y = e.baseY + Math.sin(e.t * 0.04) * 12;
+      e.x += e.dir * 0.5; e.y = e.baseY + Math.sin(e.t * 0.04) * 12;
     } else if (e.kind === 'n') {
       e.y = e.baseY + Math.sin(e.t * 0.05) * 3;
       if (e.t % 130 === 60 && Math.abs(P.x - e.x) < 150) { G.shots.push({ kind: 'drop', x: e.x + 2, y: e.y + e.h, w: 8, h: 8, vx: 0, vy: 1.2, t: 0 }); AUDIO.sfx('select'); }
@@ -654,7 +654,7 @@
     else if (e.kind === 'b') {
       if (e.stun > 0) { e.stun--; e.vx = 0; e.vy = Math.min(e.vy + 0.35, 6); const pb = e.y + e.h; e.y += e.vy; collideY(e, pb); }
       else {
-        if (e.t % 40 === 0) e.dir = P.x < e.x ? -1 : 1;
+        if (playerInZone && e.t % 40 === 0) e.dir = P.x < e.x ? -1 : 1;
         walker(e, e.turbo ? 1.6 : 1.05, false);
         e.roll += e.vx;
       }
@@ -673,14 +673,25 @@
         if (e.y > H + 16) e.gone = true;
       }
     } else if (e.kind === 'f') {
-      e.x -= 0.45;
+      e.x += e.dir * 0.45;
       e.y = e.baseY + Math.sin(e.t * 0.045) * 18;
     } else if (e.kind === 'm') {
       // morcego: voa em zigue-zague indo atrás do jogador
-      e.x += Math.sign(P.x - e.x) * 0.6; e.dir = P.x < e.x ? -1 : 1;
+      const dir = playerInZone ? Math.sign(P.x - e.x) : e.dir;
+      e.x += dir * 0.6;
+      if (dir) e.dir = dir;
       e.y = e.baseY + Math.sin(e.t * 0.08) * 14;
     }
-    touchPlayer(e);
+  }
+
+  function keepEnemyInZone(e) {
+    if (e.zone == null) return;
+    const min = G.L.zones[e.zone][0] * T;
+    const max = (G.L.zones[e.zone + 1]?.[0] ?? G.mw) * T - e.w;
+    if (e.x >= min && e.x <= max) return;
+    e.dir = e.x < min ? 1 : -1;
+    e.x = clamp(e.x, min, max);
+    e.vx = 0;
   }
 
   function enemyVsEnemy() {
@@ -701,14 +712,7 @@
   // ------------------------------------------------------------ OBJETOS
   function updatePlatform(e) {
     const ox = e.x, oy = e.y;
-    if (e.kind === 'dash') {
-      const x = R(e.x), y = R(e.y);
-      const ph = (G.t >> 2) % 3;
-      rect('rgba(255,180,40,0.25)', x - 2, y - 6, 20, 9);
-      rect('#1a1020', x - 1, y - 3, 18, 6); rect('#2a2a44', x, y - 2, 16, 4);
-      for (let i = 0; i < 3; i++) { const c = i === ph ? '#fff3a0' : '#ffb02e', ax = x + 2 + i * 5; rect(c, ax, y - 2, 2, 1); rect(c, ax + 1, y - 1, 2, 1); rect(c, ax, y, 2, 1); }
-    }
-    else if (e.kind === 'mp') {
+    if (e.kind === 'mp') {
       if (e.axis === 'x') { e.x += e.dir * e.speed; if (e.x >= e.b) { e.x = e.b; e.dir = -1; } if (e.x <= e.a) { e.x = e.a; e.dir = 1; } }
       else { e.y += e.dir * e.speed; if (e.y >= e.b) { e.y = e.b; e.dir = -1; } if (e.y <= e.a) { e.y = e.a; e.dir = 1; } }
     } else if (e.kind === 'fall') {
@@ -1026,7 +1030,7 @@
   function openMap(sel) { toState('map'); G.mapSel = clamp(sel, 0, save.unlocked - 1); AUDIO.music('title'); }
   function enterLevel(i) { G.check = null; loadLevel(i, false); toState('intro'); AUDIO.stopMusic(); AUDIO.sfx('start'); }
   // posições dos pontos no mapa, uma linha por mundo
-  const MAP_PTS = [[60, 58], [118, 46], [176, 60], [234, 46], [312, 54], [60, 108], [118, 96], [176, 110], [234, 96], [312, 104], [60, 152], [118, 146], [176, 154], [234, 146], [312, 154]];
+  const MAP_PTS = [[60, 58], [118, 46], [176, 60], [234, 46], [312, 54], [60, 108], [118, 96], [176, 110], [234, 96], [312, 104], [118, 152], [196, 146], [274, 154]];
   function updateMap() {
     const n = LEVELS.list.length;
     const mv = (d) => { let k = G.mapSel + d; if (k < 0 || k >= n || k >= save.unlocked) return; G.mapSel = k; AUDIO.sfx('select'); };
@@ -1088,8 +1092,12 @@
     if (!G.L.zones) return;
     const k = zoneAt(P.x + P.w / 2);
     if (k !== G.zone) {
-      const first = G.zone == null; G.zone = k; const z = G.L.zones[k];
-      if (!first) { G.zoneBanner = { txt: z[3], t: 150 }; if (P.star <= 0) AUDIO.music(z[2]); }
+      const previous = G.L.zones[G.zone], [, , song, name] = G.L.zones[k];
+      G.zone = k;
+      if (previous) {
+        if (previous[3] !== name) G.zoneBanner = { txt: name, t: 150 };
+        if (P.star <= 0) AUDIO.music(song);
+      }
     }
     if (G.zoneBanner && --G.zoneBanner.t <= 0) G.zoneBanner = null;
   }
@@ -1115,8 +1123,11 @@
     for (const e of G.ents) {
       if (!e.active || e.gone || e.plat) continue;
       if (e.kind === 'boss') updateBoss(e);
-      else if (e.enemy || e.dying) updateEnemy(e);
-      else if (updateObject(e)) {
+      else if (e.enemy || e.dying) {
+        updateEnemy(e);
+        keepEnemyInZone(e);
+        if (e.enemy && !e.gone) touchPlayer(e);
+      } else if (updateObject(e)) {
         if (e.who === 'ps2') G.nearShop = true;
         const distance = Math.abs(P.x + P.w / 2 - (e.x + 8));
         if ((!e.dialogDismissed || (e.who === 'ps2' && I.runP)) && distance < nearestDistance) {
@@ -1152,7 +1163,7 @@
     return items;
   }
   const pauseItems = [
-    { label: 'CONTINUAR', act: () => { toState('play'); AUDIO.music(P.star > 0 ? 'star' : G.boss ? (G.boss.state === 'intro' ? '' : G.boss.b2 ? 'boss2' : 'boss') : G.L.song); } },
+    { label: 'CONTINUAR', act: () => { toState('play'); AUDIO.music(P.star > 0 ? 'star' : G.boss ? (G.boss.state === 'intro' ? '' : G.boss.b2 ? 'boss2' : 'boss') : levelSong()); } },
     { label: 'MAPA', act: () => openMap(G.levelIdx) },
     { label: 'SAIR PARA O MENU', act: () => { toState('title'); AUDIO.music('title'); } },
   ];
@@ -1176,7 +1187,7 @@
       case 'intro':
         if (G.stateT > 150 || (G.stateT > 40 && I.selP)) {
           toState('play');
-          if (!G.L.boss) AUDIO.music(G.L.song);
+          if (!G.L.boss) AUDIO.music(levelSong());
         }
         break;
       case 'play':
@@ -1508,7 +1519,22 @@
   }
 
   function drawObject(e) {
-    if (e.kind === 'hay') img(ART.props.hay, e.x, e.y);
+    if (e.kind === 'dash') {
+      const x = R(e.x), y = R(e.y);
+      const lit = (G.t >> 2) % 3;
+      rect('#1a1020', x - 1, y - 4, 18, 7);
+      rect('#3b2942', x, y - 3, 16, 5);
+      rect('#ff9d2b', x, y + 2, 16, 1);
+      for (let i = 0; i < 3; i++) {
+        const color = i === lit || e.cool > 0 ? '#fff3a0' : '#ffb02e';
+        const ax = x + 1 + i * 5;
+        rect(color, ax, y - 3, 2, 1);
+        rect(color, ax + 1, y - 2, 2, 1);
+        rect(color, ax + 2, y - 1, 2, 1);
+        rect(color, ax + 1, y, 2, 1);
+        rect(color, ax, y + 1, 2, 1);
+      }
+    } else if (e.kind === 'hay') img(ART.props.hay, e.x, e.y);
     else if (e.kind === 'venue') img(ART.props.venue, e.x, e.y);
     else if (e.tram) img(ART.props.tram, e.x, e.y);
     else if (e.kind === 'mp') {
@@ -1758,6 +1784,7 @@
     return k;
   }
   function themeAt(px) { const k = zoneAt(px); return k == null ? G.L.theme : G.L.zones[k][1]; }
+  function levelSong() { return G.L.zones?.[zoneAt(P.x + P.w / 2)]?.[2] ?? G.L.song; }
   function drawWorld() {
     const cx = G.cam + W / 2, zk = zoneAt(cx);
     if (zk == null) ART.background(G.L.theme, W, H).draw(ctx, G.cam, G.t);

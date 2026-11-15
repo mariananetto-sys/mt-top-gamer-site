@@ -22,7 +22,7 @@ Jogo de plataforma 2D em `jogo.html` (link no menu do site e na seção "O jogo 
 
 - Mundo 1: Colinas Tropicais, Caverna dos Cartuchos, Nuvens do Lag, Fábrica Bugsoft + chefão BUGSOFT.
 - Mundo 2: Praia do Pixel, Feira Gamer, Fundo do Mar Digital (nadando), Ilha de Edição + chefão BUFFERÃO.
-- Mundo 3: Pico Congelado (gelo que escorrega), Festa dos Inscritos (zonas da Babs, do Miguel, da Martbuz e do Jackson), Live do Jackson (vídeo do YouTube de fundo e bugs no jogo), Telhados do Rafa (parkour por uma cidade medieval) e Cidade Nevada do Scott (bonde, neve e uma casa de shows).
+- Mundo 3: Pico Congelado, Festa dos Inscritos e Live do Jackson. Na Festa dos Inscritos, a fase 10, a zona do Rafa e do Scott fica entre o QG da Martbuz e a caverna do Jackson. A área vai dos telhados medievais à cidade nevada com bonde.
 - Mapa de mundos para escolher e rejogar fases; segredos por fase ficam salvos.
 - Amigos: Axolote (dicas), PS2 Gordo (loja), Babs Mary ("É brincadeira, Matheus!"), Inscrito 500 e a galera do Discord escondida em casinhas secretas.
 - Inimigos: bug do lag, cartucho bravo, controle voador, glitch espinhento, caranguejo pixel, rodinha de carregamento, peixe-controle, sininho spam, hater do comentário e a bola de metal (normal e turbo) (pisar só deixa tonta; CD, casco ou estrela destroem).
