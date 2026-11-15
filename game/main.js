@@ -235,7 +235,8 @@
       case 'h': return { ...base, kind: 'h', x: bx, y: by - 12, w: 16, h: 12, enemy: true, baseY: by - 12 };
       case 'crowd': return { ...base, kind: 'crowd', plat: true, active: true, x: bx, y: by - 16, w: 16, h: 16, look: d.x % 4, dx: 0, dy: 0 };
       case 'cut': return { ...base, kind: 'cut', plat: true, active: true, x: bx, y: d.y * T, w: 32, h: 8, off: d.off || 0, period: 200, dx: 0, dy: 0, ghost: false };
-      case 'npc': return { ...base, kind: 'npc', active: true, who: d.who, say: d.say, x: bx, y: by - 16, w: 16, h: 16, met: 0, done: false, face: -1 };
+      case 'npc': return { ...base, kind: 'npc', active: true, who: d.who, say: d.say, lines: d.lines, x: bx, y: by - 16, w: 16, h: 16, met: 0, done: false, face: -1 };
+      case 'martbuz': return { ...base, kind: 'martbuz', active: true, x: bx, y: by - 16, w: 16, h: 16, phase: 'wait' };
       case 'kiss': return { ...base, kind: 'kiss', active: true, x: bx, y: by - 16, w: 16, h: 16, phase: 'wait', bx: bx, mx: bx + 40 };
       case 'boss2': return { ...base, kind: 'boss', b2: true, active: true, x: bx - 12, y: -60, w: 40, h: 40, hp: 12, maxHp: 12, state: 'intro', face: -1, inv: 0, landed: false, last: '', baseY: 52 };
       case 'k': return { ...base, kind: 'k', x: bx + 1, y: by - 15, w: 14, h: 15, enemy: true, state: 'walk', shellT: 0, kickT: 0 };
@@ -287,6 +288,41 @@
     toState('intro');
     AUDIO.stopMusic(); AUDIO.sfx('start');
   }
+  // ---------- Tropa da Martbuz (Rafael e Scott) e o Jackson
+  function martbuzScene(e) {
+    e.t++;
+    updateParts();
+    P.vx = 0; P.vy = Math.min(P.vy + 0.42, 6); { const pb = P.y + P.h; P.y += P.vy; collideY(P, pb); }
+    const skip = e.t > 60 && I.selP;
+    if (e.phase === 'intro') {
+      const stopR = P.x + 70, stopS = P.x + 114;
+      if (e.rx > stopR) e.rx -= 1.6;
+      if (e.sx > stopS) e.sx -= 1.6;
+      if (e.t > 50 && e.t <= 200) G.dialog = { who: 'rafael', name: 'RAFAEL', txt: 'Somos da tropa da Martbuz e vamos acabar com voce!!' };
+      else if (e.t > 200) G.dialog = { who: 'scott', name: 'SCOTT', txt: 'E isso ai. Prepara, Matheus...' };
+      if (e.t > 320 || skip) {
+        G.dialog = null; G.scene = null; e.phase = 'fight';
+        const mk = (who, x) => ({ kind: 'rival', who, x, y: 192 - 16, w: 14, h: 16, vx: 0, vy: 0, dir: -1, t: who === 'scott' ? 45 : 0, active: true, enemy: true, hp: 3, inv: 0 });
+        G.ents.push(mk('rafael', e.rx), mk('scott', e.sx));
+        toState('play');
+      }
+    } else if (e.phase === 'jackson') {
+      if (e.jdir < 0) {
+        if (e.jx > P.x + 50) e.jx -= 2.6;
+        else if (!e.talk) { e.talk = e.t; }
+        if (e.talk) {
+          G.dialog = { who: 'jackson', name: 'JACKSON', txt: e.t - e.talk < 130 ? 'Zubba lorpi Martbuz?! Kranka fuu bli-bli, Matheus zonk-zonk!' : 'Oh-no-no... PIPPO NUNGA! Waaah!' };
+          if ((e.t - e.talk) % 6 === 0) AUDIO.sfx('blip');
+          if (e.t - e.talk > 220 || skip) { e.jdir = 1; G.dialog = null; for (let i = 0; i < 3; i++) G.parts.push({ type: 'tear', x: e.jx + 12, y: e.y + 2, vx: 0.5 + i * 0.3, vy: -1.2, life: 26 }); }
+        }
+      } else {
+        e.jx += 3.4;
+        if (e.t % 6 === 0) G.parts.push({ type: 'dust', x: e.jx + 2, y: e.y + 14, vx: -0.4, vy: -0.2, life: 14 });
+        if (e.jx > G.cam + W + 20) { e.phase = 'done'; G.scene = null; G.dialog = null; toState('play'); }
+      }
+    }
+  }
+
   function toState(s) { G.state = s; G.stateT = 0; G.menuSel = 0; G.menuRects = []; showOverlay(s === 'ending'); }
 
   // ------------------------------------------------------------ PONTOS
@@ -525,6 +561,13 @@
       }
       return;
     }
+    if (e.kind === 'rival') {
+      if (stomp) {
+        p.y = e.y - p.h; stompBounce();
+        if (e.inv === 0) { e.hp--; e.inv = 40; AUDIO.sfx('stomp'); addScore(500, e.x, e.y); if (e.hp <= 0) { flipKill(e); addScore(2000, e.x, e.y - 10); } }
+      } else if (e.inv < 20) hurtPlayer();
+      return;
+    }
     if (e.kind === 'c' && e.up && stomp) { hurtPlayer(); return; }
     if (e.kind === 'w' && stomp && !e.load) { hurtPlayer(); return; }
     if (e.kind === 'b') {
@@ -559,6 +602,13 @@
     if (e.dying === 'flip') { e.vy += 0.3; e.x += e.vx; e.y += e.vy; if (e.y > H + 24) e.gone = true; return; }
     if (e.kind === 'g') walker(e, 0.5, false);
     else if (e.kind === 's') walker(e, 0.55, false);
+    else if (e.kind === 'rival') {
+      if (e.inv > 0) e.inv--;
+      if (e.t % 50 === 0) e.dir = P.x < e.x ? -1 : 1;
+      walker(e, e.who === 'scott' ? 0.9 : 0.7, false);
+      if (e.who === 'scott' && e.onGround && e.t % 100 === 0) e.vy = -5.2;
+      if (e.who === 'rafael' && e.t % 110 === 60 && Math.abs(P.x - e.x) < 220) G.shots.push({ kind: 'msg', x: e.x + 2, y: e.y + 2, w: 10, h: 8, vx: clamp((P.x - e.x) / 45, -2.6, 2.6), vy: -2.8, t: 0 });
+    }
     else if (e.kind === 'c') { walker(e, 0.4, true); e.up = (e.t % 140) < 70; }
     else if (e.kind === 'w') {
       e.load = (e.t % 160) >= 100;
@@ -647,6 +697,12 @@
       }
     } else if (e.kind === 'G') {
       if (G.state === 'play' && P.x + P.w > e.x + 6 && P.y + P.h > e.y) levelClear();
+    } else if (e.kind === 'martbuz') {
+      if (e.phase === 'wait' && P.onGround && P.x > e.x) {
+        e.phase = 'intro'; e.t = 0; e.rx = G.cam + W + 20; e.sx = G.cam + W + 64; G.scene = e; P.vx = 0; P.face = 1; toState('scene'); AUDIO.sfx('rival');
+      } else if (e.phase === 'fight' && !G.ents.some((r) => r.kind === 'rival' && !r.dying)) {
+        e.phase = 'jackson'; e.t = 0; e.jx = G.cam + W + 10; e.jdir = -1; G.scene = e; P.vx = 0; toState('scene');
+      }
     } else if (e.kind === 'kiss') {
       if (e.phase === 'wait' && !G.kissSeen && P.onGround && P.x + P.w > e.x - 70 && P.x < e.x) {
         e.phase = 'run'; e.t = 0; G.scene = e; G.kissSeen = true; P.vx = 0; P.face = 1; toState('scene');
@@ -667,7 +723,7 @@
     }
   }
 
-  const NPC_NAME = { axo: 'AXOLOTE', ps2: 'PS2 GORDO', discord: 'GALERA DO DISCORD', babs: 'BABS MARY', inscrito: 'INSCRITO 500', miguel: 'MIGUEL' };
+  const NPC_NAME = { axo: 'AXOLOTE', ps2: 'PS2 GORDO', discord: 'GALERA DO DISCORD', babs: 'BABS MARY', inscrito: 'INSCRITO 500', miguel: 'MIGUEL', rafael: 'RAFAEL', scott: 'SCOTT', jackson: 'JACKSON' };
   function npcTalk(e) {
     if (e.who === 'couple') {
       // casal ajudante: a Babs chama, o Miguel dá um presente
@@ -679,7 +735,7 @@
         AUDIO.sfx('appear');
         for (let i = 0; i < 4; i++) G.parts.push({ type: 'heart', x: e.x + 8, y: e.y - 4, vx: (Math.random() - 0.5) * 0.8, vy: -0.6, life: 50 });
       }
-      const lines = [['babs', 'Amor, olha o Matheus!'], ['miguel', 'Salve, Matheus! Toma um presente da gente!'], ['babs', 'Boa sorte! A gente ta torcendo por voce <3']];
+      const lines = e.lines || [['babs', 'Amor, olha o Matheus!'], ['miguel', 'Salve, Matheus! Toma um presente da gente!'], ['babs', 'Boa sorte! A gente ta torcendo por voce <3']];
       G.dialog = { who: lines[step][0], name: NPC_NAME[lines[step][0]], txt: lines[step][1] };
       return;
     }
@@ -1092,6 +1148,7 @@
         updateMap();
         break;
       case 'scene': {
+        if (G.scene && G.scene.kind === 'martbuz') { G.t++; martbuzScene(G.scene); break; }
         G.t++;
         const e = G.scene; e.t++;
         updateParts();
@@ -1229,6 +1286,10 @@
         if (e.stun > 0) rect('#1a1020', ex + 1, ey + 3, 4, 1); else rect('#ffffff', ex + 1, ey + 1, 1, 1);
         if (e.stun > 0) for (let i = 0; i < 2; i++) { const a = e.t * 0.15 + i * 3.1; rect('#ffd23f', dx + 7 + Math.cos(a) * 7, by - 19 + Math.sin(a) * 2, 2, 2); }
       }
+    } else if (e.kind === 'rival') {
+      if (e.inv > 0 && (e.t >> 1) % 2 && !flipY) return;
+      img(face(ART.NPC[e.who]), dx, by - 16, flipY);
+      if (!flipY) { text(e.who === 'rafael' ? 'RAFAEL' : 'SCOTT', R(dx + 8), R(by - 25), { size: 6, align: 'center', color: '#ff3b3b' }); for (let i = 0; i < e.hp; i++) rect('#ff3b3b', dx + 3 + i * 4, by - 18, 3, 2); }
     } else if (e.kind === 'c') {
       img(face(ENEMY.crab[e.up && !flipY ? 1 : 0]), dx, by - 16, flipY);
     } else if (e.kind === 'p') {
@@ -1281,6 +1342,17 @@
       const x = R(e.x), y = R(e.y);
       rect('#1a1020', x, y, 32, 10); rect('#9b4dff', x + 1, y + 1, 30, 8); rect('#c8a0ff', x + 1, y + 1, 30, 1);
       for (let i = 3; i < 30; i += 5) { rect('#1a1020', x + i, y + 2, 2, 1); rect('#1a1020', x + i, y + 7, 2, 1); }
+    } else if (e.kind === 'martbuz') {
+      if (e.phase === 'intro') {
+        img(ART.NPC.rafael.r, e.rx, e.y); img(ART.NPC.scott.r, e.sx, e.y);
+        text('RAFAEL', R(e.rx + 8), R(e.y - 9), { size: 6, align: 'center', color: '#ff3b3b' });
+        text('SCOTT', R(e.sx + 8), R(e.y - 9), { size: 6, align: 'center', color: '#ff3b3b' });
+      } else if (e.phase === 'jackson') {
+        const bob = (G.t >> 2) % 2;
+        img(e.jdir < 0 ? ART.NPC.jackson.r : ART.NPC.jackson.l, e.jx, e.y - bob);
+        text('JACKSON', R(e.jx + 8), R(e.y - 9 - bob), { size: 6, align: 'center', color: '#ff9ab0' });
+        if (e.jdir > 0) { rect('#5ec8ff', e.jx + 2, e.y + 1, 2, 3); rect('#5ec8ff', e.jx + 12, e.y - 1, 2, 3); }
+      }
     } else if (e.kind === 'kiss') {
       img(ART.NPC.babs.r, e.bx, e.y);
       img(ART.NPC.miguel.l, e.mx, e.y);
@@ -1520,7 +1592,7 @@
     rect('#ffd23f', x + 4, y + 4, 36, 36); rect('#5ec8ff', x + 5, y + 5, 34, 34);
     ctx.drawImage(d.who === 'matheus' ? HERO.n.s.idle.r : ART.NPC[d.who].r, x + 6, y + 6, 32, 32);
     text(d.name, x + 46, y + 5, { color: '#ffd23f' });
-    wrap(d.txt, 40).slice(0, 3).forEach((l, i) => text(l, x + 46, y + 16 + i * 9, { color: '#ffffff', size: 8 }));
+    wrap(d.txt, 38).slice(0, 3).forEach((l, i) => text(l, x + 46, y + 16 + i * 9, { color: '#ffffff', size: 8 }));
   }
   function drawMenu(items, y0, gap) {
     G.menuRects = [];
@@ -1613,13 +1685,13 @@
     const jump = Math.abs(Math.sin(G.t * 0.08)) * 10;
     ctx.drawImage(HERO.n.b.jump.r, W / 2 - 70, 70 - R(jump));
     ctx.drawImage(HERO.n.b.jump.l, W / 2 + 54, 70 - R(jump));
-    text('BUGSOFT E BUFFERAO DERROTADOS!', W / 2, 104, { align: 'center' });
-    text('O UNIVERSO 100% GAMER', W / 2, 118, { align: 'center' });
-    text('ESTÁ SALVO!', W / 2, 132, { align: 'center' });
-    ctx.drawImage(ART.NPC.inscrito.r, 40, 160); ctx.drawImage(ART.NPC.babs.l, W - 56, 160); ctx.drawImage(ART.NPC.axo.r, 60, 162); ctx.drawImage(ART.NPC.discord.l, W - 76, 160);
-    text('PONTOS ' + pad0(G.score, 6), W / 2, 150, { color: '#ffd23f', align: 'center' });
-    text('INSCREVA-SE NO CANAL!', W / 2, 166, { color: '#ff8fd8', align: 'center' });
-    text('@MT-TOP-GAMER.2006', W / 2, 180, { color: '#ffffff', align: 'center' });
+    text('BUGSOFT E BUFFERAO DERROTADOS!', W / 2, 102, { align: 'center' });
+    text('O UNIVERSO 100% GAMER ESTA SALVO!', W / 2, 114, { align: 'center' });
+    text('PONTOS ' + pad0(G.score, 6), W / 2, 128, { color: '#ffd23f', align: 'center' });
+    text('LUCAS: "VALEU POR JOGAR MEU JOGO!"', W / 2, 144, { color: '#7cf0ff', align: 'center' });
+    text('FEITO POR: LUCAS', W / 2, 156, { color: '#ffffff', align: 'center' });
+    text('INSCREVA-SE: @MT-TOP-GAMER.2006', W / 2, 170, { color: '#ff8fd8', align: 'center' });
+    ctx.drawImage(ART.NPC.inscrito.r, 22, 150); ctx.drawImage(ART.NPC.axo.r, 22, 170); ctx.drawImage(ART.NPC.babs.l, W - 38, 150); ctx.drawImage(ART.NPC.miguel.l, W - 38, 170);
     drawParts();
   }
 

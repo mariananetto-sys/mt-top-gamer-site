@@ -24,7 +24,14 @@ window.AUDIO = (() => {
     if (!AC) return;
     ctx = new AC();
     master = ctx.createGain(); master.gain.value = muted ? 0 : 0.5; master.connect(ctx.destination);
-    musicGain = ctx.createGain(); musicGain.gain.value = 0.34; musicGain.connect(master);
+    // música: filtro suave + eco curto para o chiptune ficar mais redondo
+    musicGain = ctx.createGain(); musicGain.gain.value = 0.34;
+    const soft = ctx.createBiquadFilter(); soft.type = 'lowpass'; soft.frequency.value = 3600; soft.Q.value = 0.4;
+    const echo = ctx.createDelay(1); echo.delayTime.value = 0.21;
+    const fb = ctx.createGain(); fb.gain.value = 0.28;
+    const wet = ctx.createGain(); wet.gain.value = 0.22;
+    musicGain.connect(soft); soft.connect(master);
+    soft.connect(echo); echo.connect(fb); fb.connect(echo); echo.connect(wet); wet.connect(master);
     sfxGain = ctx.createGain(); sfxGain.gain.value = 0.55; sfxGain.connect(master);
     const pulse = (duty) => {
       const n = 48, real = new Float32Array(n), imag = new Float32Array(n);
@@ -82,6 +89,8 @@ window.AUDIO = (() => {
     oneup() { seq(['E6', 'G6', 'E7', 'C7', 'D7', 'G7'], 0.08, { wave: 'p25', vol: 0.1 }); },
     kiss() { seq(['E6', 'G6', null, 'C7'], 0.07, { wave: 'p25', vol: 0.08 }); },
     cry() { const t = ctx.currentTime; for (let i = 0; i < 4; i++) tone(520 - i * 40, t + i * 0.22, 0.2, { wave: 'p12', slide: 380 - i * 40, vol: 0.07 }); },
+    rival() { seq(['E5', 'Eb5', 'D5', 'C#5'], 0.1, { wave: 'p25', vol: 0.09 }); },
+    blip() { const t = ctx.currentTime; tone(1200 + Math.random() * 400, t, 0.04, { wave: 'p12', vol: 0.05 }); },
     swim() { const t = ctx.currentTime; tone(420, t, 0.09, { wave: 'p12', slide: 620, vol: 0.07 }); },
     kick() { const t = ctx.currentTime; tone(700, t, 0.06, { slide: 300, vol: 0.15 }); },
     cd() { const t = ctx.currentTime; tone(1400, t, 0.07, { wave: 'p12', slide: 500, vol: 0.12 }); },
@@ -167,8 +176,8 @@ window.AUDIO = (() => {
       let n = 1; while (toks[(i + n) % toks.length] === '-' && n < 8) n++;
       const m = midi(tok);
       if (m != null) {
-        tone(freq(m), t, n * spb * 0.92, { wave: song.wave, vol: 0.12, dest: musicGain, rel: 0.04 });
-        tone(freq(m), t + spb * 0.75, Math.min(n * spb, spb * 1.2) * 0.8, { wave: 'p12', vol: 0.035, dest: musicGain });
+        tone(freq(m), t, n * spb * 0.92, { wave: song.wave, vol: 0.095, dest: musicGain, rel: 0.06 });
+        tone(freq(m) * 1.004, t, n * spb * 0.9, { wave: 'p12', vol: 0.03, dest: musicGain, rel: 0.06 });
       }
     }
     const bar = Math.floor(i / 8) % song.chords.length, pos = i % 8;
@@ -176,10 +185,14 @@ window.AUDIO = (() => {
     const chord = parts.length > 1 ? parts[pos < 4 ? 0 : 1] : parts[0];
     const off = song.bass[pos];
     if (off != null) tone(freq(36 + root(chord) + off), t, spb * 0.85, { wave: 'triangle', vol: 0.26, dest: musicGain });
+    // acorde arpejado bem baixinho por baixo da melodia
+    const minor = /m(?!aj)/.test(chord.slice(1));
+    const arp = [0, minor ? 3 : 4, 7, 12][pos % 4];
+    tone(freq(60 + root(chord) + arp), t, spb * 0.7, { wave: 'p25', vol: 0.028, dest: musicGain, rel: 0.05 });
     const dr = song.drums[pos];
     if (dr === 'k') tone(150, t, 0.11, { wave: 'sine', slide: 45, vol: 0.55, dest: musicGain });
-    else if (dr === 's') noise(t, 0.1, { type: 'bandpass', freq: 1800, vol: 0.22, dest: musicGain });
-    else if (dr === 'h') noise(t, 0.03, { type: 'highpass', freq: 7000, vol: 0.07, dest: musicGain });
+    else if (dr === 's') { noise(t, 0.12, { type: 'bandpass', freq: 1600, vol: 0.2, dest: musicGain }); tone(190, t, 0.06, { wave: 'triangle', slide: 120, vol: 0.12, dest: musicGain }); }
+    else if (dr === 'h') noise(t, 0.025, { type: 'highpass', freq: 8000, vol: 0.045, dest: musicGain });
   }
   function schedule() {
     if (!ctx || !song) return;

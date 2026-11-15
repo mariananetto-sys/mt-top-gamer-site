@@ -195,13 +195,13 @@ window.LEVELS = (() => {
     L.e('npc', 5, 11, { who: 'axo', say: 'Oi, Matheus! Eu sou o Axolote. As ondas te empurram, e os caranguejos com garra pra cima nao podem ser pisados!' });
     L.put(10, 8, '?M?');
     L.e('c', 18, 11);
-    L.fill(22, 10, 30, 11, 'w'); L.e('c', 27, 11);
+    L.fill(22, 12, 30, 12, 'w'); L.e('c', 27, 11);
     L.put(32, 8, '==='); L.put(36, 6, '==='); L.put(36, 5, 'ooo');
     L.put(41, 9, 'ooo');
     L.e('n', 50, 6); L.e('c', 55, 11);
     L.put(58, 8, 'B?B');
     L.e('npc', 64, 11, { who: 'babs' });
-    L.e('c', 70, 11); L.fill(72, 10, 79, 11, 'w');
+    L.e('c', 70, 11); L.fill(72, 12, 79, 12, 'w');
     L.put(81, 8, 'ooo');
     L.e('K', 86, 11);
     L.stairs(92, [1, 2, 3]);
@@ -209,9 +209,8 @@ window.LEVELS = (() => {
     L.put(106, 8, '?1?'); L.e('B', 110, 11);
     L.secret(114);
     L.put(125, 9, 'ooo');
-    L.e('npc', 130, 11, { who: 'couple' });
     L.e('c', 136, 11); L.e('n', 140, 6); L.put(144, 8, '?M?'); L.e('c', 150, 11);
-    L.fill(154, 10, 162, 11, 'w'); L.e('B', 160, 11);
+    L.fill(154, 12, 162, 12, 'w'); L.e('B', 160, 11);
     L.e('h', 168, 4);
     L.stairs(176, [1, 2, 3, 4, 4]);
     L.e('G', 190, 11);
@@ -227,7 +226,7 @@ window.LEVELS = (() => {
     L.fill(14, 12, 24, 12, '>'); L.e('w', 20, 11);
     L.e('crowd', 26, 11); L.e('crowd', 27, 11); L.e('crowd', 28, 11);
     L.put(31, 9, 'ooo');
-    L.e('npc', 37, 11, { who: 'couple' });
+    L.e('npc', 37, 11, { who: 'couple', lines: [['miguel', 'Amor, essa feira ta LOTADA de jogo!'], ['babs', 'Matheus! Pega esse presente e vai detonar la!'], ['miguel', 'Depois a gente joga uma partida, beleza?']] });
     L.e('n', 41, 6); L.put(44, 8, 'B?B?B'); L.e('g', 46, 11); L.e('w', 52, 11);
     L.fill(56, 12, 64, 12, '<'); L.e('crowd', 60, 11); L.e('crowd', 61, 11);
     L.put(66, 7, 'oooo'); L.put(71, 9, 'ooo');
@@ -258,7 +257,7 @@ window.LEVELS = (() => {
     L.e('c', 30, 11); L.e('p', 40, 8); L.fill(44, 8, 45, 11, 'X'); L.e('p', 48, 4);
     L.put(51, 9, 'oooo');
     L.e('K', 58, 11);
-    L.e('npc', 61, 11, { who: 'couple' });
+    L.e('npc', 61, 11, { who: 'couple', lines: [['babs', 'Miguel... a gente ta DEBAIXO D AGUA?!'], ['miguel', 'Relaxa, amor, e so um jogo kkk. Toma, Matheus!'], ['babs', 'Blub blub! Boa sorte, Matheus!']] });
     L.fill(64, 2, 66, 7, 'X'); L.e('p', 70, 9); L.e('c', 74, 11); L.put(76, 6, '?1?'); L.fill(82, 6, 83, 11, 'X'); L.e('p', 86, 5);
     L.secret(88);
     L.put(96, 8, 'oooo');
@@ -275,7 +274,6 @@ window.LEVELS = (() => {
     const L = builder(200, 'edit', 'ILHA DE EDIÇÃO', 'edit');
     L.intro = 'Bem-vindo a linha do tempo! Cuidado com os cortes secos.';
     L.ground(0, 24); L.ground(37, 70); L.ground(83, 120); L.ground(132, 199);
-    L.e('npc', 4, 11, { who: 'babs' });
     L.put(10, 8, '?M?'); L.e('w', 18, 11);
     L.e('cut', 26, 10, { off: 0 }); L.e('cut', 30, 9, { off: 160 }); L.e('cut', 34, 10, { off: 120 });
     L.put(29, 6, 'ooo');
@@ -286,7 +284,7 @@ window.LEVELS = (() => {
     L.secret(104);
     L.e('s', 113, 11); L.e('g', 117, 11);
     L.e('cut', 122, 10, { off: 0 }); L.e('cut', 126, 9, { off: 160 }); L.e('cut', 129, 10, { off: 120 });
-    L.e('h', 138, 4); L.e('B', 144, 11); L.put(148, 8, '?*?');
+    L.e('martbuz', 136, 11); L.put(148, 8, '?*?');
     L.fill(152, 12, 160, 12, '<'); L.e('w', 156, 11); L.e('s', 164, 11);
     L.e('npc', 170, 11, { who: 'inscrito', say: 'Falta pouco, Matheus! O BUFFERAO ta travando tudo la na frente!' });
     L.stairs(176, [1, 2, 3, 4, 5]);

@@ -365,7 +365,65 @@ window.ART = (() => {
     '..kkkkkkkkkkkk..',
     '..kk........kk..',
   ], 16), BASE, 16);
+  // Rafael: cabelo loiro em chanel com franja e batom vermelho
+  const RAFAEL = fromRows([
+    '.....kkkkkk.....',
+    '....kyyyyyyk....',
+    '...kyyYyyYyyk...',
+    '...kyyyyyyyyk...',
+    '..kyysssssssyk..',
+    '..kyskssskssyk..',
+    '..kyssssSsssyk..',
+    '..kyysssrrssyk..',
+    '..kyyykssssyyk..',
+    '...kyywwwwyyk...',
+    '..kwwwwwwwwwwk..',
+    '..ksswwwwwwssk..',
+    '...kqqqqqqqqk...',
+    '...kqqqkkqqqk...',
+    '...kssk..kssk...',
+    '...knnk..knnk...',
+  ], { ...BASE, y: '#ffe28a', Y: '#e8c25a', r: '#e8402e', q: '#2a2a36' }, 16);
+  // Scott: cabelo loiro espetado, olhar cansado, camisa branca e gravata
+  const SCOTT = fromRows([
+    '.k..k.kk.k..k...',
+    '..kykyyykyyk....',
+    '..kyyyyyyyyyk...',
+    '.kyyYyyyYyyyyk..',
+    '..kyssssssssyk..',
+    '..kysqqssqqsyk..',
+    '..kysskssksssk..',
+    '...kssssSsssk...',
+    '....kssrrssk....',
+    '...kwwwkkwwwk...',
+    '..kwwwwkkwwwwk..',
+    '..kswwwkkwwwsk..',
+    '...kqqqkkqqqk...',
+    '...kqqqkkqqqk...',
+    '...kqqk..kqqk...',
+    '...knnk..knnk...',
+  ], { ...BASE, y: '#f4e6a8', Y: '#d8c27a', q: '#1a1a24' }, 16);
+  // Jackson: carinha rosa e redondo de bermuda azul
+  const JACKSON = fromRows([
+    '................',
+    '.....kkkkkk.....',
+    '....kmmmmmmk....',
+    '...kmmmmmmmmk...',
+    '...kmwkmmwkmk...',
+    '...kmmmmmmmmk...',
+    '..kmmmkkkkmmmk..',
+    '..kmmmmmmmmmmk..',
+    '.kmmmmmmmmmmmmk.',
+    '.kmmmmmmmmmmmmk.',
+    '..kuuuuuuuuuuk..',
+    '..kuuuuuuuuuuk..',
+    '...kmmk..kmmk...',
+    '...kmmk..kmmk...',
+    '..knnnk..knnnk..',
+    '..kkkkk..kkkkk..',
+  ], { ...BASE, m: '#ff9ab0', u: '#2f7bff' }, 16);
   const NPC = {
+    rafael: both(RAFAEL), scott: both(SCOTT), jackson: both(JACKSON),
     axo: both(AXO), ps2: both(PS2), babs: both(BABS), miguel: both(MIGUEL),
     discord: both(PERSON('d', 'v', 'V')),
     inscrito: both(PERSON('n', 'g', 'G')),
@@ -707,8 +765,10 @@ window.ART = (() => {
     });
     S.water = [0, 1].map((f) => {
       const c = mk(16, 16), x = c.getContext('2d');
-      x.fillStyle = 'rgba(30,150,235,0.82)'; x.fillRect(0, 3, 16, 13); x.fillStyle = 'rgba(200,240,255,0.5)'; x.fillRect((f * 5 + 3) % 14, 9, 3, 1); x.fillRect((f * 7 + 9) % 14, 13, 2, 1);
-      for (let i = 0; i < 16; i++) { const wy = 2 + Math.round(Math.sin((i + f * 8) / 16 * Math.PI * 2)); x.fillStyle = '#e0f6ff'; x.fillRect(i, wy, 1, 1); x.fillStyle = 'rgba(120,200,255,0.7)'; x.fillRect(i, wy + 1, 1, 2); }
+      const g = x.createLinearGradient(0, 0, 0, 16); g.addColorStop(0, '#3aa8f0'); g.addColorStop(1, '#1a5fb8');
+      x.fillStyle = g; x.fillRect(0, 2, 16, 14);
+      for (let i = 0; i < 16; i++) { const wy = 2 + Math.round(Math.sin((i + f * 8) / 16 * Math.PI * 2)); x.fillStyle = '#e8f8ff'; x.fillRect(i, wy - 1, 1, 1); x.fillStyle = '#8fd8ff'; x.fillRect(i, wy, 1, 2); }
+      x.fillStyle = 'rgba(220,245,255,0.55)'; x.fillRect((f * 5 + 3) % 13, 8, 3, 1); x.fillRect((f * 7 + 9) % 13, 12, 2, 1);
       return c;
     });
     tileCache[name] = S;
