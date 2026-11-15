@@ -221,9 +221,9 @@
   const check = (id, label, hint) => `<label class="cfg-row cfg-check"><span>${label}${hint ? `<small>${hint}</small>` : ''}</span><input type="checkbox" data-cfg="${id}"></label>`;
   cfgEl.innerHTML = `
     <div class="cfg-box" role="dialog" aria-modal="true" aria-label="Configurações">
-      <header class="cfg-head"><h2>⚙ Configurações</h2><button class="cfg-x" data-act="close" aria-label="Fechar">✕</button></header>
+      <header class="cfg-head"><h2>CONFIGURAÇÕES</h2><button class="cfg-x" data-act="close" aria-label="Fechar">✕</button></header>
       <nav class="cfg-tabs">
-        <button data-tab="touch">📱 Celular</button><button data-tab="keys">⌨ Teclado</button><button data-tab="gen">🔊 Som e tela</button>
+        <button data-tab="touch">CELULAR</button><button data-tab="keys">TECLADO</button><button data-tab="gen">SOM/TELA</button>
       </nav>
       <section class="cfg-pane" data-pane="touch">
         ${isTouch ? '' : '<p class="cfg-note">Os botões de toque só aparecem no celular ou tablet. As opções ficam salvas para quando você jogar lá.</p>'}
@@ -232,26 +232,26 @@
         ${check('lefty', 'Modo canhoto', 'pular e CD na esquerda, setas na direita')}
         ${check('autorun', 'Correr sozinho', 'o Matheus corre ao segurar a seta')}
         ${check('vibrate', 'Vibrar ao apertar')}
-        <div class="cfg-btns"><button class="cfg-b yellow" data-act="move" ${isTouch ? '' : 'disabled'}>✋ Mover botões</button><button class="cfg-b" data-act="pos-reset">Posição padrão</button></div>
+        <div class="cfg-btns"><button class="cfg-b yellow" data-act="move" ${isTouch ? '' : 'disabled'}>MOVER BOTÕES</button><button class="cfg-b" data-act="pos-reset">POSIÇÃO PADRÃO</button></div>
       </section>
       <section class="cfg-pane" data-pane="keys">
         <p class="cfg-note">Clique numa tecla e aperte a nova. Clique de novo para cancelar. Controle (gamepad) também funciona.</p>
         <div class="cfg-keys">${ACTIONS.map(([k, l]) => `<div class="cfg-key"><span>${l}</span><button data-key="${k}" data-slot="0"></button><button data-key="${k}" data-slot="1"></button></div>`).join('')}</div>
-        <div class="cfg-btns"><button class="cfg-b" data-act="keys-reset">Teclas padrão</button></div>
+        <div class="cfg-btns"><button class="cfg-b" data-act="keys-reset">TECLAS PADRÃO</button></div>
       </section>
       <section class="cfg-pane" data-pane="gen">
         ${check('sound', 'Som ligado', 'atalho: tecla M')}
         ${range('music', 'Volume da música', 0, 100, 5)}
         ${range('sfx', 'Volume dos efeitos', 0, 100, 5)}
         ${check('shake', 'Tremer a tela', 'nos chefões e explosões')}
-        <div class="cfg-btns"><button class="cfg-b" data-act="all-reset">Restaurar tudo</button></div>
+        <div class="cfg-btns"><button class="cfg-b" data-act="all-reset">RESTAURAR TUDO</button></div>
       </section>
-      <footer class="cfg-foot"><button class="cfg-b yellow big" data-act="close">Pronto</button></footer>
+      <footer class="cfg-foot"><button class="cfg-b yellow big" data-act="close">PRONTO!</button></footer>
     </div>`;
   document.body.appendChild(cfgEl);
   const editBar = document.createElement('div');
-  editBar.className = 'tedit'; editBar.hidden = true;
-  editBar.innerHTML = '<span>Arraste os botões para onde quiser</span><button class="cfg-b" data-act="pos-reset">Padrão</button><button class="cfg-b yellow" data-act="edit-done">Pronto</button>';
+  editBar.className = 'tedit cfg-bar'; editBar.hidden = true;
+  editBar.innerHTML = '<span>ARRASTE OS BOTÕES</span><button class="cfg-b" data-act="pos-reset">PADRÃO</button><button class="cfg-b yellow" data-act="edit-done">PRONTO</button>';
   document.body.appendChild(editBar);
 
   const orient = () => (window.innerHeight > window.innerWidth ? 'port' : 'land');
@@ -319,14 +319,15 @@
     cfgEl.querySelectorAll('[data-cfg]').forEach((el) => {
       const id = el.dataset.cfg;
       const v = id === 'sound' ? !save.muted : CFG[id];
-      if (el.type === 'checkbox') el.checked = !!v; else el.value = v;
+      if (el.type === 'checkbox') el.checked = !!v; else { el.value = v; el.style.setProperty('--p', ((v - el.min) / (el.max - el.min)) * 100 + '%'); }
       const out = cfgEl.querySelector(`[data-out="${id}"]`);
       if (out) out.textContent = v + '%';
     });
     cfgEl.querySelectorAll('[data-key]').forEach((b) => {
       const k = b.dataset.key, s = +b.dataset.slot;
       const isWait = waitKey && waitKey[0] === k && waitKey[1] === s;
-      b.textContent = isWait ? 'aperte...' : keyName(CFG.keys[k][s], true);
+      const nm = isWait ? 'aperte...' : keyName(CFG.keys[k][s], true);
+      if (/^[←→↑↓]$/.test(nm)) b.innerHTML = `<b class="arr">${nm}</b>`; else b.textContent = nm;
       b.classList.toggle('wait', !!isWait);
       b.classList.toggle('empty', !CFG.keys[k][s] && !isWait);
     });
