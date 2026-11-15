@@ -2163,7 +2163,7 @@
     text('TOP', W / 2 - 52, 92, { color: '#e8402e', size: 16, align: 'center', outline: '#1a1020' });
     text('GAMER', W / 2 + 28, 92, { color: '#ffd23f', size: 16, align: 'center', outline: '#1a1020' });
     text('A AVENTURA 100% GAMER', W / 2, 114, { color: '#ff8fd8', align: 'center', outline: '#1a1020' });
-    drawMenu(titleItems(), 132, 17);
+    drawMenu(titleItems(), 127, 13);
     const hint = isTouch ? 'TOQUE NA OPÇÃO OU USE A/B' : 'SETAS: MOVER  Z: PULAR  X: CORRER/CD';
     text(hint, W / 2, H - 13, { color: '#ffffff', align: 'center', outline: '#1a1020' });
     if (save.best) text('RECORDE ' + pad0(save.best, 6), W - 6, 6, { color: '#ffffff', align: 'right', size: 8, outline: '#1a1020' });
