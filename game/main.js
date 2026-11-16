@@ -880,7 +880,7 @@
     if (e.dying === 'flip') { e.vy += 0.3; e.x += e.vx; e.y += e.vy; if (e.y > H + 24) e.gone = true; return; }
     const playerInZone = e.zone == null || e.zone === G.zone;
     if (e.kind === 'g') walker(e, e.guard ? 0.68 : 0.5, e.guard);
-    else if (e.kind === 's') walker(e, 0.55, false);
+    else if (e.kind === 's') walker(e, 0.42, true);
     else if (e.kind === 'rival') {
       if (e.inv > 0) e.inv--;
       if (e.t % 50 === 0) e.dir = P.x < e.x ? -1 : 1;
@@ -899,13 +899,13 @@
       e.y = e.baseY + Math.sin(e.t * 0.05) * 3;
       if (e.t % 130 === 60 && Math.abs(P.x - e.x) < 150) { G.shots.push({ kind: 'drop', x: e.x + 2, y: e.y + e.h, w: 8, h: 8, vx: 0, vy: 1.2, t: 0 }); AUDIO.sfx('select'); }
     } else if (e.kind === 'h') {
-      if (e.t > 1500) { e.y -= 1; if (e.y < -30) e.gone = true; }
+      if (e.t > 900) { e.y -= 1; if (e.y < -30) e.gone = true; }
       else {
         const tx = P.x + 24;
-        if (Math.abs(P.x - e.x) < 240) e.x += Math.sign(tx - e.x) * Math.min(0.55, Math.abs(tx - e.x));
+        if (Math.abs(P.x - e.x) < 170) e.x += Math.sign(tx - e.x) * Math.min(0.38, Math.abs(tx - e.x));
         e.y = e.baseY + Math.sin(e.t * 0.04) * 8;
         e.dir = P.x < e.x ? -1 : 1;
-        if (e.t % 170 === 90 && Math.abs(P.x - e.x) < 200) G.shots.push({ kind: 'msg', x: e.x + 3, y: e.y + 4, w: 10, h: 8, vx: clamp((P.x - e.x) / 45, -2.6, 2.6), vy: -2.6, t: 0 });
+        if (e.t % 260 === 120 && Math.abs(P.x - e.x) < 170) G.shots.push({ kind: 'msg', x: e.x + 3, y: e.y + 4, w: 10, h: 8, vx: clamp((P.x - e.x) / 45, -2.6, 2.6), vy: -2.6, t: 0 });
       }
     }
     else if (e.kind === 'b') {
@@ -1162,7 +1162,7 @@
         const tx = clamp(p.x + p.w / 2 - b.w / 2, minX, maxX);
         b.x += (tx - b.x) * (enr ? 0.03 : 0.02);
         b.y = b.baseY + Math.sin(b.t * 0.05) * 10;
-        if (b.t > (enr ? 80 : 120)) { const opts = ['spin', 'slam', 'lag'].filter((o) => o !== b.last); const pick = opts[Math.floor(Math.random() * opts.length)]; b.last = pick; bossState(b, pick); }
+        if (b.t > (enr ? 80 : 110)) { const order = ['slam', 'spin', 'slam', 'lag']; b.cyc = ((b.cyc ?? -1) + 1) % order.length; bossState(b, order[b.cyc]); }
         break;
       }
       case 'spin':
@@ -1174,7 +1174,9 @@
         if (b.t > 75) bossState(b, 'float');
         break;
       case 'slam':
+        // aviso: sobe um pouco, treme parado com um "!" e a sombra mostra onde vai cair
         if (b.t < 20) b.y -= 0.6;
+        else if (b.t < (enr ? 48 : 60)) { /* tremendo */ }
         else {
           b.vy = Math.min((b.vy || 0) + 0.6, 8); const pb = b.y + b.h; b.y += b.vy; collideY(b, pb);
           if (b.onGround) {
@@ -1200,7 +1202,7 @@
       default: break;
     }
     if (!p.dead && overlap(p, b) && b.state !== 'lag') {
-      const stomp = p.vy > 0 && p.prevBottom <= b.y + 12;
+      const stomp = p.vy > 0 && p.prevBottom <= b.y + (b.state === 'dazed' ? 20 : 12);
       if (stomp) { p.y = b.y - p.h; p.vy = -6.6; p.onGround = false; if (b.inv === 0) bossDamage(b, b.state === 'dazed' ? 3 : 1); else AUDIO.sfx('stomp'); }
       else if (p.star > 0) { if (b.inv === 0) bossDamage(b, 1); }
       else hurtPlayer();
@@ -1452,9 +1454,13 @@
     if (!G.glitch) G.glitch = { kind: null, t: 0, next: 180, n: 0 };
     const g = G.glitch;
     if (!g.kind) {
-      if (--g.next <= 0) {
-        const ks = Object.keys(GLITCHES); g.kind = ks[Math.floor(Math.random() * ks.length)];
-        g.t = 100 + Math.floor(Math.random() * 80); AUDIO.sfx('bossHit'); G.shake = 6;
+      if (g.warn) {
+        if (--g.warnT <= 0) {
+          g.kind = g.warn; g.warn = null;
+          g.t = g.kind === 'invert' ? 100 : 100 + Math.floor(Math.random() * 80); AUDIO.sfx('bossHit'); G.shake = 6;
+        }
+      } else if (--g.next <= 0) {
+        const ks = Object.keys(GLITCHES); g.warn = ks[Math.floor(Math.random() * ks.length)]; g.warnT = 150; AUDIO.sfx('select');
       }
     } else if (--g.t <= 0) { g.kind = null; g.next = 200 + Math.floor(Math.random() * 220); }
     if (g.kind === 'shake') G.shake = Math.max(G.shake, 2);
@@ -2086,10 +2092,19 @@
   }
 
   function drawBoss2(b) {
+    // sombra no chão mostrando onde ele cai
+    if (b.state === 'slam' || b.state === 'float') {
+      const warn = b.state === 'slam', sw = warn ? 40 : 26;
+      rect(warn && (G.t >> 2) % 2 ? 'rgba(255,59,59,0.55)' : 'rgba(0,0,0,0.35)', R(b.x + b.w / 2 - sw / 2), 12 * T - 3, sw, 3);
+    }
+    if (b.state === 'slam' && b.t >= 20 && b.t < (b.hp <= b.maxHp / 2 ? 48 : 60)) {
+      b._sx = (G.t % 4 < 2 ? 1 : -1);
+      text('!', R(b.x + b.w / 2), R(b.y - 14), { color: (G.t >> 2) % 2 ? '#ff3b3b' : '#ffd23f', align: 'center' });
+    } else b._sx = 0;
     if (b.inv > 0 && (G.t >> 1) % 2 && b.state !== 'dying') return;
     if (b.state === 'lag' && (G.t >> 1) % 2) return;
     const enr = b.hp <= b.maxHp / 2;
-    const cx = R(b.x + b.w / 2), cy = R(b.y + b.h / 2);
+    const cx = R(b.x + b.w / 2) + (b._sx || 0), cy = R(b.y + b.h / 2);
     const spin = b.state === 'spin' ? b.t * 0.4 : G.t * 0.08;
     for (let i = 0; i < 10; i++) {
       const a = (i / 10) * Math.PI * 2;
@@ -2540,6 +2555,11 @@
     if (Math.random() < (strong ? 0.5 : 0.15)) { rect(Math.random() < 0.5 ? 'rgba(255,40,200,0.22)' : 'rgba(40,240,255,0.22)', 0, Math.random() * H, W, 2 + Math.random() * 10); }
     for (let i = 0; i < (strong ? 60 : 18); i++) rect(['#ff3bd6', '#2fe0ff', '#ffffff', '#1a1020'][i % 4], Math.random() * W, Math.random() * H, 2, 1);
     // aviso do bug
+    if (g && g.warn) {
+      rect('rgba(10,0,24,0.75)', W / 2 - 110, 40, 220, 26);
+      text('BUG CHEGANDO EM ' + Math.ceil(g.warnT / 50) + '...', W / 2, 44, { color: '#ffd23f', align: 'center', size: 6 });
+      text(GLITCHES[g.warn], W / 2, 55, { color: '#ffffff', align: 'center', size: 6 });
+    }
     if (strong) {
       const blink = (G.t >> 2) % 2;
       rect('rgba(10,0,24,0.75)', W / 2 - 110, 40, 220, 26);

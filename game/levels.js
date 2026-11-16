@@ -294,11 +294,10 @@ window.LEVELS = (() => {
 
   function chefe2() {
     const L = builder(24, 'buffer', 'BUFFERÃO, O CARREGAMENTO ETERNO', 'boss2');
-    L.intro = 'O BUFFERAO travou o Universo 100% Gamer! Pise nele quando ele cair tonto.';
+    L.intro = 'O BUFFERAO travou o Universo 100% Gamer! Quando ele tremer com um !, saia da sombra. Depois pise nele tonto.';
     L.boss = true; L.bossName = 'BUFFERAO'; L.bossSub = 'O CARREGAMENTO ETERNO';
     L.fill(0, 0, 23, 1, 'X'); L.ground(0, 23);
     L.fill(0, 2, 0, 11, 'X'); L.fill(23, 2, 23, 11, 'X');
-    L.put(3, 8, '===='); L.put(17, 8, '====');
     L.put(11, 8, 'M');
     L.start = { x: 3, y: 11 };
     L.e('boss2', 13, 11);
