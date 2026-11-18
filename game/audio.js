@@ -189,9 +189,9 @@ window.AUDIO = (() => {
     star: { bpm: 180, wave: 'p25', bass: [0, 12, 0, 12, 0, 12, 0, 12], drums: 'khkhkhkh',
       chords: ['C', 'Dm', 'Em', 'F G'],
       lead: ['C5 E5 G5 C6 G5 E5 C5 E5', 'D5 F5 A5 D6 A5 F5 D5 F5', 'E5 G5 B5 E6 B5 G5 E5 G5', 'F5 A5 C6 F6 G5 B5 D6 G6'] },
-    ending: { bpm: 128, wave: 'p25', bass: [0, 12, 7, 12, 0, 12, 7, 12], drums: 'k.hsk.hs',
-      chords: ['C', 'G', 'Am', 'F', 'C', 'G', 'F', 'C'],
-      lead: ['C5 E5 G5 C6 - G5 E5 G5', 'B4 D5 G5 B5 - G5 D5 B4', 'A4 C5 E5 A5 - E5 C5 E5', 'F5 - A5 - C6 - A5 .', 'G5 - E5 - C5 - E5 G5', 'D5 - G5 - B5 - D6 -', 'C6 - A5 - F5 - A5 C6', 'C6 - - - . . . .'] },
+    mgp: { bpm: 146, wave: 'p25', bass: [0, null, 7, 12, 0, 12, 10, 7], drums: 'khshk.sh',
+      chords: ['Gm', 'Eb', 'Bb', 'F', 'Gm', 'Cm', 'Eb', 'D'],
+      lead: ['G5 . Bb5 D6 G6 . F6 D6', 'Eb5 G5 Bb5 . G5 Bb5 Eb6 .', 'F5 . Bb5 D6 F6 . D6 Bb5', 'C6 A5 F5 G5 A5 - C6 .', 'G5 Bb5 D6 G6 - F6 D6 Bb5', 'C6 . G5 Eb5 G5 C6 Eb6 .', 'Eb6 D6 Bb5 Ab5 G5 Bb5 G5 Eb5', 'A5 F#5 D5 F#5 A5 C6 D6 .'] },
   };
   for (const s of Object.values(SONGS)) s.tokens = s.lead.join(' ').split(/\s+/);
 

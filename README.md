@@ -22,7 +22,8 @@ Jogo de plataforma 2D em `jogo.html` (link no menu do site e na seção "O jogo 
 
 - Mundo 1: Colinas Tropicais, Caverna dos Cartuchos, Nuvens do Lag, Fábrica Bugsoft + chefão BUGSOFT.
 - Mundo 2: Praia do Pixel, Feira Gamer, Fundo do Mar Digital (nadando), Ilha de Edição + chefão BUFFERÃO.
-- Mundo 3: Pico Congelado, Festa dos Inscritos, Live do Jackson e o chefe final Matheus Larp Gamer Monotomias.
+- Mundo 3: Pico Congelado, Festa dos Inscritos, Live do Jackson e Matheus Larp Gamer Monotomias.
+- Mundo 4: Os MGPs. A fase 12 passa pela abertura, oficina, mata e serra. Monotomias libera a fase no mapa.
 - Na fase 10, Matheus assume a forma do Sonic na zona do Miguel e vira uma bola ao ganhar velocidade. RafaRL tem uma zona de telhados medievais e Scott tem uma zona própria na cidade nevada.
 - Antes do chefe final, escolha um ajudante. Jackson limpa projéteis, Babs Mary protege de um golpe, Miguel acelera Matheus, Scott pula sobre o chefe e RafaRL prolonga o tempo para contra-atacar.
 - Mapa de mundos para escolher e rejogar fases; segredos por fase ficam salvos.

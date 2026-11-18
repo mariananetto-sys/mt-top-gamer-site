@@ -556,6 +556,10 @@ window.ART = (() => {
 
   // ----------------------------------------------------------------- TILES
   const THEMES = {
+    mgpStudio: { g1: '#302a54', g2: '#211c3e', g3: '#544673', t1: '#c36def', t2: '#77429d', tL: '#fed5ff', br: '#624e93', brL: '#ab82cf', brD: '#3e2f67', mo: '#1b1934', hd: '#3c355f', hdL: '#856d9f', hdD: '#282143', semi: 'metal', style: 'plate' },
+    mgpWorkshop: { g1: '#535056', g2: '#38363e', g3: '#72676b', t1: '#e7a451', t2: '#8b5838', tL: '#ffdc85', br: '#976b4c', brL: '#cfa276', brD: '#694a40', mo: '#37283a', hd: '#735f58', hdL: '#a88b71', hdD: '#4a3a40', semi: 'metal', style: 'plate' },
+    mgpCanopy: { g1: '#396250', g2: '#254b46', g3: '#638366', t1: '#a5bf46', t2: '#66863c', tL: '#e2ee91', br: '#635d40', brL: '#a59b59', brD: '#3a4b39', mo: '#263a35', hd: '#486350', hdL: '#80a477', hdD: '#304238', semi: 'wood', style: 'stone' },
+    mgpRidge: { g1: '#9c5367', g2: '#733a58', g3: '#ca7782', t1: '#64d6c1', t2: '#3d8fa1', tL: '#e8f7c3', br: '#9c5e7f', brL: '#d987a2', brD: '#623d6a', mo: '#422e57', hd: '#73516e', hdL: '#c7849c', hdD: '#523958', semi: 'wood', style: 'bands' },
     sonicHills: { g1: '#bb692d', g2: '#8d461d', g3: '#e6984f', t1: '#4bd940', t2: '#238c3a', tL: '#c2fc74', br: '#c67431', brL: '#faab59', brD: '#85441d', mo: '#512c22', hd: '#b47a35', hdL: '#f9be65', hdD: '#784923', semi: 'wood', style: 'checker' },
     grotto: { g1: '#1d746e', g2: '#104c58', g3: '#409b8f', t1: '#6cdfa4', t2: '#327f70', tL: '#c8fbc1', br: '#41667e', brL: '#89b6b7', brD: '#214155', mo: '#073743', hd: '#315d69', hdL: '#6baba3', hdD: '#254251', semi: 'cloud', style: 'stone' },
     monotomias: { g1: '#353049', g2: '#21172d', g3: '#59506e', t1: '#d06c49', t2: '#692c48', tL: '#ffd083', br: '#864964', brL: '#df897b', brD: '#4f2a47', mo: '#21152c', hd: '#4b3351', hdL: '#94717f', hdD: '#23182f', semi: 'metal', style: 'plate' },
@@ -1120,6 +1124,110 @@ window.ART = (() => {
     return c;
   }
 
+  function mgpScenery(name, W, H, layerWidth) {
+    const far = mk(layerWidth, H), front = mk(layerWidth, H);
+    const f = far.getContext('2d'), x = front.getContext('2d');
+    const random = rng(93);
+    const box = (ctx, color, px, y, w, h) => { ctx.fillStyle = color; ctx.fillRect(px, y, w, h); };
+    let sky, extra = null;
+    if (name === 'mgpStudio') {
+      sky = gradient(W, H, [[0,'#130f32'],[.67,'#3b205b'],[1,'#785080']]);
+      for (let px = 0; px < layerWidth; px += 128) {
+        box(f, '#2b1b48', px + 5, 45, 112, 137);
+        box(f, '#503064', px + 7, 47, 108, 2);
+        for (let y = 60; y < 160; y += 15) box(f, '#38204e', px + 7, y, 108, 1);
+        box(x, '#170f29', px + 23, 30, 80, 58);
+        box(x, '#6f507f', px + 24, 31, 78, 2);
+        box(x, '#2d244c', px + 27, 35, 72, 46);
+        const colors = ['#d0a4e4','#75c8e4','#9fdbb1','#df85b9','#bc546f','#8278cb'];
+        if (px % 256 === 0) {
+          colors.forEach((c,i) => box(x, c, px + 29 + 11*i, 38, 11, 31));
+        } else {
+          box(x, '#302744', px + 29, 38, 66, 31);
+          for (let i = 0; i < 27; i++) {
+            const a = Math.round(2 + Math.abs(Math.sin(i * 1.12) * Math.sin(i * .39)) * 25);
+            box(x, i % 6 === 0 ? '#e89bc6' : '#76d1c6', px + 33 + i * 2, 54 - Math.floor(a / 2), 1, a);
+          }
+        }
+        box(x, '#191a34', px + 29, 69, 66, 8);
+        box(x, '#ffcb8c', px + 91, 80, 3, 2);
+        box(x, '#271733', px + 17, 0, 3, 144);
+        box(x, '#65496b', px + 18, 0, 1, 98);
+      }
+    } else if (name === 'mgpWorkshop') {
+      sky = gradient(W, H, [[0,'#26203c'],[.6,'#6f4350'],[1,'#c07961']]);
+      for (let px = 0; px < layerWidth; px += 128) {
+        box(f, '#4b3346', px + 9, 74, 109, 118);
+        box(f, '#a76657', px + 22, 84, 79, 60);
+        for (let column = 0; column < 5; column++) {
+          const start = px + 24 + column * 15;
+          box(f, '#f8c781', start, 87, 12, 52);
+          box(f, '#c69068', start + 7, 87, 5, 52);
+        }
+        box(f, '#583f49', px + 20, 105, 82, 3);
+        box(x, '#37293c', px, 15, 128, 6);
+        box(x, '#ad765b', px, 15, 128, 1);
+        box(x, '#4c3948', px + 15, 18, 2, 19+(px/128%2)*18);
+        const cy = 46 + (px/128%2)*18, cx = px + 21;
+        for (let i=0;i<10;i++) {
+          const a = i*Math.PI/5;
+          box(x, '#5f4b56', cx+Math.round(Math.cos(a)*13)-2, cy+Math.round(Math.sin(a)*13)-2, 5, 5);
+        }
+        blob(x,cx,cy,12,'#715961');
+        blob(x,cx,cy,5,'#372d40');
+        box(x, '#3a2b3d', px + 75, 160, 36, 32);
+        box(x, '#966b55', px + 76, 161, 34, 2);
+        for (let i=0;i<6;i++) box(x, i%2 ? '#a67956' : '#573e46', px+78+i*5, 166, 5, 5);
+      }
+    } else if (name === 'mgpCanopy') {
+      sky = gradient(W, H, [[0,'#254c50'],[.69,'#7f9a68'],[1,'#ced083']]);
+      f.drawImage(ridge(layerWidth,H,'#658a65',103,[[19,2,1],[14,6,.4]]),0,0);
+      for (let i=0;i<16;i++) {
+        const px=Math.round(i*32+random()*25), y=71+Math.round(random()*54);
+        box(f,'#466f58',px,y,7,H-y);
+        blob(f,px+3,y,12+Math.round(random()*11),'#567c59');
+      }
+      for (let i=0;i<7;i++) {
+        const px=27+i*73, b=94+Math.round(random()*34);
+        box(x,'#305549',px,b,7,H-b);
+        box(x,'#638362',px+1,b,2,H-b);
+        for (let j=0;j<5;j++) {
+          const c=j%2 ? '#4c7757' : '#3e684e';
+          blob(x,px+Math.round((random()-.5)*35),b-Math.round(random()*24),10+Math.floor(random()*14),c);
+        }
+        box(x,'#62946c',px-13,b+5,16,2);
+        for(let j=0;j<3;j++) {
+          const bx=px-12+j*4, by=b+7+j%2;
+          box(x,'#b2b953',bx,by,2,4);
+          box(x,'#efcf70',bx+1,by+3,3,2);
+          box(x,'#f1dc82',bx+3,by+2,1,2);
+        }
+      }
+    } else {
+      sky = gradient(W, H, [[0,'#382959'],[.57,'#ba6983'],[1,'#f1ad89']]);
+      extra = mk(W,H);
+      blob(extra.getContext('2d'),W*.74,58,23,'#ffeab6');
+      for(let px=0;px<layerWidth;px+=96){
+        const peak = 65 + Math.round(random()*24);
+        for(let y=peak;y<H;y++){
+          const w=Math.min(58,Math.round((y-peak)*.56));
+          box(f,'#825f8c',px+48-w,y,w*2+1,1);
+          box(f,'#a6799a',px+48-w,y,w+1,1);
+          if(y-peak<17) box(f,'#f0b3b3',px+48-w,y,w*2+1,1);
+        }
+      }
+      x.drawImage(ridge(layerWidth,H,'#704966',54,[[13,3,.8],[6,9,.2]]),0,0);
+      for(let px=12;px<layerWidth;px+=84){
+        box(x,'#4a3957',px,138,3,56);
+        box(x,'#4a3957',px-7,137,16,2);
+        box(x,'#8a7193',px+1,139,1,32);
+        box(x,'#e2c789',px-3,141,3,2);
+      }
+    }
+    return { sky, extra, layers: [[far,.17,0],[front,.46,0]] };
+  }
+
+  const MGP_THEMES = new Set(['mgpStudio','mgpWorkshop','mgpCanopy','mgpRidge']);
   const bgCache = {};
   function background(name, W, H) {
     const key = name + W + 'x' + H;
@@ -1130,7 +1238,9 @@ window.ART = (() => {
     }
     const LW = 512;
     let layers = [], sky, extra = null;
-    if (name === 'grotto') {
+    if (MGP_THEMES.has(name)) {
+      ({sky, extra, layers} = mgpScenery(name, W, H, LW));
+    } else if (name === 'grotto') {
       sky = gradient(W, H, [[0, '#071c37'], [0.42, '#18415b'], [1, '#256962']]);
       const far = ridge(LW, H, '#17304a', 84, [[34, 3, 0.8], [13, 9, 1.6]], true);
       const cave = mk(LW, H), x = cave.getContext('2d');

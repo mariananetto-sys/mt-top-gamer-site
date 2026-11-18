@@ -40,11 +40,15 @@
   if (!Array.isArray(save.done)) save.done = [];
   if (!Array.isArray(save.sec)) save.sec = [];
   save.unlocked = Math.min(LEVELS.list.length, Math.max(1, Number.isInteger(save.unlocked) ? save.unlocked : 1));
-  const finalIndex = LEVELS.labels.indexOf('CHEFE 3');
-  // Os saves antigos já podem ter a Live concluída ou usar esse índice para uma fase removida.
-  save.done[finalIndex] = save.finalBoss ? 1 : 0;
-  if (save.finalBoss || save.done[finalIndex - 1]) save.unlocked = finalIndex + 1;
-  else save.unlocked = Math.min(save.unlocked, finalIndex);
+  // As versões anteriores usaram os índices de Monotomias e dos MGPs para fases removidas.
+  const monotomiasIndex = LEVELS.labels.indexOf('CHEFE 3');
+  const mgpIndex = LEVELS.labels.indexOf('12');
+  save.done[monotomiasIndex] = save.finalBoss ? 1 : 0;
+  save.done[mgpIndex] = save.mgpComplete ? 1 : 0;
+  if (!save.mgpComplete) save.sec[mgpIndex] = 0;
+  if (save.finalBoss) save.unlocked = mgpIndex + 1;
+  else if (save.done[monotomiasIndex - 1]) save.unlocked = monotomiasIndex + 1;
+  else save.unlocked = Math.min(save.unlocked, monotomiasIndex);
   function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) { /* sem storage */ } }
   AUDIO.setMuted(!!save.muted);
   const DEF_KEYS = {
@@ -587,7 +591,7 @@
     }
   }
 
-  function toState(s) { G.state = s; G.stateT = 0; G.menuSel = 0; G.menuRects = []; showOverlay(s === 'ending'); }
+  function toState(s) { G.state = s; G.stateT = 0; G.menuSel = 0; G.menuRects = []; }
 
   // ------------------------------------------------------------ PONTOS
   function pop(txt, x, y, color) { G.pops.push({ txt: String(txt), x, y, t: 0, color: color || '#ffffff' }); }
@@ -1392,21 +1396,22 @@
   function finishLevel() {
     const i = G.levelIdx;
     if (G.L.finalBoss) save.finalBoss = true;
+    if (i === mgpIndex) save.mgpComplete = true;
     save.done[i] = 1; save.sec[i] = Math.max(save.sec[i] || 0, G.secrets);
     save.unlocked = Math.max(save.unlocked, Math.min(i + 2, LEVELS.list.length));
     save.best = Math.max(save.best, G.score); persist();
     G.power = P.power; G.check = null;
-    if (i + 1 >= LEVELS.list.length) {
-      toState('ending'); AUDIO.music('ending');
-      for (let k = 0; k < 70; k++) G.parts.push({ type: 'confetti', x: Math.random() * W, y: Math.random() * H - H, vx: (Math.random() - 0.5) * 0.6, vy: 0.5 + Math.random(), life: 400, color: ['#ffd23f', '#e8402e', '#2f7bff', '#3bd16f', '#ff5ab4'][k % 5] });
-      return;
-    }
-    openMap(i + 1);
+    openMap(Math.min(i + 1, LEVELS.list.length - 1));
   }
   function openMap(sel) { toState('map'); G.mapSel = clamp(sel, 0, save.unlocked - 1); AUDIO.music('title'); }
   function enterLevel(i) { G.check = null; loadLevel(i, false); toState('intro'); AUDIO.stopMusic(); AUDIO.sfx('start'); }
   // posições dos pontos no mapa, uma linha por mundo
-  const MAP_PTS = [[60, 58], [118, 46], [176, 60], [234, 46], [312, 54], [60, 108], [118, 96], [176, 110], [234, 96], [312, 104], [79, 152], [151, 146], [226, 154], [310, 146]];
+  const MAP_PTS = [
+    [65,45], [125,42], [185,46], [245,42], [310,45],
+    [65,84], [125,81], [185,85], [245,81], [310,84],
+    [79,123], [151,120], [226,124], [310,121],
+    [86,163],
+  ];
   function updateMap() {
     const n = LEVELS.list.length;
     const mv = (d) => { let k = G.mapSel + d; if (k < 0 || k >= n || k >= save.unlocked) return; G.mapSel = k; AUDIO.sfx('select'); };
@@ -1428,7 +1433,6 @@
       else if (q.type === 'coin') { q.vy += 0.35; q.y += q.vy; if (q.life === 1) pop(200, q.x, q.y); }
       else if (q.type === 'boom') q.r += 1.2;
       else if (q.type === 'tear') { q.vy += 0.15; q.x += q.vx; q.y += q.vy; }
-      else if (q.type === 'confetti') { q.vy = Math.min(q.vy + 0.05, 1.5); q.x += q.vx + Math.sin(q.life * 0.1) * 0.4; q.y += q.vy; if (q.y > H) { q.y = -4; q.life = 400; } }
       else { q.x += q.vx || 0; q.y += q.vy || 0; }
     }
     G.parts = G.parts.filter((q) => q.life > 0);
@@ -1681,11 +1685,6 @@
         if (e.t > 340 || advance) { e.phase = 'done'; e.bx = e.x + 14; e.mx = e.x + 22; G.scene = null; G.dialog = null; toState('play'); }
         break;
       }
-      case 'ending':
-        G.t++;
-        updateParts();
-        if (G.stateT > 120 && I.selP) { toState('title'); AUDIO.music('title'); }
-        break;
       default: break;
     }
     click = null;
@@ -2076,7 +2075,7 @@
     rect('#1a1020', x + 9, y + 27, 2, 5); rect('#e8402e', x + 8, y + 25, 4, 3);
     rect('#ffd23f', x + 18, y + 33, 3, 2); rect('#e8402e', x + 23, y + 33, 3, 2);
     rect('#1a1020', x + 12, y + 39, 8, 6); rect('#ff9f1c', x + 13, y + 40, 6, 4); rect('#1a1020', x + 15, y + 41, 2, 2);
-    if (G.state === 'play' && (G.t >> 4) % 2) text('FIM', x + 16, y - 11, { color: '#ffd23f', align: 'center' });
+    if (G.state === 'play' && (G.t >> 4) % 2) text(G.levelIdx === mgpIndex ? 'PUBLICAR' : 'FIM', x + 16, y - 11, { color: '#ffd23f', align: 'center' });
   }
 
   function drawItems(rising) {
@@ -2221,7 +2220,7 @@
       if (q.type === 'debris') { rect('#1a1020', q.x - 1, q.y - 1, 6, 6); rect(q.color, q.x, q.y, 4, 4); }
       else if (q.type === 'coin') img(ITEM.coin[(q.life >> 1) % 4], q.x, q.y);
       else if (q.type === 'dust') { const r = q.life > 8 ? 2 : 1; rect('#f4f6ff', q.x - r, q.y - r, r * 2, r * 2); }
-      else if (q.type === 'spark' || q.type === 'confetti') rect(q.color, q.x, q.y, q.type === 'confetti' ? 3 : 2, 2);
+      else if (q.type === 'spark') rect(q.color, q.x, q.y, 2, 2);
       else if (q.type === 'heart') { const x = R(q.x), y = R(q.y); rect('#ff5ab4', x - 2, y, 2, 2); rect('#ff5ab4', x + 1, y, 2, 2); rect('#ff5ab4', x - 2, y + 1, 5, 2); rect('#ff5ab4', x - 1, y + 3, 3, 1); rect('#ff5ab4', x, y + 4, 1, 1); rect('#ffffff', x - 1, y, 1, 1); }
       else if (q.type === 'tear') { rect('#5ec8ff', q.x, q.y, 2, 2); }
       else if (q.type === 'bubble') { rect('rgba(220,240,255,0.85)', q.x - 1, q.y - 1, 3, 3); rect('rgba(255,255,255,0.9)', q.x - 1, q.y - 1, 1, 1); }
@@ -2460,12 +2459,13 @@
     ART.background('title', W, H).draw(ctx, G.t * 0.4, G.t);
     rect('rgba(11,16,51,0.78)', 0, 0, W, H);
     text('MAPA DOS MUNDOS', W / 2, 10, { color: '#ffd23f', align: 'center', outline: '#1a1020' });
-    text('MUNDO 1', 8, 28, { color: '#ff8fd8', size: 6 });
-    text('MUNDO 2', 8, 80, { color: '#2fe0ff', size: 6 });
-    text('MUNDO 3', 8, 130, { color: '#a6ff5a', size: 6 });
+    text('MUNDO 1', 8, 23, { color: '#ff8fd8', size: 6 });
+    text('MUNDO 2', 8, 62, { color: '#2fe0ff', size: 6 });
+    text('MUNDO 3', 8, 101, { color: '#a6ff5a', size: 6 });
+    text('MUNDO 4', 8, 141, { color: '#ffd384', size: 6 });
     ctx.fillStyle = '#4a58b0';
     for (let i = 0; i < MAP_PTS.length - 1; i++) {
-      if (i === 4 || i === 9) continue;
+      if (LEVELS.labels[i].startsWith('CHEFE')) continue;
       const [ax, ay] = MAP_PTS[i], [bx, by] = MAP_PTS[i + 1];
       for (let k = 0; k <= 10; k++) ctx.fillRect(R(ax + (bx - ax) * k / 10) - 1, R(ay + (by - ay) * k / 10) - 1, 2, 2);
     }
@@ -2473,34 +2473,17 @@
       const open = i < save.unlocked, done = save.done[i], sel = i === G.mapSel, boss = LEVELS.labels[i].startsWith('CHEFE');
       rect('#1a1020', x - 9, y - 9, 18, 18);
       rect(!open ? '#3a3f52' : done ? '#ffd23f' : boss ? '#e8402e' : '#2f7bff', x - 8, y - 8, 16, 16);
-      text(boss ? '!' : LEVELS.labels[i], x + 1, y - 4, { color: open ? '#ffffff' : '#6b7190', align: 'center' });
+      text(boss ? '!' : LEVELS.labels[i], x, y - 4, { color: open ? '#ffffff' : '#a1a7c0', align: 'center', size: LEVELS.labels[i].length > 1 && !boss ? 7 : 8 });
       if (sel) { const bob = (G.t >> 3) % 2; ctx.drawImage(HERO.n.s.idle.r, x - 8, y - 26 - bob); }
     });
     const i = G.mapSel, L = (LV_INFO[i] = LV_INFO[i] || LEVELS.list[i]());
     rect('rgba(0,0,0,0.55)', 0, H - 38, W, 38);
     text((L.boss ? 'CHEFAO: ' : 'FASE ' + LEVELS.labels[i] + ': ') + L.name, W / 2, H - 34, { color: '#ffffff', align: 'center' });
     const tot = L.ents.filter((d) => d.type === 'npc' && d.who === 'discord').length;
-    const info = (save.done[i] ? 'ZERADA' : 'NOVA') + (tot ? '   SEGREDOS ' + (save.sec[i] || 0) + '/' + tot : '');
+    const status = i === mgpIndex && save.done[i] ? 'MGP PUBLICADO' : save.done[i] ? 'ZERADA' : 'NOVA';
+    const info = status + (tot ? '   SEGREDOS ' + (save.sec[i] || 0) + '/' + tot : '');
     text(info, W / 2, H - 22, { color: save.done[i] ? '#ffd23f' : '#aab3e6', align: 'center' });
     if ((G.t >> 4) % 2) text(isTouch ? 'A: JOGAR' : `${kn('jump')}: JOGAR   ${kn('start')}: MENU`, W / 2, H - 10, { color: '#aab3e6', align: 'center', size: 8 });
-  }
-
-  function drawEnding() {
-    ART.background('title', W, H).draw(ctx, G.t * 0.6, G.t);
-    rect('rgba(11,16,51,0.72)', 16, 10, W - 32, H - 20);
-    text('PARABÉNS!', W / 2, 20, { color: '#ffd23f', size: 16, align: 'center', outline: '#1a1020' });
-    if (avatar) { rect('#ffd23f', W / 2 - 26, 42, 52, 52); ctx.drawImage(avatar, W / 2 - 24, 44); }
-    const jump = Math.abs(Math.sin(G.t * 0.08)) * 10;
-    ctx.drawImage(HERO.n.b.jump.r, W / 2 - 70, 70 - R(jump));
-    ctx.drawImage(HERO.n.b.jump.l, W / 2 + 54, 70 - R(jump));
-    text('MONOTOMIAS DERROTADO!', W / 2, 102, { align: 'center' });
-    text('O UNIVERSO 100% GAMER ESTA SALVO!', W / 2, 114, { align: 'center' });
-    text('PONTOS ' + pad0(G.score, 6), W / 2, 128, { color: '#ffd23f', align: 'center' });
-    text('LUCAS: "VALEU POR JOGAR MEU JOGO!"', W / 2, 144, { color: '#7cf0ff', align: 'center' });
-    text('CRIADO POR ' + creator, W / 2, 156, { color: '#ffffff', align: 'center' });
-    text('INSCREVA-SE: @MT-TOP-GAMER.2006', W / 2, 170, { color: '#ff8fd8', align: 'center' });
-    ctx.drawImage(ART.NPC.inscrito.r, 22, 150); ctx.drawImage(ART.NPC.axo.r, 22, 170); ctx.drawImage(ART.NPC.babs.l, W - 38, 150); ctx.drawImage(ART.NPC.miguel.l, W - 38, 170);
-    drawParts();
   }
 
   function render() {
@@ -2511,7 +2494,6 @@
       case 'credits': drawCredits(); break;
       case 'intro': drawIntro(); break;
       case 'assist': drawAllySelect(); break;
-      case 'ending': drawEnding(); break;
       case 'map': drawMap(); break;
       case 'gameover':
         rect('#0b1033', 0, 0, W, H);
@@ -2529,7 +2511,7 @@
           drawMenu(pauseItems, 110, 20);
         }
         if (G.state === 'clear' && P.hidden) {
-          text('FASE CONCLUÍDA!', W / 2, 74, { color: '#ffd23f', size: 16, align: 'center', outline: '#1a1020' });
+          text(G.levelIdx === mgpIndex ? 'MGP PUBLICADO!' : 'FASE CONCLUÍDA!', W / 2, 74, { color: '#ffd23f', size: 16, align: 'center', outline: '#1a1020' });
           text('BÔNUS DE TEMPO', W / 2, 100, { align: 'center', outline: '#1a1020' });
         }
         if (G.state === 'victory') {
@@ -2599,12 +2581,6 @@
       if (liveMuted !== !!save.muted) { liveMuted = !!save.muted; try { liveFrame.contentWindow.postMessage(JSON.stringify({ event: 'command', func: liveMuted ? 'mute' : 'unMute', args: [] }), '*'); } catch (e) { /* ok */ } }
     }
   }
-
-  // ------------------------------------------------------------ OVERLAY HTML
-  const overlay = document.getElementById('overlay');
-  function showOverlay(on) { if (overlay) overlay.hidden = !on; }
-  const again = document.getElementById('btn-again');
-  if (again) again.addEventListener('click', () => { toState('title'); AUDIO.music('title'); });
 
   // ------------------------------------------------------------ PAUSA AUTOMÁTICA
   document.addEventListener('visibilitychange', () => {

@@ -421,7 +421,7 @@ window.LEVELS = (() => {
   function chefe3() {
     const L = builder(24, 'monotomias', 'MATHEUS LARP GAMER MONOTOMIAS', 'monotomias');
     L.intro = 'Escolha um amigo. Pule sobre o chefe depois dos ataques, quando ele estiver vulnerável.';
-    L.boss = true; L.finalBoss = true; L.bossName = L.name; L.bossSub = 'O DUELO FINAL';
+    L.boss = true; L.finalBoss = true; L.bossName = L.name; L.bossSub = 'O DUELO DO MUNDO 3';
     L.ground(0, 23);
     L.fill(0, 0, 0, 11, 'X'); L.fill(23, 0, 23, 11, 'X');
     L.put(3, 7, '===='); L.put(17, 7, '====');
@@ -430,7 +430,38 @@ window.LEVELS = (() => {
     return L;
   }
 
-  const list = [fase1, fase2, fase3, fase4, chefe, fase5, fase6, fase7, fase8, chefe2, fase9, fase10, fase11, chefe3];
-  const labels = ['1', '2', '3', '4', 'CHEFE', '5', '6', '7', '8', 'CHEFE 2', '9', '10', '11', 'CHEFE 3'];
+  function fase12() {
+    const L = builder(187, 'mgpStudio', 'OS MGPS', 'mgp');
+    L.intro = 'Luz, câmera, gameplay! Atravesse os cenários e publique o primeiro MGP do Mundo 4.';
+    L.time = 360;
+    L.zones = [
+      [0, 'mgpStudio', 'mgp', 'ABERTURA DO MGP'],
+      [40, 'mgpWorkshop', 'mgp', 'OFICINA DE ENGENHOCAS'],
+      [87, 'mgpCanopy', 'mgp', 'MATA DAS BANANAS'],
+      [139, 'mgpRidge', 'mgp', 'SERRA DA VELOCIDADE'],
+    ];
+    L.e('npc', 7, 11, { who: 'inscrito', say: 'O trailer já saiu! Hora da gameplay, Matheus. Ligar a câmera! Três, dois, um... gravando!' });
+    L.ground(0, 29); L.ground(34, 62);
+    L.put(14, 8, 'BMB'); L.put(19, 7, '===='); L.put(20, 6, 'oooo');
+    L.e('n', 24, 6); L.put(30, 9, 'oooo'); L.e('K', 42, 11);
+    L.e('npc', 46, 11, { who: 'ps2', say: 'Olha a engenhoca! Pule na plataforma e espere ela te levar até o outro lado da oficina.' });
+    L.e('b', 54, 11); L.put(56, 8, '?B?');
+    L.e('mph', 62, 11, { range: 9 }); L.put(65, 9, 'oooooo');
+    L.ground(73, 104); L.e('w', 80, 11); L.put(83, 8, 'BBB');
+    L.e('K', 89, 11); L.secret(95); L.put(103, 9, 'oooo');
+    L.ground(107, 125); L.ground(126, 132, 10); L.ground(134, 156);
+    L.put(110, 8, 'BB?BB'); L.put(111, 7, 'oooo');
+    L.e('m', 115, 6); L.e('k', 121, 11); L.put(131, 8, 'ooo');
+    L.e('K', 141, 11);
+    L.e('npc', 145, 11, { who: 'miguel', say: 'Pegue embalo na serra! A mola te lança para uma rota mais alta, cheia de fichas.' });
+    L.e('spring', 152, 11); L.put(154, 6, '====='); L.put(155, 5, 'oooo');
+    L.ground(161, 186); L.put(157, 10, '==='); L.put(161, 10, 'oooo');
+    L.e('f', 166, 5); L.e('g', 169, 11); L.put(173, 8, '?1?');
+    L.e('G', 181, 11);
+    return L;
+  }
+
+  const list = [fase1, fase2, fase3, fase4, chefe, fase5, fase6, fase7, fase8, chefe2, fase9, fase10, fase11, chefe3, fase12];
+  const labels = ['1', '2', '3', '4', 'CHEFE', '5', '6', '7', '8', 'CHEFE 2', '9', '10', '11', 'CHEFE 3', '12'];
   return { list, labels };
 })();
