@@ -616,11 +616,11 @@ window.ART = (() => {
   function tiles(name) {
     if (tileCache[name]) return tileCache[name];
     const th = THEMES[name], S = {};
-    const ground = (top, variant) => {
+    const ground = (top) => {
       const c = mk(16, 16), x = c.getContext('2d');
       if (th.style === 'dirt') {
         x.fillStyle = th.g1; x.fillRect(0, 0, 16, 16);
-        const r = rng(11 + variant * 41);
+        const r = rng(11);
         for (let i = 0; i < 9; i++) { x.fillStyle = th.g2; x.fillRect((r() * 14) | 0, (r() * 14) | 0, 2, 2); }
         for (let i = 0; i < 6; i++) { x.fillStyle = th.g3; x.fillRect((r() * 15) | 0, (r() * 15) | 0, 1, 1); }
         if (top) {
@@ -633,7 +633,7 @@ window.ART = (() => {
         }
       } else if (th.style === 'sand') {
         x.fillStyle = th.g1; x.fillRect(0, 0, 16, 16);
-        const r = rng(23 + variant * 41);
+        const r = rng(23);
         for (let i = 0; i < 14; i++) { x.fillStyle = i % 3 ? th.g2 : th.g3; x.fillRect((r() * 15) | 0, (r() * 15) | 0, 1, 1); }
         if (top) { x.fillStyle = th.t2; x.fillRect(0, 3, 16, 2); x.fillStyle = th.t1; x.fillRect(0, 0, 16, 3); x.fillStyle = th.tL; x.fillRect(0, 0, 16, 1); for (let i = 3; i < 16; i += 6) x.fillRect(i, 1, 2, 1); }
       } else if (th.style === 'bands' || th.style === 'checker') {
@@ -671,41 +671,9 @@ window.ART = (() => {
         x.fillStyle = th.g2; x.fillRect(5, 7, 6, 2);
         if (top) { x.fillStyle = th.t1; x.fillRect(0, 0, 16, 2); x.fillStyle = th.tL; x.fillRect(0, 0, 16, 1); }
       }
-      // Keep the checkerboard and panel alignment while varying wear on each tile.
-      if (name !== 'bat') {
-        const structured = th.style === 'plate' || th.style === 'stone';
-        const random = rng(45 + variant * 61);
-        if (top) {
-          x.fillStyle = 'rgba(0,0,0,.18)';
-          x.fillRect(0, th.style === 'bands' || th.style === 'checker' ? 8 : th.style === 'dirt' ? 7 : 2, 16, 1);
-        }
-        for (let i = 0; i < 4; i++) {
-          const px = 2 + Math.floor(random() * 11), py = (top ? 9 : 4) + Math.floor(random() * 5);
-          x.fillStyle = structured ? th.g3 : 'rgba(255,248,217,.19)';
-          x.fillRect(px, py, i % 2 ? 1 : 2, 1);
-          if (i % 2 === 0) {
-            x.fillStyle = 'rgba(0,0,0,.15)';
-            x.fillRect(px + 1, py + 1, 2, 1);
-          }
-        }
-        if (th.style === 'plate') {
-          x.fillStyle = th.mo;
-          x.fillRect(4, 7, 8, 2);
-          x.fillStyle = th.g3;
-          x.fillRect(5, 9, 6, 1);
-          if (variant === 1) {
-            x.fillStyle = th.t2;
-            x.fillRect(6, 7, 2, 1);
-          }
-        }
-      }
       return c;
     };
-    const variants = name === 'bat' ? [0] : [0, 1, 2, 3];
-    S.groundTopVariants = variants.map(v => ground(true, v));
-    S.groundVariants = variants.map(v => ground(false, v));
-    S.groundTop = S.groundTopVariants[0];
-    S.ground = S.groundVariants[0];
+    S.groundTop = ground(true); S.ground = ground(false);
 
     { // tijolo
       const c = mk(16, 16), x = c.getContext('2d');
@@ -786,13 +754,6 @@ window.ART = (() => {
         x.fillStyle = '#d0d4e4'; x.fillRect(0, 1, 16, 1);
         x.fillStyle = '#1a1020'; for (let i = 2; i < 16; i += 4) x.fillRect(i, 3, 2, 1);
       }
-      if (name !== 'bat' && th.semi === 'metal') {
-        x.fillStyle = th.tL;
-        x.fillRect(1, 1, 3, 1);
-        x.fillRect(12, 1, 3, 1);
-        x.fillStyle = th.hdD;
-        x.fillRect(0, 5, 16, 1);
-      }
       S.semi = c;
     }
     // cartucho gigante (pilar)
@@ -833,9 +794,6 @@ window.ART = (() => {
         }
       }
       x.fillStyle = '#4a4e66'; x.fillRect(0, 14, 16, 2);
-      x.fillStyle = '#242035'; x.fillRect(0, 15, 16, 1);
-      x.fillStyle = '#ffc582'; x.fillRect(1, 14, 2, 1); x.fillRect(9, 14, 2, 1);
-      x.fillStyle = '#ffffff'; x.fillRect(3, 7, 1, 2); x.fillRect(11, 7, 1, 2);
       S.spikes = c;
     }
     { // lava animada
@@ -855,9 +813,6 @@ window.ART = (() => {
           x.fillStyle = '#ff5a1f'; x.fillRect(i, wy + 3, 1, 16 - wy - 3);
         }
         x.fillStyle = '#d8340f'; x.fillRect(4, 11, 2, 1); x.fillRect(11, 13, 2, 1);
-        x.fillStyle = '#ffa949';
-        x.fillRect((3 + f * 3) % 12, 8 + (f % 2), 3, 1);
-        x.fillRect((10 + f * 2) % 13, 12, 2, 1);
         return c;
       });
     }
@@ -1351,327 +1306,13 @@ window.ART = (() => {
     return { sky, extra, layers: [[far,.17,0],[front,.46,0]] };
   }
 
-  function lightPool(ctx, x, y, rx, ry, color) {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.scale(rx, ry);
-    const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
-    glow.addColorStop(0, color);
-    glow.addColorStop(1, 'transparent');
-    ctx.fillStyle = glow;
-    ctx.fillRect(-1, -1, 2, 2);
-    ctx.restore();
-  }
-
-  function pixelLine(ctx, color, x, y, length, rise, step = 1) {
-    ctx.fillStyle = color;
-    for (let i = 0; i < length; i += step) {
-      ctx.fillRect(x + i, y + Math.round(i * rise), Math.min(step, length - i), 1);
-    }
-  }
-
-  // Affixes these details to the same plane as the scene they belong to.
-  function sceneryDetails(name, layers, H, LW) {
-    const paint = (index, draw) => {
-      const ctx = layers[index][0].getContext('2d');
-      ctx.save();
-      ctx.globalCompositeOperation = 'source-over';
-      draw(ctx);
-      ctx.restore();
-    };
-    const rect = (x, color, px, py, w, h) => {
-      x.fillStyle = color;
-      x.fillRect(px, py, w, h);
-    };
-    const random = rng(152);
-    if (name === 'tropical' || name === 'sonicHills') {
-      paint(0, x => {
-        x.globalCompositeOperation = 'source-atop';
-        for (let px = 0; px < LW; px += 41) {
-          const y = 103 + Math.floor(random() * 34);
-          pixelLine(x, '#94c8e9', px, y, 27, -.24, 3);
-          pixelLine(x, '#6da7d3', px + 8, y + 15, 21, -.22, 2);
-        }
-      });
-      paint(2, x => {
-        x.globalCompositeOperation = 'source-atop';
-        for (let px = 2; px < LW; px += 9) {
-          const top = H - Math.round(96 + 18 * Math.sin(px / LW * Math.PI * 4 + .6)
-            + 10 * Math.sin(px / LW * Math.PI * 10 + 1.7) + 5 * Math.sin(px / LW * Math.PI * 26 + .4));
-          const shade = 1 + Math.floor(random() * 11);
-          rect(x, '#70b96c', px, top + 1, 5, 1);
-          rect(x, '#1c7449', px + 3, top + shade + 8, 2, 8 + shade);
-          rect(x, '#50ad64', px + 5, top + shade + 10, 2, 4 + shade);
-        }
-      });
-      paint(3, x => {
-        for (let px = 6; px < LW; px += 13) {
-          const y = H - 18 - Math.floor(random() * 8);
-          rect(x, '#905331', px, y + 2, 6, 2);
-          rect(x, '#d98d47', px + 1, y, 4, 1);
-        }
-      });
-    } else if (name === 'cave') {
-      const pillars = mk(LW, H), x = pillars.getContext('2d');
-      for (let px = 13; px < LW; px += 76) {
-        const width = 19 + Math.floor(random() * 27), y = H - 61 - Math.floor(random() * 58);
-        for (let row = 0; row < H - y; row++) {
-          const span = Math.min(width, 2 + Math.round(row * .54));
-          rect(x, '#242052', px - (span >> 1), y + row, span, 1);
-          rect(x, '#2e3164', px - (span >> 1), y + row, Math.max(1, span >> 2), 1);
-        }
-        lightPool(x, px, y + 69, 30, 27, 'rgba(82,151,226,.23)');
-        for (let i = 0; i < 7; i++) {
-          const dx = Math.floor(random() * 23) - 11, dy = H - 57 + Math.floor(random() * 14);
-          rect(x, i % 2 ? '#a47bdf' : '#71bbdc', px + dx, dy, 1, 2 + i % 3);
-        }
-      }
-      layers.splice(1, 0, [pillars, .22, 0]);
-    } else if (name === 'sky') {
-      paint(1, x => {
-        x.globalCompositeOperation = 'source-atop';
-        for (let px = 0; px < LW; px += 3) {
-          const stretch = 5 + Math.floor(random() * 23);
-          rect(x, px % 2 ? '#ae7bdb' : '#8d5fbf', px, 113, 2, stretch);
-        }
-      });
-      const clouds = mk(LW, H), x = clouds.getContext('2d');
-      for (let px = 26; px < LW - 35; px += 97) {
-        const y = 143 + Math.floor(random() * 35);
-        cloud(x, px, y, 1.1, '#ffddeb', '#e5aada');
-        rect(x, '#ffebf0', px - 10, y - 4, 22, 1);
-        rect(x, '#edb5db', px + 10, y + 4, 25, 1);
-      }
-      layers.splice(2, 0, [clouds, .28, .09]);
-    } else if (name === 'castle') {
-      paint(0, x => {
-        for (let px = 40; px < LW; px += 128) {
-          lightPool(x, px + 16, 114, 54, 64, 'rgba(255,125,48,.32)');
-          rect(x, '#591e24', px - 8, 145, 48, 4);
-          rect(x, '#e77138', px - 5, 145, 42, 1);
-          for (let bar = 4; bar < 30; bar += 8) {
-            rect(x, '#661c19', px + bar, 76, 1, 64);
-            rect(x, '#e58b43', px + bar + 1, 76, 1, 64);
-          }
-        }
-      });
-      paint(1, x => {
-        for (let px = 90; px < LW; px += 160) {
-          rect(x, '#6d4551', px + 3, 10, 19, 1);
-          rect(x, '#37232f', px + 3, 14, 20, 6);
-          for (let y = 109; y < H; y += 32) {
-            rect(x, '#4a2635', px - 3, y, 32, 5);
-            rect(x, '#764050', px, y, 26, 1);
-          }
-        }
-      });
-    } else if (name === 'beach') {
-      const surf = mk(LW, H), x = surf.getContext('2d');
-      for (let px = 7; px < LW - 18; px += 26) {
-        const y = 143 + Math.floor(random() * 39), w = 6 + Math.floor(random() * 12);
-        rect(x, '#98c4e3', px, y, w, 1);
-        rect(x, '#ffdcb3', px + 3, y + 1, Math.max(2, w - 6), 1);
-        rect(x, '#5b9ed4', px + 2, y + 3, w, 1);
-      }
-      layers.splice(1, 0, [surf, .1, .12]);
-      paint(2, ctx => {
-        ctx.globalCompositeOperation = 'source-atop';
-        for (let px = 0; px < LW; px += 2) {
-          const top = H - Math.round(70 + 10 * Math.sin(px / LW * Math.PI * 4 + .4)
-            + 6 * Math.sin(px / LW * Math.PI * 10 + 1.2));
-          rect(ctx, '#ffe1a5', px, top, 2, 2);
-          if (px % 6 === 0) rect(ctx, '#d59060', px, top + 8 + Math.floor(random() * 17), 3, 1);
-        }
-      });
-    } else if (name === 'fair') {
-      const ceiling = mk(LW, H), x = ceiling.getContext('2d');
-      for (let px = 0; px < LW; px += 32) {
-        rect(x, '#2a234d', px, 32, 32, 3);
-        pixelLine(x, '#45365e', px, px % 64 ? 49 : 35, 32, px % 64 ? -.45 : .45, 2);
-        rect(x, '#2a234d', px, 49, 32, 2);
-        if (px % 64 === 0) {
-          lightPool(x, px + 24, 60, 34, 26, 'rgba(148,120,244,.24)');
-          rect(x, '#392b5a', px + 13, 52, 22, 5);
-          rect(x, '#9c81ca', px + 16, 56, 16, 1);
-        }
-      }
-      layers.unshift([ceiling, .13, 0]);
-      paint(1, ctx => {
-        for (let px = 0; px < LW; px += 64) {
-          const color = px % 128 ? 'rgba(145,222,255,.20)' : 'rgba(244,143,205,.21)';
-          lightPool(ctx, px + 32, 150, 35, 28, color);
-          for (let i = 0; i < 3; i++) {
-            rect(ctx, '#353359', px + 12 + i * 14, 163, 10, 5);
-            rect(ctx, i === 1 ? '#a65f92' : '#53899a', px + 14 + i * 14, 164, 6, 1);
-          }
-        }
-      });
-    } else if (name === 'sea') {
-      const kelp = mk(LW, H), x = kelp.getContext('2d');
-      for (let px = 22; px < LW; px += 44) {
-        const y = H - 54 - Math.floor(random() * 29);
-        for (let row = 0; row < H - y; row++) {
-          const bx = px + Math.round(Math.sin(row * .13 + px) * 5);
-          rect(x, '#20598a', bx, y + row, 3, 1);
-          const leaf = row % 18;
-          if (leaf < 5) rect(x, '#2b7199', bx - leaf * 2, y + row, 2 + leaf * 2, 1);
-          if (leaf > 9 && leaf < 15) rect(x, '#296b94', bx + 2, y + row, 2 + (14 - leaf) * 2, 1);
-        }
-      }
-      layers.splice(1, 0, [kelp, .27, 0]);
-      paint(2, x => {
-        for (let i = 0; i < 17; i++) {
-          const px = 8 + i * 30, y = H - 38 - Math.floor(random() * 21);
-          const col = i % 2 ? '#d774a2' : '#e49d87', rim = i % 2 ? '#f4a7bd' : '#ffc3a1';
-          for (let branch = -1; branch <= 1; branch += 2) {
-            const length = 5 + Math.floor(random() * 10);
-            const by = y + 9 + Math.floor(random() * 17);
-            for (let row = 0; row < length; row++) {
-              const bx = px + branch * Math.round((length - row) * .51);
-              rect(x, col, bx, by + row, 3, 2);
-              if (row % 4 === 0) rect(x, rim, bx, by + row, 1, 1);
-            }
-          }
-          rect(x, col, px, y, 3, H - y);
-          rect(x, rim, px, y, 1, 8);
-        }
-      });
-    } else if (name === 'edit') {
-      const console = mk(LW, H), x = console.getContext('2d');
-      for (let px = 4; px < LW - 45; px += 128) {
-        rect(x, '#232535', px, 44, 43, 60);
-        rect(x, '#343849', px + 2, 44, 39, 2);
-        rect(x, '#131523', px + 4, 49, 35, 23);
-        rect(x, '#24283c', px + 6, 51, 31, 19);
-        for (let i = 0; i < 15; i++) {
-          const amp = 1 + Math.floor(random() * 8);
-          rect(x, '#636b98', px + 7 + i * 2, 60 - (amp >> 1), 1, amp);
-        }
-        for (let i = 0; i < 4; i++) {
-          const sx = px + 7 + i * 8;
-          rect(x, '#43455a', sx, 79, 1, 17);
-          rect(x, i % 2 ? '#806b9d' : '#5a779b', sx - 2, 81 + (i * 5) % 12, 5, 2);
-        }
-      }
-      layers.unshift([console, .08, 0]);
-      paint(1, x => {
-        for (let px = 0; px < LW; px += 8) {
-          rect(x, px % 24 ? '#343344' : '#55536b', px, H - 94, 1, px % 24 ? 2 : 4);
-          if (px % 24 === 0) rect(x, 'rgba(151,142,186,.16)', px, H - 87, 1, 60);
-        }
-        for (let px = 7; px < LW; px += 39) {
-          const y = H - 85 + 18 * Math.floor(random() * 4);
-          for (let j = 0; j < 11; j++) {
-            const amp = 1 + Math.floor(random() * 5);
-            rect(x, 'rgba(170,186,223,.30)', px + j * 2, y + 5 - (amp >> 1), 1, amp);
-          }
-        }
-      });
-    } else if (name === 'snow') {
-      paint(0, x => {
-        x.globalCompositeOperation = 'source-atop';
-        for (let px = 0; px < LW; px += 49) {
-          const y = 93 + Math.floor(random() * 47);
-          pixelLine(x, '#9bb2e0', px, y, 38, .43, 2);
-          pixelLine(x, '#edf5ff', px + 3, y + 7, 24, .32, 2);
-        }
-      });
-      paint(2, x => {
-        x.globalCompositeOperation = 'source-atop';
-        for (let px = 1; px < LW; px += 22) {
-          const y = H - 32 + Math.floor(random() * 17);
-          rect(x, '#aac5e7', px, y, 12, 1);
-          rect(x, '#edf6ff', px + 2, y - 1, 8, 1);
-        }
-      });
-    } else if (name === 'bat') {
-      paint(0, x => {
-        x.globalCompositeOperation = 'source-atop';
-        for (let px = 9; px < LW; px += 27) {
-          const y = 117 + Math.floor(random() * 56);
-          rect(x, 'rgba(168,115,224,.12)', px, y, 1, 27);
-        }
-      });
-    } else if (name === 'roofs' || name === 'snowCity') {
-      paint(0, x => {
-        x.globalCompositeOperation = 'source-atop';
-        for (let px = 0; px < LW; px += 33) {
-          const y = H - 77 + Math.floor(random() * 25);
-          pixelLine(x, name === 'roofs' ? '#da9489' : '#8595c8', px, y, 20, .18, 2);
-        }
-      });
-      if (name === 'snowCity') paint(2, x => {
-        for (const px of [112, 370]) lightPool(x, px + 2, 62, 18, 13, 'rgba(251,167,169,.25)');
-      });
-    } else if (name === 'grotto') {
-      paint(0, x => {
-        for (const [px, width] of [[54, 24], [328, 36]]) {
-          lightPool(x, px + width / 2, 167, 36, 54, 'rgba(106,233,213,.29)');
-          for (let i = 0; i < 9; i++) {
-            const y = 177 + i * 3;
-            rect(x, i % 2 ? '#5a9d9f' : '#3b919a', px - i * 2, y, width + i * 4, 1);
-          }
-        }
-      });
-    } else if (MGP_THEMES.has(name)) {
-      paint(0, x => {
-        const light = {
-          mgpStudio: 'rgba(177,109,209,.25)',
-          mgpWorkshop: 'rgba(244,154,91,.30)',
-          mgpCanopy: 'rgba(200,207,118,.19)',
-          mgpRidge: 'rgba(255,186,136,.20)',
-        }[name];
-        for (let px = 64; px < LW; px += 128) {
-          lightPool(x, px, H - 71, 64, 53, light);
-        }
-      });
-      paint(1, x => {
-        if (name === 'mgpCanopy') {
-          for (let px = 8; px < LW; px += 16) {
-            const y = H - 26 - Math.floor(random() * 17);
-            const col = px % 3 ? '#486d55' : '#648354';
-            rect(x, col, px, y, 3, H - y);
-            pixelLine(x, col, px - 6, y - 4, 8, .75, 2);
-            pixelLine(x, col, px + 1, y + 6, 9, -.52, 2);
-          }
-        } else if (name === 'mgpRidge') {
-          for (let px = 2; px < LW; px += 23) {
-            const y = H - 34 + Math.floor(random() * 19);
-            pixelLine(x, '#9a647f', px, y, 14, -.23, 3);
-          }
-        } else {
-          for (let px = 0; px < LW; px += 128) {
-            const studio = name === 'mgpStudio';
-            const y = studio ? 105 : 122;
-            rect(x, studio ? '#3b2c4d' : '#5b404b', px + 25, y, 73, 23);
-            rect(x, studio ? '#715279' : '#926358', px + 25, y, 73, 2);
-            for (let i = 0; i < 5; i++) {
-              const sx = px + 30 + i * 13;
-              rect(x, studio ? '#261f39' : '#47313d', sx, y + 5, 11, 12);
-              rect(x, studio ? '#7569a5' : '#af815f', sx + 2, y + 8 + i % 2, 7, 1);
-              rect(x, studio ? '#576382' : '#71514d', sx + 2, y + 12, 7, 1);
-            }
-          }
-        }
-      });
-    }
-  }
-
   const MGP_THEMES = new Set(['mgpStudio','mgpWorkshop','mgpCanopy','mgpRidge']);
   const bgCache = {};
   function background(name, W, H) {
     const key = name + W + 'x' + H;
     if (bgCache[key]) return bgCache[key];
     if (name === 'live') {
-      const overlay = gradient(W, H, [[0, 'rgba(15,4,35,.78)'], [.2, 'rgba(12,4,26,.19)'],
-        [.68, 'rgba(14,5,30,.15)'], [1, 'rgba(36,8,56,.75)']]);
-      const x = overlay.getContext('2d');
-      x.fillStyle = 'rgba(255,143,235,.68)';
-      for (const px of [9, W - 22]) {
-        x.fillRect(px, H - 32, 13, 1);
-        x.fillRect(px === 9 ? px : px + 12, H - 43, 1, 12);
-      }
-      bgCache[key] = { draw(ctx) { ctx.clearRect(0, 0, W, H); ctx.drawImage(overlay, 0, 0); } };
+      bgCache[key] = { draw(ctx) { ctx.clearRect(0, 0, W, H); ctx.fillStyle = 'rgba(8,0,24,0.22)'; ctx.fillRect(0, 0, W, H); } };
       return bgCache[key];
     }
     const LW = 512;
@@ -1714,18 +1355,6 @@ window.ART = (() => {
         x.fillStyle = '#2d1b37'; x.fillRect(px, 28, 11, 162);
         x.fillStyle = '#6a4764'; x.fillRect(px + 2, 28, 2, 162);
         x.fillStyle = '#c67a69'; x.fillRect(px - 4, 113, 19, 2);
-      }
-      for (const side of [-1, 1]) {
-        const px = mid + side * 96;
-        lightPool(x, px, 146, 58, 52, 'rgba(236,121,74,.38)');
-        x.fillStyle = '#372034'; x.fillRect(px - 7, 118, 14, 51);
-        x.fillStyle = '#b06c66'; x.fillRect(px - 9, 141, 18, 2);
-        x.fillStyle = '#ffb675'; x.fillRect(px - 2, 124, 4, 17);
-        x.fillStyle = '#ffe6a1'; x.fillRect(px - 1, 120, 2, 12);
-        for (let row = 0; row < 16; row++) {
-          x.fillStyle = row % 4 ? '#583045' : '#ab625f';
-          x.fillRect(px - 33 + side * row, 37 + row, 65, 1);
-        }
       }
       x.strokeStyle = '#c17c68'; x.lineWidth = 2; x.strokeRect(mid - 61, 46, 122, 76);
       x.strokeStyle = '#65405f'; x.strokeRect(mid - 57, 50, 114, 68);
@@ -1898,20 +1527,7 @@ window.ART = (() => {
         const x = extra.getContext('2d');
         x.fillStyle = '#05050a'; x.fillRect(W / 2 - 90, 34, 180, 90); x.fillStyle = '#2a2a3a'; x.fillRect(W / 2 - 92, 32, 184, 2);
         ['#e8402e', '#ffd23f', '#3bd16f', '#2fe0ff', '#2f7bff', '#ff5ab4', '#ffffff'].forEach((c, i) => { x.fillStyle = c; x.fillRect(W / 2 - 86 + i * 25, 38, 25, 60); });
-        const mid = W >> 1;
-        x.fillStyle = '#1a1a24'; x.fillRect(mid - 86, 98, 175, 22);
-        x.fillStyle = '#30334a'; x.fillRect(mid - 83, 101, 165, 14);
-        x.fillStyle = '#22263a'; x.fillRect(mid - 25, 103, 70, 10);
-        for (let i = 0; i < 14; i++) {
-          x.fillStyle = i % 5 ? '#585977' : '#9990b4';
-          x.fillRect(mid - 81 + i * 12, 114, 1, 2);
-        }
-        for (let i = 0; i < 4; i++) {
-          x.fillStyle = i === 1 ? '#de778b' : '#7bb2aa';
-          x.fillRect(mid + 57 + i * 6, 105, 3, 2);
-        }
-        x.fillStyle = 'rgba(3,5,19,.13)';
-        for (let row = 40; row < 98; row += 3) x.fillRect(mid - 86, row, 175, 1);
+        x.fillStyle = '#1a1a24'; x.fillRect(W / 2 - 86, 98, 175, 22);
       }
       const tracks = mk(LW, H); { const x = tracks.getContext('2d'); const r = rng(5); const cols = ['#3a8aff', '#3bd16f', '#9b4dff', '#ff8a3d'];
         for (let tr = 0; tr < 4; tr++) { const y = H - 92 + tr * 18; x.fillStyle = '#16161e'; x.fillRect(0, y, LW, 14); for (let cx = 0; cx < LW;) { const w = 30 + ((r() * 60) | 0); x.fillStyle = cols[tr]; x.fillRect(cx + 2, y + 2, w - 4, 10); x.fillStyle = 'rgba(255,255,255,0.35)'; x.fillRect(cx + 2, y + 2, w - 4, 2); cx += w + ((r() * 14) | 0); } } }
@@ -2008,45 +1624,17 @@ window.ART = (() => {
       };
       layers = [[towers(5, 80, 60, '#1a0e30', '#b48aff'), 0.1, 0], [towers(9, 44, 50, '#0c0618', '#ffd27a'), 0.28, 0]];
     } else if (name === 'buffer') {
-      sky = gradient(W, H, [[0, '#090b1b'], [.58, '#24283e'], [1, '#171621']]);
-      extra = mk(W, H);
-      const x = extra.getContext('2d'), mid = W >> 1;
-      lightPool(x, mid, 101, 118, 83, 'rgba(111,139,226,.30)');
-      x.strokeStyle = '#343b5c';
-      x.strokeRect(mid - 84.5, 15.5, 169, 163);
-      x.strokeStyle = '#252a47';
-      x.strokeRect(mid - 93.5, 9.5, 187, 177);
-      for (const side of [-1, 1]) {
-        const px = mid + side * 113;
-        x.fillStyle = '#1c2136'; x.fillRect(px - 16, 52, 32, 110);
-        x.fillStyle = '#3c466b'; x.fillRect(px - 14, 56, 28, 1);
-        for (let i = 0; i < 11; i++) {
-          x.fillStyle = i % 3 ? '#374463' : '#7996bc';
-          x.fillRect(px - 10, 64 + i * 7, 3 + (i * 17) % 21, 1);
-        }
-      }
+      sky = gradient(W, H, [[0, '#0a0a10'], [1, '#22222c']]);
     } else if (name === 'boss') {
       sky = gradient(W, H, [[0, '#0a0318'], [1, '#2a0a4a']]);
       extra = mk(W, H); {
         const x = extra.getContext('2d'); const hz = 110;
-        for (const side of [-1, 1]) {
-          const px = (W >> 1) + side * 94;
-          lightPool(x, px, 99, 82, 73, side < 0 ? 'rgba(175,66,228,.38)' : 'rgba(52,151,225,.30)');
-          for (let i = 0; i < 5; i++) {
-            const y = 49 + i * 11;
-            x.fillStyle = side < 0 ? '#431c5c' : '#26345e';
-            x.fillRect(px - 28, y, 56, 6);
-            x.fillStyle = side < 0 ? '#97548b' : '#537699';
-            x.fillRect(px - 23, y + 1, 4 + (i * 13) % 38, 1);
-          }
-        }
         x.strokeStyle = 'rgba(255,43,214,0.35)'; x.lineWidth = 1;
         for (let i = -12; i <= 12; i++) { x.beginPath(); x.moveTo(W / 2 + i * 8, hz); x.lineTo(W / 2 + i * 48, H); x.stroke(); }
         for (let j = 0; j < 8; j++) { const yy = Math.round(hz + Math.pow(j / 8, 1.8) * (H - hz)); x.fillStyle = 'rgba(255,43,214,0.35)'; x.fillRect(0, yy, W, 1); }
         x.fillStyle = 'rgba(47,224,255,0.08)'; for (let j = 0; j < H; j += 3) x.fillRect(0, j, W, 1);
       }
     }
-    sceneryDetails(name, layers, H, LW);
     const res = {
       draw(ctx, camX, t) {
         ctx.drawImage(sky, 0, 0);
@@ -2063,23 +1651,10 @@ window.ART = (() => {
           const r = rng(Math.floor(t / 6));
           for (let i = 0; i < 6; i++) { ctx.fillStyle = r() > 0.5 ? 'rgba(255,90,180,0.18)' : 'rgba(47,224,255,0.16)'; ctx.fillRect((r() * W) | 0, (r() * H * 0.6) | 0, (8 + r() * 60) | 0, (2 + r() * 6) | 0); }
         }
-        if (name === 'edit') {
-          const px = Math.round(((t * .6 - camX * .3) % (W + 40) + W + 40) % (W + 40)) - 20;
-          ctx.fillStyle = 'rgba(255,99,125,.38)'; ctx.fillRect(px, H - 96, 1, 72);
-          ctx.fillStyle = '#ff838f'; ctx.fillRect(px - 3, H - 96, 7, 3);
-        }
+        if (name === 'edit') { const span = W + 40, ph = ((((t * 0.6 - camX * 0.3) % span) + span) % span) - 20; /* a linha anda presa à trilha do fundo, não à tela */ ctx.fillStyle = '#ff3b3b'; ctx.fillRect(Math.round(ph), 0, 2, H); ctx.fillRect(Math.round(ph) - 3, 0, 8, 6); }
         if (name === 'sea') {
           ctx.fillStyle = 'rgba(255,255,255,0.06)'; for (let i = 0; i < 5; i++) { const bx = ((i * 90 - camX * 0.1 + t * 0.2) % (W + 80)) - 40; ctx.beginPath(); ctx.moveTo(bx, 0); ctx.lineTo(bx + 30, 0); ctx.lineTo(bx + 80, H); ctx.lineTo(bx + 40, H); ctx.fill(); }
-          for (let i = 0; i < 18; i++) {
-            const px = Math.round(((i * 71 - camX * .5) % W + W) % W + Math.sin(t * .06 + i) * 3);
-            const py = H - Math.round((t * (.4 + i % 3 * .2) + i * 37) % H);
-            ctx.fillStyle = 'rgba(169,222,253,.56)'; ctx.fillRect(px, py, 1, 2);
-            if (i % 3 === 0) {
-              ctx.fillRect(px + 2, py, 1, 2);
-              ctx.fillRect(px + 1, py + 2, 1, 1);
-              ctx.fillStyle = 'rgba(223,247,255,.78)'; ctx.fillRect(px + 1, py - 1, 1, 1);
-            }
-          }
+          ctx.fillStyle = 'rgba(220,240,255,0.7)'; for (let i = 0; i < 18; i++) { const px = ((i * 71 - camX * 0.5) % W + W) % W; const py = H - ((t * (0.4 + (i % 3) * 0.2) + i * 37) % H); ctx.fillRect(Math.round(px), Math.round(py), 2, 2); }
         }
         if (name === 'buffer') {
           for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; const k = ((i - Math.floor(t / 5)) % 12 + 12) % 12; ctx.fillStyle = 'rgba(255,255,255,' + (0.04 + (k / 12) * 0.16) + ')'; ctx.fillRect(Math.round(W / 2 + Math.cos(a) * 70 - 6), Math.round(96 + Math.sin(a) * 70 - 6), 12, 12); }
