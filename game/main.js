@@ -1876,7 +1876,7 @@
       for (const b of G.bumps) if (b.tx === tx && b.ty === ty) oy = -Math.round(Math.sin((b.t / 10) * Math.PI) * 5);
       switch (c) {
         case '#': {
-          const variants = tileAt(tx, ty - 1) === '#' ? ts.ground : ts.groundTop;
+          const variants = tileAt(tx, ty - 1) === '#' ? ts.groundVariants : ts.groundTopVariants;
           const variant = ((Math.imul(tx, 73856093) ^ Math.imul(ty, 19349663)) >>> 5) % variants.length;
           if (!(G.glitch && G.glitch.kind === 'vanish' && ((tx * 7 + ty * 3 + (G.t >> 3)) % 4) === 0)) im = variants[variant];
           break;

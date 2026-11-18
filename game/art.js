@@ -702,8 +702,10 @@ window.ART = (() => {
       return c;
     };
     const variants = name === 'bat' ? [0] : [0, 1, 2, 3];
-    S.groundTop = variants.map(v => ground(true, v));
-    S.ground = variants.map(v => ground(false, v));
+    S.groundTopVariants = variants.map(v => ground(true, v));
+    S.groundVariants = variants.map(v => ground(false, v));
+    S.groundTop = S.groundTopVariants[0];
+    S.ground = S.groundVariants[0];
 
     { // tijolo
       const c = mk(16, 16), x = c.getContext('2d');
@@ -974,13 +976,19 @@ window.ART = (() => {
     x.fillStyle = g; x.fillRect(0, 0, w, h);
     return c;
   }
+  function ridgeHeightAt(column, width, base, waves) {
+    let height = base;
+    for (const [amplitude, frequency, phase] of waves) {
+      height += amplitude * Math.sin((column / width) * Math.PI * 2 * frequency + phase);
+    }
+    return Math.max(0, Math.round(height));
+  }
+
   function ridge(w, h, color, base, waves, fromTop) {
     const c = mk(w, h), x = c.getContext('2d');
     x.fillStyle = color;
     for (let i = 0; i < w; i++) {
-      let v = base;
-      waves.forEach(([a, k, ph]) => { v += a * Math.sin((i / w) * Math.PI * 2 * k + ph); });
-      v = Math.max(0, Math.round(v));
+      const v = ridgeHeightAt(i, w, base, waves);
       if (fromTop) x.fillRect(i, 0, 1, v); else x.fillRect(i, h - v, 1, v);
     }
     return c;
@@ -1775,7 +1783,8 @@ window.ART = (() => {
         }
       };
       // morros arredondados com palmeiras
-      const near = ridge(LW, H, '#3cc34f', 44, [[12, 3, 0.2], [7, 8, 2.4]]);
+      const hillHeight = 44, hillWaves = [[12, 3, 0.2], [7, 8, 2.4]];
+      const near = ridge(LW, H, '#3cc34f', hillHeight, hillWaves);
       { const x = near.getContext('2d');
         x.globalCompositeOperation = 'source-atop';
         for (let j = H - 70; j < H; j += 6) { x.fillStyle = (j / 6) % 2 ? '#c4691f' : '#8e4513'; x.fillRect(0, j + 20, LW, 3); }
@@ -1797,7 +1806,10 @@ window.ART = (() => {
           [[-1, 0], [1, 0], [-1, 0.6], [1, 0.6], [0, -1]].forEach(([dx, dy]) => { for (let k = 0; k < 12; k++) x.fillRect(tx + dx * k - 1, ty + Math.round(dy * k + (k * k) / 14), 3, 2); });
           x.fillStyle = '#3fd04a'; [[-1, 0], [1, 0]].forEach(([dx]) => { for (let k = 0; k < 9; k++) x.fillRect(tx + dx * k, ty - 1 + Math.round((k * k) / 14), 2, 1); });
         };
-        [[40, 26], [150, 34], [300, 22], [420, 30]].forEach(([px, h]) => { let top = H; for (let j = 0; j < H; j++) { if (x.getImageData(px + 1, j, 1, 1).data[3] > 0) { top = j; break; } } palm(px, top + 2, h); });
+        for (const [px, height] of [[40, 26], [150, 34], [300, 22], [420, 30]]) {
+          const top = H - ridgeHeightAt(px + 1, LW, hillHeight, hillWaves);
+          palm(px, top + 2, height);
+        }
       }
       { const x = extra.getContext('2d'); const sx = W * 0.78, sy = 46;
         const glow = x.createRadialGradient(sx, sy, 4, sx, sy, 70); glow.addColorStop(0, 'rgba(255,250,210,0.9)'); glow.addColorStop(0.25, 'rgba(255,240,170,0.45)'); glow.addColorStop(1, 'rgba(255,240,170,0)');
