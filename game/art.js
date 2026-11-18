@@ -444,7 +444,29 @@ window.ART = (() => {
     '..knnnk..knnnk..',
     '..kkkkk..kkkkk..',
   ], { ...BASE, m: '#ff9ab0', u: '#2f7bff' }, 16);
+  // Chainsaw Sam: cabelo espetado, óculos redondos e a paleta azul do retrato.
+  const SAM = fromRows([
+    '...k..k.k.......',
+    '....k.kk.kk.....',
+    '..kkkkkkkkWk....',
+    '...kWkkkkkkkkk..',
+    '..kkkkskskkk....',
+    '...kksssssWk....',
+    '..kHeehheehEk...',
+    '..kswkskwksEk...',
+    '...kssSssssEk...',
+    '...kssdhsssk....',
+    '....kksssSk.....',
+    '...kDdhhDDk.....',
+    '..kDDgDDDDgk....',
+    '..kDDDDDDDDk....',
+    '...kDDkkDDk.....',
+    '..kQQk..kQQk....',
+  ], { ...BASE, k: '#101e32', W: '#1c3d53', D: '#243b54', Q: '#182b43', E: '#417c9b', s: '#88d5e7', S: '#57adbf', h: '#4d99b7', H: '#66b9d0', e: '#c4f3ff', w: '#e4faff', d: '#3c7898', g: '#4b748c' }, 16);
+  const samPortrait = new Image();
+  samPortrait.src = 'assets/chainsaw-sam.png';
   const NPC = {
+    sam: both(SAM),
     rafael: both(RAFAEL), scott: both(SCOTT), jackson: both(JACKSON),
     axo: both(AXO), ps2: both(PS2), babs: both(BABS), miguel: both(MIGUEL),
     discord: both(PERSON('d', 'v', 'V')),
@@ -962,6 +984,25 @@ window.ART = (() => {
       }
     } else if (name === 'sky') {
       for (let i = 0; i < 26; i++) { if ((t + i * 13) % 90 < 60) { ctx.fillStyle = i % 4 ? 'rgba(255,255,255,0.8)' : '#ffd23f'; ctx.fillRect(wrapX(i * 47 - camX * 0.04, W), (i * 29) % 70 + 4, 1, 1); } }
+    } else if (name === 'mgpStudio') {
+      const offset = -Math.round((camX * .46) % 128);
+      for (let px = offset; px < W; px += 128) {
+        ctx.fillStyle = (t >> 5) % 2 ? '#ff7cb7' : '#a14e82';
+        ctx.fillRect(px + 91, 80, 3, 2);
+      }
+    } else if (name === 'mgpCanopy') {
+      for (let i = 0; i < 17; i++) {
+        const px = wrapX(i * 101 - camX * .35 + Math.sin((t + i * 18) * .023) * 12, W);
+        const py = 81 + i * 31 % 100 + Math.cos(t * .038 + i) * 7;
+        ctx.fillStyle = (t + i * 19) % 73 < 28 ? '#fff0a3' : '#90ae74';
+        ctx.fillRect(Math.round(px), Math.round(py), 1, 1);
+      }
+    } else if (name === 'mgpRidge') {
+      for (let i = 0; i < 11; i++) {
+        const px = wrapX(i * 79 - camX * .24 + t * .26, W + 28) - 14;
+        ctx.fillStyle = 'rgba(255,218,185,0.37)';
+        ctx.fillRect(Math.round(px), 42 + i * 17 % 108, 2 + i % 5, 1);
+      }
     } else if (name === 'grotto') {
       for (let i = 0; i < 21; i++) {
         const px = wrapX(i * 73 - camX * (0.23 + (i % 2) * 0.14) + Math.sin(t * 0.026 + i) * 6, W);
@@ -1131,11 +1172,24 @@ window.ART = (() => {
     const box = (ctx, color, px, y, w, h) => { ctx.fillStyle = color; ctx.fillRect(px, y, w, h); };
     let sky, extra = null;
     if (name === 'mgpStudio') {
-      sky = gradient(W, H, [[0,'#130f32'],[.67,'#3b205b'],[1,'#785080']]);
+      sky = gradient(W, H, [[0,'#1c142d'],[.62,'#522856'],[1,'#7e465f']]);
       for (let px = 0; px < layerWidth; px += 128) {
         box(f, '#2b1b48', px + 5, 45, 112, 137);
         box(f, '#503064', px + 7, 47, 108, 2);
         for (let y = 60; y < 160; y += 15) box(f, '#38204e', px + 7, y, 108, 1);
+        box(f, '#261936', px + 5, 153, 112, 23);
+        box(f, '#ae5b98', px + 6, 153, 110, 1);
+        for (let j = 0; j < 19; j++) {
+          const height = 2 + Math.floor(random() * 8);
+          box(f, j % 3 ? '#8f609f' : '#d283af', px + 10 + j * 5, 163 - height, 2, height);
+        }
+        const light = f.createLinearGradient(0, 9, 0, 146);
+        light.addColorStop(0, px % 256 ? 'rgba(255,119,177,0.24)' : 'rgba(132,200,255,0.32)');
+        light.addColorStop(1, 'rgba(172,103,209,0)');
+        f.fillStyle = light;
+        f.beginPath(); f.moveTo(px + 65, 17); f.lineTo(px + 108, 147); f.lineTo(px + 24, 147); f.fill();
+        box(x, '#171426', px + 57, 4, 14, 6);
+        box(x, '#e595c6', px + 59, 10, 10, 2);
         box(x, '#170f29', px + 23, 30, 80, 58);
         box(x, '#6f507f', px + 24, 31, 78, 2);
         box(x, '#2d244c', px + 27, 35, 72, 46);
@@ -1150,6 +1204,8 @@ window.ART = (() => {
           }
         }
         box(x, '#191a34', px + 29, 69, 66, 8);
+        x.font = 'bold 6px monospace'; x.textBaseline = 'top';
+        x.fillStyle = '#edd1ee'; x.fillText(px % 256 ? 'EDIÇÃO' : 'MGP', px + 33, 70);
         box(x, '#ffcb8c', px + 91, 80, 3, 2);
         box(x, '#271733', px + 17, 0, 3, 144);
         box(x, '#65496b', px + 18, 0, 1, 98);
@@ -1165,6 +1221,13 @@ window.ART = (() => {
           box(f, '#c69068', start + 7, 87, 5, 52);
         }
         box(f, '#583f49', px + 20, 105, 82, 3);
+        box(f, '#583f49', px + 20, 125, 82, 2);
+        box(f, '#6c4654', px + 13, 154, 105, 2);
+        for (let j = 0; j < 8; j++) {
+          const rivet = px + 13 + j * 14;
+          box(f, '#a46d63', rivet, 149, 2, 2);
+          box(f, '#3e2d41', rivet - 2, 160, 5, 24);
+        }
         box(x, '#37293c', px, 15, 128, 6);
         box(x, '#ad765b', px, 15, 128, 1);
         box(x, '#4c3948', px + 15, 18, 2, 19+(px/128%2)*18);
@@ -1174,7 +1237,11 @@ window.ART = (() => {
           box(x, '#5f4b56', cx+Math.round(Math.cos(a)*13)-2, cy+Math.round(Math.sin(a)*13)-2, 5, 5);
         }
         blob(x,cx,cy,12,'#715961');
+        blob(x,cx-1,cy-1,9,'#85696b');
         blob(x,cx,cy,5,'#372d40');
+        blob(x,cx,cy,2,'#c88c69');
+        box(x, '#372c3e', px + 90, 18, 4, 102);
+        box(x, '#9c6861', px + 91, 21, 1, 94);
         box(x, '#3a2b3d', px + 75, 160, 36, 32);
         box(x, '#966b55', px + 76, 161, 34, 2);
         for (let i=0;i<6;i++) box(x, i%2 ? '#a67956' : '#573e46', px+78+i*5, 166, 5, 5);
@@ -1195,6 +1262,11 @@ window.ART = (() => {
           const c=j%2 ? '#4c7757' : '#3e684e';
           blob(x,px+Math.round((random()-.5)*35),b-Math.round(random()*24),10+Math.floor(random()*14),c);
         }
+        for (let j = 0; j < 8; j++) {
+          const by = b + 16 + j * 4;
+          box(x, '#679578', px - 12 + Math.round(Math.sin(j * .53) * 5), by, 1, 4);
+          if (j % 3 === 0) box(x, '#89ae7d', px - 15 + Math.round(Math.sin(j * .53) * 5), by, 3, 2);
+        }
         box(x,'#62946c',px-13,b+5,16,2);
         for(let j=0;j<3;j++) {
           const bx=px-12+j*4, by=b+7+j%2;
@@ -1207,13 +1279,14 @@ window.ART = (() => {
       sky = gradient(W, H, [[0,'#382959'],[.57,'#ba6983'],[1,'#f1ad89']]);
       extra = mk(W,H);
       blob(extra.getContext('2d'),W*.74,58,23,'#ffeab6');
-      for(let px=0;px<layerWidth;px+=96){
-        const peak = 65 + Math.round(random()*24);
-        for(let y=peak;y<H;y++){
-          const w=Math.min(58,Math.round((y-peak)*.56));
-          box(f,'#825f8c',px+48-w,y,w*2+1,1);
-          box(f,'#a6799a',px+48-w,y,w+1,1);
-          if(y-peak<17) box(f,'#f0b3b3',px+48-w,y,w*2+1,1);
+      f.drawImage(ridge(layerWidth,H,'#b4839e',98,[[20,2,.5],[11,4,1.4],[5,11,.7]]),0,0);
+      for (const [center, peak, width] of [[42,89,59],[120,56,69],[207,78,63],[300,61,83],[414,86,70],[490,67,69]]) {
+        for (let y = peak; y < H; y++) {
+          const d = y - peak, left = Math.min(width, Math.round(d * .67)), right = Math.min(width, Math.round(d * .47));
+          const snow = 12 + Math.round(Math.sin(d * .66 + center) * 4);
+          box(f, d < snow ? '#f3bdbe' : '#ac7c9c',center-left,y,left+1,1);
+          box(f, d < snow ? '#d599af' : '#805e8c',center,y,right+1,1);
+          if (d > 23 && (d >> 2) % 4 === 0) box(f, '#9f7192',center-left+2,y,Math.max(1,left-7),1);
         }
       }
       x.drawImage(ridge(layerWidth,H,'#704966',54,[[13,3,.8],[6,9,.2]]),0,0);
@@ -1592,5 +1665,5 @@ window.ART = (() => {
     return res;
   }
 
-  return { HERO, ENEMY, ITEM, NPC, SONIC, props, tiles, background, THEMES, mk, rng };
+  return { HERO, ENEMY, ITEM, NPC, SONIC, samPortrait, props, tiles, background, THEMES, mk, rng };
 })();

@@ -1022,7 +1022,7 @@
     }
   }
 
-  const NPC_NAME = { axo: 'AXOLOTE', ps2: 'PS2 GORDO', discord: 'GALERA DO DISCORD', babs: 'BABS MARY', inscrito: 'INSCRITO 500', miguel: 'MIGUEL', rafael: 'RafaRL', scott: 'SCOTT', jackson: 'JACKSON' };
+  const NPC_NAME = { axo: 'AXOLOTE', ps2: 'PS2 GORDO', discord: 'GALERA DO DISCORD', babs: 'BABS MARY', inscrito: 'INSCRITO 500', miguel: 'MIGUEL', rafael: 'RafaRL', scott: 'SCOTT', jackson: 'JACKSON', sam: 'CHAINSAW SAM' };
   const ALLIES = {
     jackson: { effect: 'LIMPA OS PROJÉTEIS', line: 'Zubba lorpi! Fuu blim-blim!', color: '#93ecf4' },
     babs: { effect: 'PROTEGE DE UM GOLPE', line: 'É brincadeira! Toma um escudo!', color: '#ff9bcc' },
@@ -1798,6 +1798,16 @@
         else if (k === 1) { px('#2a9a3a', 1, -4, 1, 4); px(['#ffffff', '#ffd23f', '#ff8fd8'][h % 3], 0, -6, 3, 2); px('#ffd23f', 1, -6, 1, 1); }
         else if (k === 2) { px('#8a8fa8', 0, -2, 4, 2); px('#c8ccd8', 1, -2, 2, 1); }
         break;
+      case 'mgpCanopy':
+        if (k <= 1) {
+          px('#416a4e', 3, -7, 1, 7);
+          px('#78a264', 0, -5, 3, 1); px('#97ac68', 4, -6, 3, 1);
+          px('#63935e', 1, -3, 2, 1); px('#96aa62', 4, -4, 2, 1);
+        }
+        break;
+      case 'mgpRidge':
+        if (k === 1) { px('#a26b88', 0, -2, 4, 2); px('#f4c6ad', 1, -3, 2, 1); }
+        break;
       case 'sonicHills':
         if (k <= 1) {
           px('#218745', 2, -5, 1, 5); px('#ffcc42', 0, -8, 5, 3); px('#a26627', 2, -7);
@@ -2030,6 +2040,7 @@
       text('BABS MARY', R(e.x + 4), R(e.y - 16), { size: 6, align: 'right', color: '#ff8fd8' });
       text('MIGUEL', R(e.x + 13), R(e.y - 16), { size: 6, color: '#7cf0ff' });
     } else if (e.kind === 'npc') {
+      if (e.who === 'sam') drawSamStation(e);
       const spr = ART.NPC[e.who][e.face > 0 ? 'l' : 'r'];
       img(spr, e.x, e.y + (e.who === 'axo' ? Math.round(Math.sin(G.t * 0.1)) : 0));
       if (e.who === 'inscrito') { rect('#1a1020', e.x - 4, e.y - 14, 24, 12); rect('#ffffff', e.x - 3, e.y - 13, 22, 10); text('500', e.x + 8, e.y - 12, { color: '#e8402e', align: 'center', shadow: false }); }
@@ -2062,6 +2073,23 @@
       for (let i = 1; i < e.len; i++) img(ITEM.fire[((G.t >> 2) + i) & 1], e.cx + Math.cos(e.ang) * i * 8 - 4, e.cy + Math.sin(e.ang) * i * 8 - 4);
     }
   }
+  function drawSamStation(e) {
+    const x = e.x + 19, y = e.y + 2;
+    rect('#24172e', x - 1, y + 2, 29, 12);
+    rect('#744b8d', x - 1, y + 2, 29, 2);
+    rect('#443051', x + 1, y + 6, 11, 8);
+    rect('#b982bf', x + 3, y + 8, 5, 1);
+    rect('#281d3a', x + 21, y + 6, 5, 8);
+    rect('#140e24', x + 4, y - 15, 18, 12);
+    rect('#99749f', x + 4, y - 15, 18, 1);
+    rect('#284763', x + 6, y - 13, 14, 8);
+    rect('#f792ca', x + 7, y - 11, 9, 1);
+    rect('#7cdbe9', x + 8, y - 8, 11, 1);
+    rect('#61446f', x + 12, y - 3, 2, 5);
+    rect('#ac83b0', x + 15, y + 1, 8, 1);
+    text('EDITOR', e.x + 9, e.y - 12, { size: 6, color: '#b4edff', align: 'center' });
+  }
+
   function drawArcade(e) {
     const x = R(e.x), y = R(e.y);
     rect('#1a1020', x, y, 32, 48); rect('#2f7bff', x + 1, y + 1, 30, 46); rect('#1f56c0', x + 26, y + 1, 5, 46);
@@ -2357,7 +2385,9 @@
     const x = 10, y = 34, w = W - 20, h = 54;
     rect('#1a1020', x - 2, y - 2, w + 4, h + 4); rect('#0b1033', x, y, w, h); rect('#ffd23f', x, y, w, 1);
     rect('#ffd23f', x + 4, y + 4, 36, 36); rect('#5ec8ff', x + 5, y + 5, 34, 34);
-    ctx.drawImage(d.who === 'matheus' ? HERO.n.s.idle.r : ART.NPC[d.who].r, x + 6, y + 6, 32, 32);
+    const photo = ART.samPortrait;
+    if (d.who === 'sam' && photo.naturalWidth > 0) ctx.drawImage(photo, 28, 12, 203, 203, x + 6, y + 6, 32, 32);
+    else ctx.drawImage(d.who === 'matheus' ? HERO.n.s.idle.r : ART.NPC[d.who].r, x + 6, y + 6, 32, 32);
     text(d.name, x + 46, y + 5, { color: '#ffd23f' });
     const lines = d.lines || wrap(d.txt, 38), firstLine = (d.page || 0) * 3;
     lines.slice(firstLine, firstLine + 3).forEach((l, i) => text(l, x + 46, y + 16 + i * 9, { color: '#ffffff', size: 8 }));

@@ -441,6 +441,7 @@ window.LEVELS = (() => {
       [139, 'mgpRidge', 'mgp', 'SERRA DA VELOCIDADE'],
     ];
     L.e('npc', 7, 11, { who: 'inscrito', say: 'O trailer já saiu! Hora da gameplay, Matheus. Ligar a câmera! Três, dois, um... gravando!' });
+    L.e('npc', 12, 11, { who: 'sam', say: 'Eu vou editar essa gameplay sua!' });
     L.ground(0, 29); L.ground(34, 62);
     L.put(14, 8, 'BMB'); L.put(19, 7, '===='); L.put(20, 6, 'oooo');
     L.e('n', 24, 6); L.put(30, 9, 'oooo'); L.e('K', 42, 11);
