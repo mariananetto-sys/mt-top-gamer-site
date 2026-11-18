@@ -1865,18 +1865,22 @@
     }
   }
   function drawTiles() {
-    let ts = ART.tiles(G.L.theme);
     const qf = [0, 0, 0, 0, 1, 2, 1, 0][(G.t >> 3) % 8];
     const lf = (G.t >> 3) % 4;
     const x0 = Math.max(0, Math.floor(G.cam / T) - 1), x1 = Math.min(G.mw - 1, x0 + W / T + 2);
     for (let ty = 0; ty < 14; ty++) for (let tx = x0; tx <= x1; tx++) {
       const c = G.map[ty][tx];
       if (c === '.') continue;
-      if (G.L.zones) ts = ART.tiles(themeAt(tx * T));
+      const theme = themeAt(tx * T), ts = ART.tiles(theme);
       let im = null, oy = 0;
       for (const b of G.bumps) if (b.tx === tx && b.ty === ty) oy = -Math.round(Math.sin((b.t / 10) * Math.PI) * 5);
       switch (c) {
-        case '#': im = tileAt(tx, ty - 1) === '#' ? ts.ground : ts.groundTop; if (G.glitch && G.glitch.kind === 'vanish' && ((tx * 7 + ty * 3 + (G.t >> 3)) % 4) === 0) im = null; break;
+        case '#': {
+          const variants = tileAt(tx, ty - 1) === '#' ? ts.ground : ts.groundTop;
+          const variant = ((Math.imul(tx, 73856093) ^ Math.imul(ty, 19349663)) >>> 5) % variants.length;
+          if (!(G.glitch && G.glitch.kind === 'vanish' && ((tx * 7 + ty * 3 + (G.t >> 3)) % 4) === 0)) im = variants[variant];
+          break;
+        }
         case 'B': case '*': im = ts.brick; break;
         case '?': case 'M': case '1': im = ts.q[qf]; break;
         case 'E': im = ts.used; break;
@@ -1895,11 +1899,11 @@
         default: break;
       }
       if (im) ctx.drawImage(im, tx * T, ty * T + oy);
-      if (c === '#' || c === 'X' || c === '[' || c === ']') {
-        const th = ART.THEMES[G.L.zones ? themeAt(tx * T) : G.L.theme], edge = th.mo || '#1a1020';
+      if (im && (c === '#' || c === 'X' || c === '[' || c === ']')) {
+        const edge = ART.THEMES[theme].mo || '#1a1020';
         if (!SOLID.has(tileAt(tx - 1, ty)) && tx > 0) { ctx.fillStyle = edge; ctx.fillRect(tx * T, ty * T, 1, T); }
         if (!SOLID.has(tileAt(tx + 1, ty)) && tx < G.mw - 1) { ctx.fillStyle = edge; ctx.fillRect(tx * T + T - 1, ty * T, 1, T); }
-        if (c === '#' && tileAt(tx, ty - 1) === '.') drawDeco(G.L.zones ? themeAt(tx * T) : G.L.theme, tx, ty);
+        if (c === '#' && tileAt(tx, ty - 1) === '.') drawDeco(theme, tx, ty);
       }
     }
   }
@@ -2327,13 +2331,23 @@
   }
   function themeAt(px) { const k = zoneAt(px); return k == null ? G.L.theme : G.L.zones[k][1]; }
   function levelSong() { return G.L.zones?.[zoneAt(P.x + P.w / 2)]?.[2] ?? G.L.song; }
+  const zoneBackdrop = ART.mk(W, H);
+  const zoneCtx = zoneBackdrop.getContext('2d');
+  zoneCtx.imageSmoothingEnabled = false;
+
   function drawWorld() {
     const cx = G.cam + W / 2, zk = zoneAt(cx);
-    if (zk == null) ART.background(G.L.theme, W, H).draw(ctx, G.cam, G.t);
-    else {
-      ART.background(G.L.zones[zk][1], W, H).draw(ctx, G.cam, G.t);
-      const nx = G.L.zones[zk + 1];
-      if (nx) { const d = nx[0] * T - cx; if (d < 60) { ctx.globalAlpha = Math.max(0, Math.min(1, 1 - d / 60)); ART.background(nx[1], W, H).draw(ctx, G.cam, G.t); ctx.globalAlpha = 1; } }
+    const theme = zk == null ? G.L.theme : G.L.zones[zk][1];
+    ART.background(theme, W, H).draw(ctx, G.cam, G.t);
+    const next = zk == null ? null : G.L.zones[zk + 1];
+    if (next) {
+      const distance = next[0] * T - cx;
+      if (distance < 60) {
+        ART.background(next[1], W, H).draw(zoneCtx, G.cam, G.t);
+        ctx.globalAlpha = 1 - distance / 60;
+        ctx.drawImage(zoneBackdrop, 0, 0);
+        ctx.globalAlpha = 1;
+      }
     }
     ctx.save();
     const shk = G.shake && CFG.shake;
@@ -2358,7 +2372,12 @@
       const c = ART.mk(W, H), x = c.getContext('2d');
       const g = x.createRadialGradient(W / 2, H / 2, H * 0.45, W / 2, H / 2, W * 0.7);
       g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,0.28)');
-      x.fillStyle = g; x.fillRect(0, 0, W, H); drawWorld.vig = c;
+      x.fillStyle = g; x.fillRect(0, 0, W, H);
+      const hudShade = x.createLinearGradient(0, 0, 0, 39);
+      hudShade.addColorStop(0, 'rgba(7,9,28,.38)');
+      hudShade.addColorStop(1, 'rgba(7,9,28,0)');
+      x.fillStyle = hudShade; x.fillRect(0, 0, W, 39);
+      drawWorld.vig = c;
     }
     ctx.drawImage(drawWorld.vig, 0, 0);
     if (G.flash > 0) { ctx.fillStyle = `rgba(255,255,255,${G.flash / 20})`; ctx.fillRect(0, 0, W, H); }
