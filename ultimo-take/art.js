@@ -1,6 +1,6 @@
 import { THREE as T, box, sphere, mesh, rod, v, material } from './geometry.js';
-import { head } from './face.js';
-import { cast } from './campaign.js';
+import { sculpt, detail, piping, cloth } from './face.js';
+import { outfit } from './outfits.js';
 const palette = new Map();
 function mat(color) {
   if (!palette.has(color)) palette.set(color, material(color, 0.8, { flatShading: true }));
@@ -68,100 +68,195 @@ function batch(root) {
   }
   return result;
 }
-export function weapon(id = 0) {
+// Oval cross-sections along the forward axis form a continuous blaster shell.
+function housing(g, color, profiles, x = 0, y = 0) {
+  const part = sculpt(g, color, profiles, 12);
+  part.rotation.x = Math.PI / 2;
+  part.position.set(x, y, 0);
+  return part;
+}
+export function weapon(id = 0, held = false) {
   const g = new T.Group(),
-    accent = [teal, amber, '#b59aff'][id];
-  block(g, ink, 0.15, 0.17, 0.43, 0, 0, 0);
-  block(g, '#85969b', 0.19, 0.09, 0.28, 0, 0.08, -0.01);
-  block(g, accent, 0.11, 0.07, 0.14, 0, 0.02, 0.24);
-  block(g, ink, 0.1, 0.2, 0.1, 0, -0.12, -0.05);
+    glow = [teal, amber, '#bc9dff'][id];
+  const finish = ['#405966', '#62594c', '#4e506d'][id],
+    w = [0.09, 0.1, 0.134][id];
+  housing(g, finish, [
+    [-0.27, w * 0.55, 0.077],
+    [-0.225, w * 0.89, 0.093],
+    [-0.145, w, 0.101],
+    [0.09, w, 0.088],
+    [0.179, w * 0.86, 0.074],
+    [0.22, w * 0.65, 0.055],
+  ]);
+  housing(
+    g,
+    ink,
+    [
+      [-0.223, 0.047, 0.019],
+      [-0.14, 0.06, 0.032],
+      [0.1, 0.055, 0.03],
+      [0.17, 0.037, 0.018],
+    ],
+    0,
+    0.085,
+  );
   for (const side of [-1, 1]) {
-    block(g, accent, 0.012, 0.028, 0.23, side * 0.083, 0.018, 0.025);
-    for (let i = 0; i < 3; i++) block(g, '#62747c', 0.026, 0.1, 0.024, side * 0.097, 0.025, 0.04 + i * 0.052);
+    piping(
+      g,
+      glow,
+      [
+        [side * w * 0.91, 0.03, -0.175],
+        [side * (w + 0.004), 0.035, -0.09],
+        [side * (w + 0.005), 0.023, 0.07],
+        [side * w * 0.8, 0.016, 0.158],
+      ],
+      0.008,
+    );
+    for (let j = 0; j < 3; j++)
+      piping(
+        g,
+        ink,
+        [
+          [side * w, 0.008, 0.028 + j * 0.034],
+          [side * w * 0.94, -0.032, 0.045 + j * 0.034],
+        ],
+        0.006,
+      );
   }
-  block(g, ink, 0.13, 0.1, 0.13, 0, 0.123, -0.124);
-  block(g, accent, 0.052, 0.025, 0.018, 0, 0.16, -0.199);
-  const muzzle = cylinder(g, ink, 0.087, 0.105, 0.15, 0, 0.015, 0.257, 8);
-  muzzle.rotation.x = Math.PI / 2;
-  const lens = cylinder(g, accent, 0.054, 0.054, 0.012, 0, 0.015, 0.335, 8);
-  lens.rotation.x = Math.PI / 2;
-  if (id) block(g, accent, 0.22, 0.06, 0.23, 0, 0.14, 0);
+  const ports = id === 1 ? [-0.047, 0.047] : [0];
+  for (const x of ports) {
+    const r = id === 2 ? 0.085 : id === 1 ? 0.037 : 0.058;
+    housing(
+      g,
+      ink,
+      [
+        [0.13, r * 0.82, r * 0.82],
+        [0.18, r, r],
+        [0.27, r * 0.85, r * 0.85],
+        [0.3, r, r],
+        [0.327, r * 0.97, r * 0.97],
+      ],
+      x,
+      0.004,
+    );
+    housing(
+      g,
+      glow,
+      [
+        [0.321, r * 0.68, r * 0.68],
+        [0.333, r * 0.68, r * 0.68],
+      ],
+      x,
+      0.004,
+    );
+  }
+  if (id === 2) {
+    for (let j = 0; j < 3; j++)
+      housing(g, glow, [
+        [0.074 + j * 0.036, 0.108, 0.097],
+        [0.081 + j * 0.036, 0.108, 0.097],
+      ]);
+  }
+  const grip = sculpt(
+    g,
+    '#28373b',
+    [
+      [-0.183, 0.045, 0.055],
+      [-0.15, 0.055, 0.06],
+      [-0.042, 0.049, 0.069],
+      [0, 0.051, 0.065],
+    ],
+    12,
+  );
+  grip.position.z = -0.111;
+  grip.rotation.x = -0.22;
+  for (let j = 0; j < 3; j++)
+    piping(
+      g,
+      '#4c5960',
+      [
+        [-0.046, -0.087 - j * 0.025, -0.081],
+        [0, -0.09 - j * 0.025, -0.06],
+        [0.046, -0.087 - j * 0.025, -0.081],
+      ],
+      0.005,
+    );
+  piping(
+    g,
+    ink,
+    [
+      [-0.004, -0.063, -0.07],
+      [-0.004, -0.118, -0.047],
+      [-0.004, -0.115, 0.044],
+      [-0.004, -0.061, 0.059],
+    ],
+    0.011,
+  );
+  for (const s of [-1, 1]) block(g, ink, 0.012, 0.041, 0.026, s * 0.04, 0.12, -0.15);
+  block(g, glow, 0.025, 0.012, 0.018, 0, 0.116, 0.13);
+  if (held) {
+    detail(g, '#333d43', 0.072, -0.105, -0.137, 0.063, 0.07, 0.094, 16);
+    for (let j = 0; j < 3; j++)
+      detail(g, '#50595a', 0.016, -0.095 - j * 0.024, -0.058 - j * 0.005, 0.054, 0.016, 0.023, 12);
+    detail(g, '#28313a', 0.087, -0.136, -0.249, 0.086, 0.082, 0.136, 16);
+  }
   return batch(g);
 }
 export function person(id, gun = 0) {
-  const g = new T.Group(),
-    coat = id === 0 ? '#232831' : cast[id][3],
-    skin = id === 5 ? '#abdce2' : '#c78e68';
-  for (const side of [-1, 1]) {
-    const x = side * 0.16;
-    beam(g, ink, [x, 0.94, 0], [x * 1.08, 0.18, 0.035], 0.135);
-    block(g, '#29363d', 0.24, 0.17, 0.36, x, 0.09, 0.07);
-  }
-  oval(g, coat, 0.41, 0.49, 0.245, 0, 1.25, 0);
-  oval(g, ink, 0.36, 0.14, 0.22, 0, 1.58, -0.075);
-  for (const side of [-1, 1]) {
-    const x = side * 0.34;
-    beam(g, coat, [x, 1.49, 0], [x * 1.17, 1.19, 0.09], 0.14);
-    beam(g, coat, [x * 1.17, 1.19, 0.09], [side * 0.16, 1.25, 0.37], 0.105);
-    oval(g, skin, 0.09, 0.09, 0.09, side * 0.16, 1.25, 0.37);
-    beam(g, side === 1 ? amber : '#5185ce', [side * 0.2, 1.57, 0.18], [side * 0.2, 1.28, 0.245], 0.023);
-  }
-  if (id === 0) {
-    const f = head(g);
-    f.position.y = 1.95;
-    f.scale.setScalar(0.84);
-  } else {
-    oval(g, skin, 0.29, 0.33, 0.26, 0, 1.92, 0.01);
-    oval(g, id === 2 ? '#9f5889' : '#26323c', 0.31, 0.2, 0.26, 0, 2.09, -0.02);
-    for (const side of [-1, 1]) {
-      oval(g, ink, 0.034, 0.039, 0.025, side * 0.111, 1.94, 0.249);
-    }
-    if (id === 1) {
-      cylinder(g, steel, 0.22, 0.36, 0.19, 0, 2.14, 0);
-      block(g, '#c98443', 0.13, 0.25, 0.36, 0, 2.25, -0.03);
-    }
-    if (id === 2) {
-      for (const s of [-1, 1]) oval(g, '#924e82', 0.13, 0.31, 0.16, s * 0.26, 1.91, -0.06);
-    }
-    if (id === 3) {
-      block(g, '#e3c663', 0.58, 0.075, 0.48, 0, 2.03, 0);
-      block(g, cast[id][3], 0.43, 0.08, 0.26, 0, 2.03, 0.29);
-    }
-    if (id === 4) {
-      for (const s of [-1, 1]) oval(g, steel, 0.11, 0.14, 0.13, s * 0.29, 1.96, 0);
-      beam(g, ink, [0.29, 1.93, 0.02], [0.17, 1.83, 0.29], 0.024);
-    }
-    if (id === 5) {
-      for (const s of [-1, 1]) {
-        mesh(g, new T.TorusGeometry(0.102, 0.014, 5, 12), mat('#3b5967'), s * 0.114, 1.95, 0.252);
-      }
-      block(g, steel, 0.06, 0.018, 0.018, 0, 1.95, 0.26);
-      for (let i = -2; i <= 2; i++) {
-        const tuft = mesh(
-          g,
-          new T.ConeGeometry(0.116, 0.29, 5),
-          mat('#162c38'),
-          i * 0.092,
-          2.24 - Math.abs(i) * 0.024,
-          -0.015,
-        );
-        tuft.rotation.z = -0.45 + i * 0.13;
-      }
-    }
-  }
+  const g = new T.Group();
+  const legs = outfit(g, id);
   const tool = weapon(gun);
-  tool.position.set(0.12, 1.27, 0.51);
+  tool.position.set(id === 4 ? 0.13 : 0.087, id === 4 ? 1.18 : 1.35, 0.481);
   g.add(tool);
-  return batch(g);
+  const body = batch(g);
+  legs.forEach((leg, index) => {
+    // Rebase each rigid leg around the hip so animation cannot open a gap at the waist.
+    const hip = new T.Group();
+    hip.position.set(index === 0 ? -0.146 : 0.146, 0.96, 0);
+    hip.name = index === 0 ? 'leftLeg' : 'rightLeg';
+    leg.position.copy(hip.position).negate();
+    hip.add(batch(leg));
+    body.add(hip);
+  });
+  return body;
 }
 export function drone() {
   const g = new T.Group();
-  oval(g, '#ab5d51', 0.52, 0.44, 0.48, 0, 1.22, 0);
-  block(g, ink, 0.68, 0.2, 0.24, 0, 1.23, 0.36);
-  block(g, '#ff785d', 0.4, 0.075, 0.06, 0, 1.24, 0.5);
+  sculpt(
+    g,
+    '#985849',
+    [
+      [0.91, 0.16, 0.17],
+      [0.96, 0.31, 0.26],
+      [1.07, 0.414, 0.34],
+      [1.29, 0.433, 0.35],
+      [1.39, 0.361, 0.285],
+      [1.46, 0.205, 0.177],
+    ],
+    22,
+  );
+  detail(g, '#37464c', 0, 1.24, 0.28, 0.284, 0.136, 0.133, 20);
   for (const s of [-1, 1]) {
-    block(g, steel, 0.34, 0.13, 0.3, s * 0.54, 1.24, 0);
-    cylinder(g, '#ff9958', 0.16, 0.1, 0.22, s * 0.62, 1.08, 0);
+    detail(g, '#f57756', s * 0.116, 1.25, 0.39, 0.077, 0.051, 0.026);
+    detail(g, '#ffddb0', s * 0.116, 1.26, 0.412, 0.031, 0.022, 0.009);
+    beam(g, steel, [s * 0.3, 1.22, 0], [s * 0.61, 1.29, 0], 0.072);
+    const nacelle = mesh(g, new T.TorusGeometry(0.202, 0.052, 8, 20), cloth('#4a5559'), s * 0.63, 1.28, 0);
+    nacelle.rotation.x = Math.PI / 2;
+    for (let j = 0; j < 3; j++) {
+      const blade = detail(g, '#b98967', s * 0.63, 1.278, 0, 0.173, 0.012, 0.029, 10);
+      blade.rotation.y = (j * Math.PI) / 3;
+    }
+    detail(g, '#263940', s * 0.63, 1.273, 0, 0.063, 0.086, 0.062);
+    piping(
+      g,
+      ink,
+      [
+        [s * 0.22, 1.02, 0.13],
+        [s * 0.27, 0.865, 0.1],
+        [s * 0.27, 0.849, -0.124],
+      ],
+      0.024,
+    );
   }
   return batch(g);
 }
@@ -210,13 +305,114 @@ export function station(mission, index) {
   }
   return result;
 }
+// Texture dimensions map to the playable 30 m square. All graphics are painted
+// into the studio surface, including markings that never obstruct movement.
+function floorArt(g) {
+  const c = document.createElement('canvas');
+  c.width = c.height = 1024;
+  const x = c.getContext('2d'),
+    size = 1024,
+    step = size / 15;
+  let state = 361;
+  const random = () => (state = (Math.imul(state, 1664525) + 1013904223) >>> 0) / 4294967296;
+  x.fillStyle = '#3b5059';
+  x.fillRect(0, 0, size, size);
+  const zones = [
+    ['#55545b', 163, 37, 697, 290, 'PALCO', 196, 291],
+    ['#575249', 37, 344, 194, 570, 'DEPÓSITO', 53, 863],
+    ['#3b5d62', 779, 365, 205, 546, 'EDIÇÃO', 795, 862],
+    ['#504d48', 300, 765, 428, 210, 'RECEPÇÃO', 354, 932],
+  ];
+  for (const [color, left, top, w, h, name, tx, ty] of zones) {
+    x.fillStyle = color;
+    x.fillRect(left, top, w, h);
+    x.strokeStyle = '#bba879';
+    x.lineWidth = 3;
+    x.strokeRect(left + 5, top + 5, w - 10, h - 10);
+    x.fillStyle = '#b8af9b';
+    x.font = 'bold 31px Arial';
+    x.fillText(name, tx, ty);
+    x.fillStyle = '#bea16c';
+    for (const px of [left + 17, left + w - 55])
+      for (let k = 0; k < 3; k++) x.fillRect(px + 11 * k, top + 17, 7, 24);
+  }
+  for (let i = 1; i < 15; i++) {
+    x.fillStyle = '#24363b55';
+    x.fillRect(i * step, 0, 1.3, size);
+    x.fillRect(0, i * step, size, 1.3);
+    x.fillStyle = '#a7c4be21';
+    x.fillRect(i * step + 1.4, 0, 1, size);
+    x.fillRect(0, i * step + 1.4, size, 1);
+  }
+  for (let i = 0; i < 12000; i++) {
+    x.fillStyle = i % 2 ? '#a9c8c220' : '#1f2d3455';
+    x.fillRect(random() * size, random() * size, 1 + random() * 4, 1 + random());
+  }
+  x.strokeStyle = '#dba85d';
+  x.lineWidth = 2;
+  x.setLineDash([15, 19]);
+  x.strokeRect(258, 347, 494, 377);
+  x.setLineDash([]);
+  x.strokeStyle = '#b4cfcd77';
+  x.lineWidth = 3;
+  x.beginPath();
+  x.arc(512, 537, 65, 0, 2 * Math.PI);
+  x.stroke();
+  x.fillStyle = '#b4cfcd77';
+  x.font = 'italic 900 53px Arial';
+  x.fillText('MT', 467, 555);
+  const map = new T.CanvasTexture(c);
+  map.colorSpace = T.SRGBColorSpace;
+  map.anisotropy = 4;
+  const plane = mesh(g, new T.PlaneGeometry(30, 30), new T.MeshBasicMaterial({ map }), 0, 0, 0);
+  plane.rotation.x = -Math.PI / 2;
+}
+
+function stageScreen(g) {
+  const c = document.createElement('canvas');
+  c.width = 960;
+  c.height = 240;
+  const x = c.getContext('2d'),
+    grad = x.createLinearGradient(0, 0, 960, 240);
+  grad.addColorStop(0, '#10292e');
+  grad.addColorStop(0.46, '#15363d');
+  grad.addColorStop(1, '#30464a');
+  x.fillStyle = grad;
+  x.fillRect(0, 0, 960, 240);
+  for (let px = 0; px < 960; px += 16)
+    for (let y = 0; y < 240; y += 16) {
+      x.fillStyle = (px + y) % 48 ? '#5ac7c226' : '#5ac7c24e';
+      x.fillRect(px, y, 2, 2);
+    }
+  for (let k = 0; k < 4; k++) {
+    x.beginPath();
+    x.moveTo(0, 110);
+    for (let px = 0; px <= 960; px += 8)
+      x.lineTo(px, 98 + k * 18 + Math.sin(px * 0.024 + k) * Math.sin(px * 0.007 + k) * 32);
+    x.strokeStyle = k % 2 ? '#55bac072' : '#e2b16a78';
+    x.lineWidth = 2;
+    x.stroke();
+  }
+  x.fillStyle = '#153439';
+  x.fillRect(160, 37, 640, 155);
+  x.strokeStyle = '#79a6a1';
+  x.lineWidth = 2;
+  x.strokeRect(160, 37, 640, 155);
+  x.fillStyle = '#f1cd95';
+  x.font = 'italic 900 100px Arial';
+  x.textAlign = 'center';
+  x.fillText('MT  /  AO VIVO', 480, 147, 595);
+  x.fillStyle = '#ff865c';
+  x.fillRect(798, 37, 9, 155);
+  const map = new T.CanvasTexture(c);
+  map.colorSpace = T.SRGBColorSpace;
+  block(g, '#1e2932', 14.36, 3.47, 0.19, 0, 3.45, -13.7);
+  mesh(g, new T.PlaneGeometry(14, 3.15), new T.MeshBasicMaterial({ map }), 0, 3.45, -13.59);
+}
+
 export function studio() {
   const g = new T.Group();
-  block(g, '#526870', 30, 0.35, 30, 0, -0.2, 0);
-  for (let i = -14; i <= 14; i += 2) {
-    block(g, '#64777b', 0.025, 0.012, 28, i, 0, 0);
-    block(g, '#64777b', 28, 0.012, 0.025, 0, 0, i);
-  }
+  floorArt(g);
   for (const x of [-14.5, 14.5]) block(g, '#34515a', 0.7, 3.8, 29, x, 1.89, 0);
   block(g, '#314951', 29, 4, 0.5, 0, 2, -14.4);
   block(g, '#38565b', 29, 3, 0.5, 0, 1.5, 14.4);
@@ -224,7 +420,7 @@ export function studio() {
     block(g, '#253940', 1.72, 3.25, 0.28, x, 2, -14.0);
     block(g, x % 4 === 1 ? amber : teal, 0.07, 3.1, 0.32, x + 0.72, 2, -13.82);
   }
-  sign(g, 'MT  /  AO VIVO', 8, 1.35, 0, 3.2, -13.6);
+  stageScreen(g);
   sign(g, 'ILHA DE EDIÇÃO', 4, 0.8, 13.92, 2.3, 3, ink, '#99eeeb', -Math.PI / 2);
   sign(g, 'DEPÓSITO', 4, 0.8, -13.92, 2.5, 2, ink, cream, Math.PI / 2);
   for (const x of [-12, 12]) {
@@ -254,6 +450,28 @@ export function studio() {
     block(g, '#a37751', w - 0.1, 1.09, d + 0.02, x, 0.66, z);
     for (const s of [-1, 1]) block(g, steel, 0.13, 1.36, d + 0.06, x + s * w * 0.34, 0.68, z);
     block(g, '#b99a71', w + 0.04, 0.11, d + 0.04, x, 1.32, z);
+    for (const side of [-1, 1]) {
+      const face = z + side * (d / 2 + 0.064);
+      block(g, '#342e30', 0.46, 0.17, 0.046, x, 1.005, face);
+      block(g, '#a9afb0', 0.31, 0.038, 0.029, x, 0.991, face + side * 0.021);
+      for (const corner of [-1, 1]) {
+        block(g, '#35444c', 0.21, 0.17, 0.042, x + corner * (w / 2 - 0.126), 0.23, face);
+        block(g, '#c9bf9f', 0.04, 0.04, 0.029, x + corner * (w / 2 - 0.126), 0.23, face + side * 0.024);
+      }
+    }
+    for (let i = 0; i < 4; i++) {
+      const stripe = block(
+        g,
+        i % 2 ? '#383d3c' : '#ce9b58',
+        0.127,
+        0.014,
+        0.285,
+        x + (i - 1.5) * 0.125,
+        1.382,
+        z + d / 2 - 0.25,
+      );
+      stripe.rotation.y = -0.38;
+    }
   }
   for (let i = 0; i < 4; i++) {
     block(g, ink, 1.8, 1.13, 0.7, 13.6, 0.57, -4 + i * 2);
@@ -272,7 +490,7 @@ export function studio() {
     block(g, '#ff624e', 0.11, 0.08, 0.13, x + 0.19, 1.83, -12.85);
   }
   sign(g, 'RECEPÇÃO   /   MT', 5, 0.86, 0, 2.12, 14.05, ink, cream, Math.PI);
-  sign(g, 'NO AR', 1.15, 0.45, 0, 4.25, -13.78, '#9b352b', '#fff0b8');
+  sign(g, 'NO AR', 1.28, 0.48, 0, 5.38, -13.66, '#9b352b', '#fff0b8');
   for (const z of [-5, -2, 1, 4, 7]) {
     for (const y of [0.4, 1.6, 2.8]) {
       block(g, steel, 0.9, 0.09, 2.6, -13.43, y, z);

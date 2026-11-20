@@ -338,3 +338,17 @@ select:focus-visible {
     padding: 10px 0;
   }
 }
+
+#hud::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 15vmin 3vmin #d04434;
+  opacity: var(--damage, 0);
+}
+#cross.hit {
+  color: #ffaf65;
+  transform: translate(-50%, -50%) rotate(45deg) scale(1.3);
+  text-shadow: 0 0 6px #bd492b;
+}

@@ -2,13 +2,19 @@ import { THREE as T, v } from './geometry.js';
 import { cast, guns, missions, progress, weaponLimit, complete } from './campaign.js';
 import { studio, station, person, drone, weapon, obstacles } from './art.js';
 import { createDisplay } from './display.js';
+import { createSound } from './sound.js';
+import { effects } from './effects.js';
 const $ = (id) => document.getElementById(id);
 const { canvas, renderer } = createDisplay($('world'));
 const scene = new T.Scene(),
   cam = new T.PerspectiveCamera(62, 1, 0.06, 105);
+const sparks = effects(scene);
+const fill = new T.DirectionalLight(0xf9e2c4, 0.55);
+fill.position.set(2, 4, 9);
+scene.add(fill);
 scene.background = new T.Color(0xc5b9a9);
 scene.fog = new T.FogExp2(0xbac2bb, 0.019);
-scene.add(new T.HemisphereLight(0xffe8bd, 0x718b9c, 2.1), cam);
+scene.add(new T.HemisphereLight(0xffeee1, 0x798c9c, 1.82), cam);
 const sun = new T.DirectionalLight(0xffdfb2, 2.55);
 sun.position.set(-6, 11, 8);
 scene.add(sun);
@@ -45,7 +51,7 @@ markRing.rotation.x = Math.PI / 2;
 markRing.name = 'mark';
 markRing.visible = false;
 botTemplate.add(markRing);
-const hands = guns.map((_, i) => weapon(i));
+const hands = guns.map((_, i) => weapon(i, true));
 hands.forEach((g) => {
   g.rotation.y = Math.PI;
   g.position.set(0.236, -0.208, -0.58);
@@ -107,6 +113,8 @@ let hp,
 const stations = new Map();
 let activeStation;
 let recoil = 0,
+  hitFeedback = 0,
+  damageFeedback = 0,
   bots = [],
   shots = [],
   firing = false,
@@ -118,19 +126,14 @@ const look = new T.Vector3(),
   direction = new T.Vector3(),
   pos = new T.Vector3(),
   ray = new T.Raycaster();
-function tone(freq, end, length = 0.12, type = 'sine') {
-  if (!audio) return;
-  const o = audio.createOscillator(),
-    g = audio.createGain(),
-    now = audio.currentTime;
-  o.type = type;
-  o.frequency.setValueAtTime(freq, now);
-  o.frequency.exponentialRampToValueAtTime(end, now + length);
-  g.gain.setValueAtTime(0.055, now);
-  g.gain.exponentialRampToValueAtTime(0.001, now + length);
-  o.connect(g).connect(audio.destination);
-  o.start();
-  o.stop(now + length);
+function tone(freq, end, length) {
+  audio?.tone(freq, end, length);
+}
+function stride(model, moving, phase) {
+  const intensity = Math.min(1, moving);
+  const angle = Math.sin(phase) * 0.31 * intensity;
+  model.getObjectByName('leftLeg').rotation.x = angle;
+  model.getObjectByName('rightLeg').rotation.x = -angle;
 }
 function message(s) {
   $('notice').textContent = s;
@@ -189,6 +192,8 @@ function clearRun() {
   bots = [];
   shots = [];
   friend = null;
+  sparks.clear();
+  hitFeedback = damageFeedback = 0;
 }
 function inputsOff() {
   keys.clear();
@@ -203,8 +208,8 @@ function lock() {
   }
 }
 function start() {
-  audio ??= new (window.AudioContext || window.webkitAudioContext)();
-  audio.resume().catch(() => {});
+  audio ??= createSound();
+  audio?.resume().catch(() => {});
   clearRun();
   inputsOff();
   phase = 'play';
@@ -242,7 +247,7 @@ function start() {
   message(cast[selected][0] + ' em missão');
   placeMarker();
   camera();
-  tone(270, 510);
+  audio?.confirm(false);
   lock();
 }
 function lobby() {
@@ -280,7 +285,7 @@ function finish(win) {
         '.'
       : 'Missão concluída pela equipe.';
     mission = Math.min(4, mission + 1);
-    tone(420, 900, 0.35);
+    audio?.confirm(true);
   }
   panel(win ? 'Missão concluída' : 'Missão encerrada', msg, false);
 }
@@ -379,7 +384,9 @@ function camera() {
 }
 function shoot(origin, dir, type, enemy = false) {
   const mesh = new T.Mesh(shotGeo, shotMats[enemy ? 3 : type]);
-  mesh.scale.setScalar(enemy ? 0.15 : type === 2 ? 0.23 : 0.11);
+  const size = enemy ? 0.12 : type === 2 ? 0.18 : 0.072;
+  mesh.scale.set(size, size, size * (enemy ? 1.7 : 4.1));
+  mesh.quaternion.setFromUnitVectors(v(0, 0, 1), dir.clone().normalize());
   mesh.position.copy(origin);
   scene.add(mesh);
   shots.push({ mesh, dir: dir.clone().normalize(), enemy, type, life: enemy ? 4 : 1.5 });
@@ -407,15 +414,24 @@ function fire() {
     }
   }
   shoot(origin, target.sub(origin), gun);
-  tone([490, 700, 175][gun], [160, 280, 58][gun], 0.11, gun === 2 ? 'triangle' : 'square');
+  audio?.fire(gun);
 }
 function damageBot(b, damage) {
   b.hp -= damage * (marked > 0 ? 1.6 : 1);
-  if (b.hp <= 0) {
+  const destroyed = b.hp <= 0;
+  sparks.burst(
+    b.mesh.position.clone().add(v(0, 1.17, 0)),
+    destroyed ? 17 : 7,
+    destroyed ? 1 : 0,
+    destroyed ? 5 : 2.6,
+    0.058,
+  );
+  hitFeedback = destroyed ? 0.26 : 0.13;
+  if (destroyed) {
     scene.remove(b.mesh);
     bots.splice(bots.indexOf(b), 1);
   }
-  tone(135, 74, 0.06);
+  audio?.impact(destroyed);
 }
 function ability(id, actor) {
   if (id === 0) {
@@ -432,6 +448,7 @@ function ability(id, actor) {
     shots = shots.filter((s) => !s.enemy);
   }
   if (id === 5) marked = 6;
+  sparks.burst(actor.position.clone().add(v(0, 0.22, 0)), 22, 2, 4.7, 0.062);
   message(id === 4 ? 'Jackson: Zubba lorpi!' : cast[id][0] + ' · ' + cast[id][2]);
   tone(380, 730, 0.22);
 }
@@ -466,7 +483,7 @@ function use() {
     message('Aproxime-se do marcador');
     return;
   }
-  tone(420, 650);
+  audio?.confirm(false);
   if (step + 1 === objectives().length) {
     if (mission >= 3) {
       hold = mission === 4 ? 20 : 13;
@@ -504,7 +521,17 @@ function tick(dt) {
     (-forward * Math.cos(yaw) - right * Math.sin(yaw)) * amount,
   );
   hero.rotation.y = Math.PI + yaw;
-  hero.position.y = forward || right ? 0.032 * Math.abs(Math.sin(clock * 11)) : 0;
+  const walking = Math.min(1, Math.hypot(forward, right));
+  const gait = clock * (speed > 0 ? 15 : 11);
+  stride(hero, walking, gait);
+  hero.position.y = walking * 0.027 * Math.abs(Math.sin(gait));
+  hands[gun].position.y = -0.208 + walking * 0.012 * Math.sin(gait * 2);
+  hands[gun].position.x = 0.236 + walking * 0.009 * Math.sin(gait);
+  sparks.update(dt);
+  damageFeedback = Math.max(0, damageFeedback - dt);
+  hitFeedback = Math.max(0, hitFeedback - dt);
+  $('hud').style.setProperty('--damage', damageFeedback * 1.8);
+  $('cross').classList.toggle('hit', hitFeedback > 0);
   recoil = Math.max(0, recoil - dt);
   hands[gun].position.z = -0.58 + recoil * 0.54;
   hands[gun].rotation.x = -recoil * 0.55;
@@ -535,7 +562,12 @@ function tick(dt) {
     spawnTime = hold > 0 ? 3 : 5;
   }
   if (friend && partnerHP > 0) {
+    const oldX = friend.position.x,
+      oldZ = friend.position.z;
     follow(friend, p, dt * 4.3, 1.85);
+    const moving = Math.hypot(friend.position.x - oldX, friend.position.z - oldZ) > 0.002;
+    stride(friend, Number(moving), clock * 11 + 0.8);
+    friend.position.y = moving ? 0.027 * Math.abs(Math.sin(clock * 11 + 0.8)) : 0;
     const target = bots
       .filter((b) => clearLine(friend.position, b.mesh.position))
       .sort(
@@ -609,7 +641,11 @@ function tick(dt) {
           alarm -= 8;
           s.life = 0;
         } else if (at.distanceTo(pos.copy(p).add(v(0, 1.2, 0))) < 0.55) {
-          if (shield <= 0) hp -= 8;
+          if (shield <= 0) {
+            hp -= 8;
+            damageFeedback = 0.37;
+            audio?.hurt();
+          }
           s.life = 0;
         } else if (
           friend &&
@@ -781,7 +817,7 @@ function frame(now) {
       innerWidth,
       innerHeight,
     );
-    preview.rotation.y = 0.4 + Math.sin(clock * 0.37) * 0.14;
+    preview.rotation.y = 0.28 + Math.sin(clock * 0.62) * 0.32;
   } else if (cam.view?.enabled) cam.clearViewOffset();
   renderer.render(scene, cam);
   requestAnimationFrame(frame);
