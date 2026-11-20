@@ -166,8 +166,7 @@ details {
   top: 18px;
 }
 .objective,
-.vitals,
-#cameraLabel {
+.vitals {
   position: absolute;
   padding: 12px 16px;
   background: #122127e8;
@@ -187,9 +186,46 @@ details {
   bottom: 16px;
 }
 #cameraLabel {
+  font-size: 10px;
+  color: #9cb8bc;
+}
+#weaponState {
+  position: absolute;
   right: 16px;
   bottom: 16px;
+  display: grid;
+  gap: 4px;
+  min-width: 126px;
+  padding: 11px 13px;
+  text-align: right;
+  background: #101e28e8;
+  border-right: 3px solid #6ad6cb;
 }
+#weaponState > span:first-child {
+  color: #9bd5cf;
+  font: 700 10px monospace;
+  letter-spacing: 1.2px;
+}
+#ammo {
+  font: 800 clamp(17px, 3vw, 29px) monospace;
+  letter-spacing: -0.04em;
+}
+#ammo.low {
+  color: #ffbb82;
+}
+.audio-toggle {
+  padding: 8px 10px;
+  border: 1px solid #a0b8b470;
+  background: #162931;
+  color: #d7ede8;
+  font: 700 11px monospace;
+}
+#panel .audio-toggle,
+#soundPause {
+  background: #273e48;
+  color: #d6eee8;
+}
+
 #cross,
 #notice {
   position: absolute;
@@ -277,8 +313,8 @@ select:focus-visible {
   .vitals {
     bottom: 130px;
   }
-  #cameraLabel {
-    bottom: 120px;
+  #weaponState {
+    bottom: 170px;
   }
 }
 @media (max-width: 650px) {
@@ -351,4 +387,32 @@ select:focus-visible {
   color: #ffaf65;
   transform: translate(-50%, -50%) rotate(45deg) scale(1.3);
   text-shadow: 0 0 6px #bd492b;
+}
+
+#lobby {
+  background: linear-gradient(90deg, #081521f7 0%, #101d28dc 30%, #0e1b2629 62%, transparent 92%);
+}
+#profile strong {
+  display: block;
+}
+#profile {
+  border-right: 2px solid #eda85e;
+  padding-right: 11px;
+}
+@media (pointer: coarse) {
+  .vitals {
+    bottom: 138px;
+  }
+  .actions button:last-child {
+    grid-column: span 2;
+  }
+}
+
+.credits {
+  display: inline-block;
+  margin-top: 8px;
+  color: #9db4bf;
+  font-size: 11px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }

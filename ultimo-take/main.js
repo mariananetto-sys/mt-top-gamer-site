@@ -1,11 +1,23 @@
 import { THREE as T, v } from './geometry.js';
 import { cast, guns, missions, progress, weaponLimit, complete } from './campaign.js';
-import { studio, station, person, drone, weapon, obstacles } from './art.js';
+import { loadArt, createActor, blaster } from './assets.js';
+import { studio, robot, blocked, clearLine, follow, move } from './arena.js';
+import { station, magazine, reloadSeconds } from './equipment.js';
+import { controls } from './input.js';
 import { createDisplay } from './display.js';
 import { createSound } from './sound.js';
 import { effects } from './effects.js';
 const $ = (id) => document.getElementById(id);
 const { canvas, renderer } = createDisplay($('world'));
+try {
+  await loadArt();
+} catch (error) {
+  $('start').textContent = 'RECARREGAR ESTÚDIO';
+  $('start').disabled = false;
+  $('start').onclick = () => location.reload();
+  $('summary').textContent = 'Alguns arquivos do estúdio não carregaram. Tente novamente.';
+  throw error;
+}
 const scene = new T.Scene(),
   cam = new T.PerspectiveCamera(62, 1, 0.06, 105);
 const sparks = effects(scene);
@@ -13,7 +25,7 @@ const fill = new T.DirectionalLight(0xf9e2c4, 0.55);
 fill.position.set(2, 4, 9);
 scene.add(fill);
 scene.background = new T.Color(0xc5b9a9);
-scene.fog = new T.FogExp2(0xbac2bb, 0.019);
+scene.fog = new T.FogExp2(0x627788, 0.017);
 scene.add(new T.HemisphereLight(0xffeee1, 0x798c9c, 1.82), cam);
 const sun = new T.DirectionalLight(0xffdfb2, 2.55);
 sun.position.set(-6, 11, 8);
@@ -29,19 +41,18 @@ const sky = new T.Mesh(
     vertexShader:
       'varying vec3 skyDir;void main(){skyDir=position; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
     fragmentShader:
-      'varying vec3 skyDir;void main(){vec3 d=normalize(skyDir);float h=smoothstep(-0.10,.72,d.y);vec3 c=mix(vec3(.94,.72,.51),vec3(.27,.55,.65),h);float s=distance(d,normalize(vec3(-.49,.34,-1.)));c+=vec3(.20,.15,.09)*(1.-smoothstep(.045,.053,s));gl_FragColor=vec4(c,1.);}',
+      'varying vec3 skyDir;void main(){vec3 d=normalize(skyDir);float h=smoothstep(-0.10,.72,d.y);vec3 c=mix(vec3(.76,.53,.43),vec3(.102,.22,.34),h);float s=distance(d,normalize(vec3(-.49,.34,-1.)));c+=vec3(.20,.15,.09)*(1.-smoothstep(.045,.053,s));gl_FragColor=vec4(c,1.);}',
   }),
 );
 sky.renderOrder = -5;
 scene.add(sky, studio());
-// Models are rigid low-poly sculptures. Reuse their meshes and shapes across runs.
-const models = new Map();
+const actors = new WeakMap();
 function model(id, gun) {
-  const key = id + '-' + gun;
-  if (!models.has(key)) models.set(key, person(id, gun));
-  return models.get(key).clone();
+  const actor = createActor(id, gun);
+  actors.set(actor.root, actor);
+  return actor.root;
 }
-const botTemplate = drone();
+const botTemplate = robot();
 const markRing = new T.Mesh(
   new T.TorusGeometry(0.44, 0.035, 5, 18),
   new T.MeshBasicMaterial({ color: 0xffcc49 }),
@@ -51,11 +62,11 @@ markRing.rotation.x = Math.PI / 2;
 markRing.name = 'mark';
 markRing.visible = false;
 botTemplate.add(markRing);
-const hands = guns.map((_, i) => weapon(i, true));
+const hands = guns.map((_, i) => blaster(i, true));
 hands.forEach((g) => {
   g.rotation.y = Math.PI;
-  g.position.set(0.236, -0.208, -0.58);
-  g.scale.setScalar(0.76);
+  g.position.set(0.242, -0.231, -0.65);
+  g.scale.setScalar(0.74);
   g.rotation.z = -0.055;
   cam.add(g);
 });
@@ -78,9 +89,6 @@ marker.add(gem);
 scene.add(marker);
 const shotGeo = new T.SphereGeometry(1, 7, 5),
   shotMats = ['#9cf5ff', '#ffc077', '#c397ff', '#ff7059'].map((color) => new T.MeshBasicMaterial({ color }));
-const keys = new Set(),
-  stick = { x: 0, y: 0 },
-  touch = matchMedia('(pointer:coarse)').matches;
 const modes = ['Primeira pessoa', 'Sobre o ombro', 'Vista de cima'];
 let phase = 'lobby',
   done = progress(),
@@ -112,12 +120,14 @@ let hp,
   alarm;
 const stations = new Map();
 let activeStation;
+let ammo = 0,
+  reloading = 0,
+  walkSound = 0;
 let recoil = 0,
   hitFeedback = 0,
   damageFeedback = 0,
   bots = [],
   shots = [],
-  firing = false,
   noticeTime = 0,
   clock = 0,
   last = performance.now(),
@@ -126,15 +136,6 @@ const look = new T.Vector3(),
   direction = new T.Vector3(),
   pos = new T.Vector3(),
   ray = new T.Raycaster();
-function tone(freq, end, length) {
-  audio?.tone(freq, end, length);
-}
-function stride(model, moving, phase) {
-  const intensity = Math.min(1, moving);
-  const angle = Math.sin(phase) * 0.31 * intensity;
-  model.getObjectByName('leftLeg').rotation.x = angle;
-  model.getObjectByName('rightLeg').rotation.x = -angle;
-}
 function message(s) {
   $('notice').textContent = s;
   noticeTime = 2.2;
@@ -174,15 +175,18 @@ function options() {
   scene.add(preview);
 }
 $('mission').onchange = (e) => {
+  audio?.select();
   mission = +e.target.value;
   options();
 };
 $('hero').onchange = (e) => {
+  audio?.select();
   selected = +e.target.value;
   options();
 };
 $('ally').onchange = (e) => (ally = +e.target.value);
 $('gun').onchange = (e) => {
+  audio?.select();
   gun = +e.target.value;
   options();
 };
@@ -195,23 +199,15 @@ function clearRun() {
   sparks.clear();
   hitFeedback = damageFeedback = 0;
 }
-function inputsOff() {
-  keys.clear();
-  firing = false;
-  stick.x = stick.y = 0;
-  $('stick').firstElementChild.style.transform = '';
-}
-function lock() {
-  if (!touch) {
-    const p = canvas.requestPointerLock?.();
-    p?.catch?.(() => {});
-  }
-}
 function start() {
   audio ??= createSound();
-  audio?.resume().catch(() => {});
+  audio
+    ?.resume()
+    .then(() => audio?.cue('start'))
+    .catch(() => {});
+  audio?.mission(true);
   clearRun();
-  inputsOff();
+  input.reset();
   phase = 'play';
   hero = model(selected, gun);
   hero.position.set(0, 0, 10);
@@ -240,6 +236,9 @@ function start() {
       0;
   timer = 0;
   alarm = 100;
+  ammo = magazine[gun];
+  reloading = 0;
+  walkSound = 0;
   marker.visible = true;
   preview.visible = pedestal.visible = false;
   $('lobby').hidden = true;
@@ -247,14 +246,14 @@ function start() {
   message(cast[selected][0] + ' em missão');
   placeMarker();
   camera();
-  audio?.confirm(false);
-  lock();
+  input.lock();
 }
 function lobby() {
   document.exitPointerLock?.();
   phase = 'lobby';
+  audio?.mission(false);
   clearRun();
-  inputsOff();
+  input.reset();
   marker.visible = false;
   pedestal.visible = true;
   hands.forEach((g) => (g.visible = false));
@@ -265,7 +264,8 @@ function lobby() {
 }
 function panel(title, body, paused) {
   phase = paused ? 'pause' : 'result';
-  inputsOff();
+  audio?.mission(false);
+  input.reset();
   document.exitPointerLock?.();
   $('panel').querySelector('h2').textContent = title;
   $('panel').querySelector('p').textContent = body;
@@ -285,8 +285,9 @@ function finish(win) {
         '.'
       : 'Missão concluída pela equipe.';
     mission = Math.min(4, mission + 1);
-    audio?.confirm(true);
+    audio?.cue('win');
   }
+  if (!win) audio?.cue('loss');
   panel(win ? 'Missão concluída' : 'Missão encerrada', msg, false);
 }
 function pause() {
@@ -296,7 +297,8 @@ function resume() {
   if (phase !== 'pause') return;
   $('panel').close();
   phase = 'play';
-  lock();
+  audio?.mission(true);
+  input.lock();
 }
 $('start').onclick = start;
 $('pauseBtn').onclick = pause;
@@ -310,46 +312,8 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) pause();
 });
 document.addEventListener('pointerlockchange', () => {
-  if (!document.pointerLockElement && !touch) pause();
+  if (!document.pointerLockElement && !input.isTouch) pause();
 });
-function blocked(x, z, r = 0.35) {
-  return (
-    Math.abs(x) > 13.8 - r ||
-    Math.abs(z) > 13.8 - r ||
-    obstacles.some(([a, b, w, d]) => Math.abs(x - a) < w / 2 + r && Math.abs(z - b) < d / 2 + r)
-  );
-}
-function move(p, dx, dz) {
-  if (!blocked(p.x + dx, p.z)) p.x += dx;
-  if (!blocked(p.x, p.z + dz)) p.z += dz;
-}
-function clearLine(a, b) {
-  const dist = a.distanceTo(b),
-    n = Math.ceil(dist / 0.38);
-  for (let i = 1; i < n; i++) {
-    const k = i / n;
-    if (blocked(a.x + (b.x - a.x) * k, a.z + (b.z - a.z) * k, 0.06)) return false;
-  }
-  return true;
-}
-function follow(entity, target, amount, stop) {
-  const p = entity.position,
-    dx = target.x - p.x,
-    dz = target.z - p.z,
-    d = Math.hypot(dx, dz);
-  if (d < stop) return;
-  const angle = Math.atan2(dx, dz);
-  for (const offset of [0, 0.65, -0.65, 1.3, -1.3, 1.58, -1.58]) {
-    const a = angle + offset,
-      x = Math.sin(a),
-      z = Math.cos(a);
-    if (!blocked(p.x + x * 0.65, p.z + z * 0.65)) {
-      move(p, x * amount, z * amount);
-      entity.rotation.y = a;
-      break;
-    }
-  }
-}
 function aim() {
   return direction.set(-Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), -Math.cos(yaw) * Math.cos(pitch));
 }
@@ -391,8 +355,17 @@ function shoot(origin, dir, type, enemy = false) {
   scene.add(mesh);
   shots.push({ mesh, dir: dir.clone().normalize(), enemy, type, life: enemy ? 4 : 1.5 });
 }
+function reload() {
+  if (reloading > 0 || ammo === magazine[gun]) return;
+  reloading = reloadSeconds[gun];
+  burst = 0;
+  audio?.cue('activate');
+}
 function fire() {
+  if (ammo <= 0 || reloading > 0) return;
+  ammo--;
   recoil = 0.1;
+  actors.get(hero).fire();
   camera();
   cam.updateMatrixWorld();
   const origin = hero.position.clone().add(v(0, 1.37, 0));
@@ -431,7 +404,8 @@ function damageBot(b, damage) {
     scene.remove(b.mesh);
     bots.splice(bots.indexOf(b), 1);
   }
-  audio?.impact(destroyed);
+  const delta = b.mesh.position.clone().sub(hero.position);
+  audio?.impact(destroyed, (Math.cos(yaw) * delta.x - Math.sin(yaw) * delta.z) / 10);
 }
 function ability(id, actor) {
   if (id === 0) {
@@ -450,10 +424,11 @@ function ability(id, actor) {
   if (id === 5) marked = 6;
   sparks.burst(actor.position.clone().add(v(0, 0.22, 0)), 22, 2, 4.7, 0.062);
   message(id === 4 ? 'Jackson: Zubba lorpi!' : cast[id][0] + ' · ' + cast[id][2]);
-  tone(380, 730, 0.22);
+  audio?.cue('power');
 }
 function action(s) {
   if (phase !== 'play') return;
+  if (s === 'reload') reload();
   if (s === 'camera') {
     view = (view + 1) % 3;
     pitch = 0;
@@ -483,7 +458,7 @@ function use() {
     message('Aproxime-se do marcador');
     return;
   }
-  audio?.confirm(false);
+  audio?.cue('use');
   if (step + 1 === objectives().length) {
     if (mission >= 3) {
       hold = mission === 4 ? 20 : 13;
@@ -497,8 +472,8 @@ function use() {
 }
 function spawn() {
   const points = [
-      [-11, -10],
-      [11, -11],
+      [-11.8, -7.6],
+      [11.1, -6.4],
       [-12, 8],
       [12, 9],
       [1, -12],
@@ -512,8 +487,8 @@ function spawn() {
 }
 function tick(dt) {
   const p = hero.position,
-    forward = Number(keys.has('KeyW')) - Number(keys.has('KeyS')) - stick.y,
-    right = Number(keys.has('KeyD')) - Number(keys.has('KeyA')) + stick.x;
+    forward = input.forward,
+    right = input.right;
   const amount = ((speed > 0 ? 7.3 : 4.65) * dt) / Math.max(1, Math.hypot(forward, right));
   move(
     p,
@@ -523,18 +498,30 @@ function tick(dt) {
   hero.rotation.y = Math.PI + yaw;
   const walking = Math.min(1, Math.hypot(forward, right));
   const gait = clock * (speed > 0 ? 15 : 11);
-  stride(hero, walking, gait);
+  actors.get(hero).animate(dt, walking);
+  walkSound -= dt;
+  if (walking > 0.1 && walkSound <= 0) {
+    audio?.step();
+    walkSound = speed > 0 ? 0.285 : 0.38;
+  }
+  if (reloading > 0) {
+    reloading -= dt;
+    if (reloading <= 0) {
+      ammo = magazine[gun];
+      audio?.cue('activate');
+    }
+  }
   hero.position.y = walking * 0.027 * Math.abs(Math.sin(gait));
-  hands[gun].position.y = -0.208 + walking * 0.012 * Math.sin(gait * 2);
-  hands[gun].position.x = 0.236 + walking * 0.009 * Math.sin(gait);
+  hands[gun].position.y = -0.231 + walking * 0.012 * Math.sin(gait * 2);
+  hands[gun].position.x = 0.242 + walking * 0.009 * Math.sin(gait);
   sparks.update(dt);
   damageFeedback = Math.max(0, damageFeedback - dt);
   hitFeedback = Math.max(0, hitFeedback - dt);
   $('hud').style.setProperty('--damage', damageFeedback * 1.8);
   $('cross').classList.toggle('hit', hitFeedback > 0);
   recoil = Math.max(0, recoil - dt);
-  hands[gun].position.z = -0.58 + recoil * 0.54;
-  hands[gun].rotation.x = -recoil * 0.55;
+  hands[gun].position.z = -0.65 + recoil * 0.54;
+  hands[gun].rotation.x = -recoil * 0.55 - Math.max(0, reloading) * 0.31;
   camera();
   skillTime -= dt;
   shield -= dt;
@@ -547,14 +534,15 @@ function tick(dt) {
   allySkill -= dt;
   noticeTime -= dt;
   if (noticeTime <= 0) $('notice').textContent = '';
-  if (firing && fireTime <= 0) {
+  if (input.firing && ammo === 0) reload();
+  if (input.firing && fireTime <= 0 && ammo > 0 && reloading <= 0) {
     fireTime = [0.28, 0.55, 0.7][gun];
     burst = gun === 1 ? 3 : 1;
     burstTime = 0;
   }
   if (burst && burstTime <= 0) {
     fire();
-    burst--;
+    burst = ammo > 0 ? burst - 1 : 0;
     burstTime = 0.085;
   }
   if (spawnTime <= 0 && bots.length < 5) {
@@ -566,7 +554,7 @@ function tick(dt) {
       oldZ = friend.position.z;
     follow(friend, p, dt * 4.3, 1.85);
     const moving = Math.hypot(friend.position.x - oldX, friend.position.z - oldZ) > 0.002;
-    stride(friend, Number(moving), clock * 11 + 0.8);
+    actors.get(friend).animate(dt, moving ? 0.72 : 0);
     friend.position.y = moving ? 0.027 * Math.abs(Math.sin(clock * 11 + 0.8)) : 0;
     const target = bots
       .filter((b) => clearLine(friend.position, b.mesh.position))
@@ -582,6 +570,7 @@ function tick(dt) {
           .add(v(0, 1.24, 0))
           .sub(from);
       friend.rotation.y = Math.atan2(dir.x, dir.z);
+      actors.get(friend).fire();
       shoot(from, dir, 0);
       allyTime = 1.35;
     }
@@ -616,6 +605,7 @@ function tick(dt) {
         true,
       );
       b.cd = 2.5;
+      audio?.enemy((b.mesh.position.x - p.x) / 13);
     }
   }
   for (let i = shots.length - 1; i >= 0; i--) {
@@ -629,7 +619,7 @@ function tick(dt) {
       if (
         at.y < 0 ||
         at.y > 7 ||
-        (blocked(at.x, at.z, 0.05) && at.y < 1.5) ||
+        blocked(at.x, at.z, 0.05, at.y) ||
         Math.abs(at.x) > 14 ||
         Math.abs(at.z) > 14
       ) {
@@ -724,73 +714,29 @@ function tick(dt) {
   $('ability').textContent =
     'Q · ' + cast[selected][2] + (skillTime > 0 ? ' · ' + Math.ceil(skillTime) + ' s' : ' ✓');
   $('cameraLabel').textContent = 'C · ' + modes[view];
+  $('ammo').textContent =
+    reloading > 0 ? 'RECARREGANDO' : String(ammo).padStart(2, '0') + ' / ' + magazine[gun];
+  $('ammo').classList.toggle('low', ammo <= 3);
 }
-window.addEventListener('keydown', (e) => {
-  if (phase !== 'play') return;
-  keys.add(e.code);
-  if (!e.repeat) {
-    if (e.code === 'Escape') pause();
-    action({ KeyE: 'use', KeyQ: 'skill', KeyC: 'camera' }[e.code]);
-  }
-});
-window.addEventListener('keyup', (e) => keys.delete(e.code));
-let drag = null;
-canvas.onpointerdown = (e) => {
-  if (phase !== 'play') return;
-  if (document.pointerLockElement !== canvas) canvas.setPointerCapture(e.pointerId);
-  if (e.pointerType === 'mouse') {
-    lock();
-    firing = true;
-  } else drag = [e.clientX, e.clientY];
-};
 function turn(dx, dy) {
   yaw = (yaw - dx * 0.003) % (Math.PI * 2);
   pitch = T.MathUtils.clamp(pitch - dy * 0.003, -0.95, 0.9);
 }
-window.addEventListener('pointermove', (e) => {
-  if (phase !== 'play') return;
-  if (e.pointerType === 'mouse' && (document.pointerLockElement === canvas || e.buttons === 1))
-    turn(e.movementX, e.movementY);
-  else if (drag && e.target === canvas) {
-    turn(e.clientX - drag[0], e.clientY - drag[1]);
-    drag = [e.clientX, e.clientY];
-  }
-});
-canvas.onpointerup = canvas.onpointercancel = () => {
-  firing = false;
-  drag = null;
-};
-const pad = $('stick');
-function joystick(e) {
-  const r = pad.getBoundingClientRect(),
-    x = (e.clientX - r.left - r.width / 2) / 35,
-    y = (e.clientY - r.top - r.height / 2) / 35,
-    n = Math.max(1, Math.hypot(x, y));
-  stick.x = x / n;
-  stick.y = y / n;
-  pad.firstElementChild.style.transform = 'translate(' + stick.x * 25 + 'px,' + stick.y * 25 + 'px)';
+const input = controls(canvas, { active: () => phase === 'play', action, pause, turn });
+function audioButton() {
+  audio ??= createSound();
+  if (!audio) return;
+  audio.resume().catch(() => {});
+  renderAudioState(audio.toggle());
 }
-pad.onpointerdown = (e) => {
-  pad.setPointerCapture(e.pointerId);
-  joystick(e);
-};
-pad.onpointermove = (e) => {
-  if (pad.hasPointerCapture(e.pointerId)) joystick(e);
-};
-pad.onpointerup = pad.onpointercancel = () => {
-  stick.x = stick.y = 0;
-  pad.firstElementChild.style.transform = '';
-};
-document.querySelectorAll('[data-action]').forEach((b) => {
-  b.onpointerdown = (e) => {
-    b.setPointerCapture(e.pointerId);
-    if (b.dataset.action === 'fire') firing = true;
-    else action(b.dataset.action);
-  };
-  b.onpointerup = b.onpointercancel = () => {
-    if (b.dataset.action === 'fire') firing = false;
-  };
-});
+function renderAudioState(disabled) {
+  for (const id of ['soundMenu', 'soundPause']) {
+    $(id).textContent = disabled ? 'Som desligado' : 'Som ligado';
+    $(id).setAttribute('aria-pressed', String(disabled));
+  }
+}
+$('soundMenu').onclick = audioButton;
+$('soundPause').onclick = audioButton;
 function resize() {
   renderer.setSize(innerWidth, innerHeight, false);
   cam.aspect = innerWidth / innerHeight;
@@ -799,6 +745,9 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 lobby();
+try {
+  renderAudioState(localStorage.getItem('mt.ultimoTake.audio') === '0');
+} catch {}
 $('start').textContent = 'INICIAR MISSÃO  →';
 $('start').disabled = false;
 function frame(now) {
@@ -817,7 +766,8 @@ function frame(now) {
       innerWidth,
       innerHeight,
     );
-    preview.rotation.y = 0.28 + Math.sin(clock * 0.62) * 0.32;
+    preview.rotation.y = 0.28 + Math.sin(clock * 0.62) * 0.27;
+    actors.get(preview).animate(dt, 0);
   } else if (cam.view?.enabled) cam.clearViewOffset();
   renderer.render(scene, cam);
   requestAnimationFrame(frame);

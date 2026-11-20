@@ -1,0 +1,29 @@
+ÚLTIMO TAKE — RECURSOS EXTERNOS
+
+Kay Lousberg (KayKit) — CC0 1.0
+Adventurers Character Pack: malhas de corpo, rig e animações. Os rostos e as
+cores foram adaptados para o elenco do jogo.
+https://github.com/KayKit-Game-Assets/KayKit-Character-Pack-Adventures-1.0
+Space Base Bits: módulos da arena, carga, iluminação e base do robô.
+https://github.com/KayKit-Game-Assets/KayKit-Space-Base-Bits-1.0
+
+Kenney — CC0 1.0
+Blaster Kit: três armas importadas, com cores adaptadas.
+https://kenney.nl/assets/blaster-kit
+Sci-fi Sounds, UI Audio e Music Jingles: tiros, impactos, energia, ambiente,
+interface e sinais de vitória e derrota.
+https://kenney.nl/assets/sci-fi-sounds
+https://kenney.nl/assets/ui-audio
+https://kenney.nl/assets/music-jingles
+
+Rob Tuytel / Poly Haven — CC0 1.0
+Concrete Floor Painted: imagem de cor e mapa normal do piso.
+https://polyhaven.com/a/concrete_floor_painted
+
+TinyWorlds — CC0 1.0
+Passo em pedra de Different steps on wood, stone, leaves, gravel and mud.
+https://opengameart.org/content/different-steps-on-wood-stone-leaves-gravel-and-mud
+
+Three.js r170 e utilitários — MIT
+https://github.com/mrdoob/three.js/tree/r170
+A licença está em ../vendor/LICENSE.

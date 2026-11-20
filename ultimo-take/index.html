@@ -12,7 +12,8 @@
     <canvas id="world" aria-label="Estúdio 3D"></canvas>
     <main id="lobby">
       <header>
-        <a href="../">← &nbsp; MATHEUS TOP GAMER</a><span class="signal">● &nbsp; ESTÚDIO MT</span>
+        <a href="../">← &nbsp; MATHEUS TOP GAMER</a
+        ><button id="soundMenu" class="audio-toggle" type="button">Som ligado</button>
       </header>
       <section class="brief">
         <small>CAMPANHA &nbsp; / &nbsp; OPERAÇÃO</small>
@@ -29,9 +30,10 @@
         <button id="start" disabled>CARREGANDO ESTÚDIO…</button>
         <details>
           <summary>Controles</summary>
-          WASD mover · mouse mirar · clique atirar · E interagir · Q habilidade · C câmera · Esc pausar. No
-          celular, arraste à direita para mirar.
+          WASD mover · mouse mirar · clique atirar · E interagir · Q habilidade · R recarregar · C câmera ·
+          Esc pausar. No celular, arraste à direita para mirar.
         </details>
+        <a class="credits" href="assets/CREDITS.txt">Créditos dos recursos</a>
       </section>
       <aside id="profile">
         <img id="portrait" src="../assets/chainsaw-sam.png" alt="Retrato de Chainsaw Sam" hidden /><small
@@ -46,12 +48,15 @@
       <div id="cross">＋</div>
       <div id="notice" role="status"></div>
       <div class="vitals"><strong id="health"></strong><span id="ability"></span></div>
-      <div id="cameraLabel"></div>
+      <div id="weaponState">
+        <span>ENERGIA</span><strong id="ammo"></strong><span id="cameraLabel"></span>
+      </div>
       <div id="touch">
         <div id="stick"><i></i></div>
         <div class="actions">
           <button data-action="camera">Câmera</button><button data-action="skill">Poder</button
-          ><button data-action="use">Usar</button><button data-action="fire">Atirar</button>
+          ><button data-action="use">Usar</button><button data-action="reload">Recarga</button
+          ><button data-action="fire">Atirar</button>
         </div>
       </div>
     </section>
@@ -59,7 +64,8 @@
       <small>OPERAÇÃO ÚLTIMO TAKE</small>
       <h2></h2>
       <p></p>
-      <button id="resume">Continuar</button><button id="back">Seleção da partida</button>
+      <button id="resume">Continuar</button><button id="soundPause" type="button">Som ligado</button
+      ><button id="back">Seleção da partida</button>
     </dialog>
     <script type="module" src="main.js"></script>
   </body>

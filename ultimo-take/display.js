@@ -37,6 +37,7 @@ class SoftwareDisplay {
     this.ctx = canvas.getContext('2d', { alpha: false });
     this.transform = new T.Matrix4();
     this.geometry = new WeakMap();
+    this.vertex = new T.Vector3();
     this.textures = new WeakMap();
   }
   setSize(width, height) {
@@ -48,13 +49,26 @@ class SoftwareDisplay {
     this.depth = new Float32Array(this.pixels.length);
   }
   texture(material) {
-    const img = material.map?.image;
-    if (!img?.getContext) return null;
-    if (!this.textures.has(img)) {
-      const data = img.getContext('2d').getImageData(0, 0, img.width, img.height);
-      this.textures.set(img, { w: img.width, h: img.height, pixels: new Uint32Array(data.data.buffer) });
+    const map = material.map,
+      img = map?.image;
+    if (!img || !img.width || !img.height) return null;
+    if (!this.textures.has(map)) {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(img, 0, 0);
+      const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      map.updateMatrix();
+      this.textures.set(map, {
+        w: img.width,
+        h: img.height,
+        flip: map.flipY,
+        uv: map.matrix.elements,
+        pixels: new Uint32Array(data.data.buffer),
+      });
     }
-    return this.textures.get(img);
+    return this.textures.get(map);
   }
   drawTriangle(a, b, c, color, texture, doubleSided) {
     const { w, h, projection: m } = this;
@@ -94,8 +108,14 @@ class SoftwareDisplay {
         if (texture) {
           const s = (t * a.u * az + u * b.u * bz + v * c.u * cz) / z;
           const r = (t * a.v * az + u * b.v * bz + v * c.v * cz) / z;
-          const tx = Math.max(0, Math.min(texture.w - 1, Math.floor(s * texture.w)));
-          const ty = Math.max(0, Math.min(texture.h - 1, Math.floor((1 - r) * texture.h)));
+          const uv = texture.uv;
+          const mapX = uv[0] * s + uv[3] * r + uv[6],
+            mapY = uv[1] * s + uv[4] * r + uv[7];
+          const tx = Math.max(0, Math.min(texture.w - 1, Math.floor(mapX * texture.w)));
+          const ty = Math.max(
+            0,
+            Math.min(texture.h - 1, Math.floor((texture.flip ? 1 - mapY : mapY) * texture.h)),
+          );
           this.pixels[i] = texture.pixels[ty * texture.w + tx];
         } else this.pixels[i] = color;
       }
@@ -132,9 +152,10 @@ class SoftwareDisplay {
     const m = this.transform.multiplyMatrices(cam.matrixWorldInverse, mesh.matrixWorld).elements;
     let visible = false;
     for (let i = 0; i < xyz.count; i++) {
-      const x = xyz.getX(i),
-        y = xyz.getY(i),
-        z = xyz.getZ(i),
+      const vertex = mesh.isSkinnedMesh
+        ? mesh.getVertexPosition(i, this.vertex)
+        : this.vertex.fromBufferAttribute(xyz, i);
+      const { x, y, z } = vertex,
         p = cache.points[i];
       p.x = m[0] * x + m[4] * y + m[8] * z + m[12];
       p.y = m[1] * x + m[5] * y + m[9] * z + m[13];
@@ -177,9 +198,9 @@ class SoftwareDisplay {
     this.depth.fill(0);
     for (let y = 0; y < this.h; y++) {
       const k = y / this.h,
-        red = Math.round(125 + 107 * k),
-        green = Math.round(164 + 28 * k),
-        blue = Math.round(173 - 21 * k);
+        red = Math.round(27 + 166 * k),
+        green = Math.round(54 + 87 * k),
+        blue = Math.round(83 + 29 * k);
       this.pixels.fill((0xff000000 | (blue << 16) | (green << 8) | red) >>> 0, y * this.w, (y + 1) * this.w);
     }
     scene.traverseVisible((mesh) => this.drawMesh(mesh, cam));
