@@ -1,0 +1,340 @@
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #182a30;
+  color: #fff4de;
+  font-family: Arial, Helvetica, sans-serif;
+}
+button,
+select,
+summary,
+a {
+  cursor: pointer;
+}
+button,
+select {
+  font: inherit;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+}
+#lobby,
+#hud {
+  position: absolute;
+  inset: 0;
+}
+#lobby {
+  background: linear-gradient(
+    90deg,
+    rgba(10, 20, 24, 0.96),
+    rgba(13, 25, 31, 0.89) 24%,
+    rgba(16, 29, 34, 0.18) 61%,
+    transparent
+  );
+  overflow: auto;
+}
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0 5vw;
+  padding: 22px 0;
+  border-bottom: 1px solid #c0d4cb42;
+  font: bold 12px monospace;
+  letter-spacing: 2px;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+.signal {
+  color: #ffd396;
+}
+small,
+label,
+summary,
+#cameraLabel {
+  font: bold 11px monospace;
+  letter-spacing: 1.4px;
+}
+small,
+label {
+  color: #ffc575;
+}
+.brief {
+  margin: clamp(16px, 5vh, 52px) 5vw;
+  width: min(440px, 43vw);
+}
+h1 {
+  font:
+    italic 1000 clamp(53px, 7.7vw, 114px) / 0.79 Arial,
+    sans-serif;
+  letter-spacing: -0.085em;
+  margin: 18px 0 26px;
+}
+h1 em {
+  color: #ff954c;
+}
+.mission {
+  border-left: 3px solid #ff954c;
+  padding-left: 12px;
+}
+.mission select {
+  font-weight: bold;
+  font-size: 20px;
+}
+.mission p {
+  font-size: 14px;
+  line-height: 1.4;
+  margin: 5px 0;
+  color: #d5dedc;
+}
+select {
+  display: block;
+  color: #fff5df;
+  background: #1d3035;
+  border: 1px solid #70878277;
+  border-radius: 3px;
+  width: 100%;
+  padding: 8px 5px;
+  margin-top: 4px;
+}
+.load {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 11px;
+  margin: 18px 0;
+}
+.load label:last-child {
+  grid-column: span 2;
+}
+.load select {
+  font: 15px Arial;
+}
+button {
+  border: 0;
+  border-radius: 3px;
+  background: #ff9b53;
+  color: #171c20;
+  font-weight: 800;
+  padding: 12px 18px;
+}
+#start {
+  width: 100%;
+  letter-spacing: 1px;
+}
+details {
+  margin-top: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+#profile {
+  position: absolute;
+  right: 7vw;
+  bottom: 8vh;
+  text-align: right;
+  display: grid;
+  gap: 4px;
+  text-shadow: 0 2px 5px #000;
+}
+#profile strong {
+  font: italic 900 clamp(24px, 3vw, 48px) Arial;
+}
+#profile img {
+  width: 58px;
+  border-radius: 50%;
+  justify-self: end;
+}
+#hud {
+  pointer-events: none;
+}
+#hud button,
+#stick {
+  pointer-events: auto;
+}
+#pauseBtn {
+  position: absolute;
+  right: 18px;
+  top: 18px;
+}
+.objective,
+.vitals,
+#cameraLabel {
+  position: absolute;
+  padding: 12px 16px;
+  background: #122127e8;
+  border-left: 3px solid #ff9b53;
+}
+.objective,
+.vitals {
+  display: grid;
+  gap: 5px;
+  left: 16px;
+}
+.objective {
+  top: 16px;
+  max-width: 75%;
+}
+.vitals {
+  bottom: 16px;
+}
+#cameraLabel {
+  right: 16px;
+  bottom: 16px;
+}
+#cross,
+#notice {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  text-shadow: 0 1px 4px #000;
+}
+#notice {
+  top: 68%;
+  text-align: center;
+  color: #ffda91;
+  font-weight: bold;
+}
+dialog {
+  background: #172a31;
+  color: #fff9e7;
+  padding: 28px;
+  border: 1px solid #648080;
+  border-radius: 5px;
+  width: min(400px, 90%);
+}
+dialog::backdrop {
+  background: #0a151abb;
+}
+dialog button {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+}
+#back {
+  background: #344951;
+  color: white;
+}
+#touch {
+  display: none;
+}
+#stick {
+  width: 92px;
+  height: 92px;
+  position: absolute;
+  bottom: 22px;
+  left: 22px;
+  background: #182b3680;
+  border: 2px solid #ddd8;
+  border-radius: 50%;
+  touch-action: none;
+  display: grid;
+  place-items: center;
+}
+#stick i {
+  background: #fff8;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+}
+.actions {
+  position: absolute;
+  right: 12px;
+  bottom: 18px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+}
+.actions button {
+  touch-action: none;
+  padding: 10px;
+  background: #243f4cdd;
+  color: white;
+}
+.actions button:last-child {
+  background: #d77737;
+}
+button:focus-visible,
+select:focus-visible {
+  outline: 3px solid #fff;
+}
+[hidden] {
+  display: none !important;
+}
+@media (pointer: coarse) {
+  #touch {
+    display: block;
+  }
+  .vitals {
+    bottom: 130px;
+  }
+  #cameraLabel {
+    bottom: 120px;
+  }
+}
+@media (max-width: 650px) {
+  header {
+    padding: 14px 0;
+    font-size: 9px;
+  }
+  .brief {
+    width: 55vw;
+    margin-top: 18px;
+  }
+  #profile {
+    right: 3vw;
+    bottom: 15vh;
+    max-width: 35vw;
+  }
+  .load {
+    grid-template-columns: 1fr;
+    gap: 5px;
+    margin: 10px 0;
+  }
+  .load label:last-child {
+    grid-column: auto;
+  }
+  h1 {
+    font-size: 53px;
+  }
+  .mission select {
+    font-size: 16px;
+  }
+  .brief small {
+    font-size: 9px;
+  }
+}
+@media (max-height: 550px) {
+  .brief {
+    margin-top: 10px;
+  }
+  h1 {
+    font-size: 40px;
+    margin: 8px 0;
+  }
+  h1 br {
+    display: none;
+  }
+  .load {
+    margin: 7px 0;
+    gap: 5px;
+  }
+  .load label:last-child {
+    grid-column: auto;
+  }
+  .load {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  header {
+    padding: 10px 0;
+  }
+}

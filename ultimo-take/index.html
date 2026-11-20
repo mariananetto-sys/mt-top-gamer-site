@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <meta name="theme-color" content="#172328" />
+    <title>Último Take • Matheus Top Gamer</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <canvas id="world" aria-label="Estúdio 3D"></canvas>
+    <main id="lobby">
+      <header>
+        <a href="../">← &nbsp; MATHEUS TOP GAMER</a><span class="signal">● &nbsp; ESTÚDIO MT</span>
+      </header>
+      <section class="brief">
+        <small>CAMPANHA &nbsp; / &nbsp; OPERAÇÃO</small>
+        <h1>ÚLTIMO<br /><em>TAKE</em></h1>
+        <div class="mission">
+          <label for="mission">MISSÃO</label
+          ><select id="mission"></select>
+          <p id="summary"></p>
+        </div>
+        <div class="load">
+          <label>PERSONAGEM<select id="hero"></select></label><label>ALIADO<select id="ally"></select></label
+          ><label>ARMA<select id="gun"></select></label>
+        </div>
+        <button id="start">INICIAR MISSÃO &nbsp; →</button>
+        <details>
+          <summary>Controles</summary>
+          WASD mover · mouse mirar · clique atirar · E interagir · Q habilidade · C câmera · Esc pausar. No
+          celular, arraste à direita para mirar.
+        </details>
+      </section>
+      <aside id="profile">
+        <img id="portrait" src="../assets/chainsaw-sam.png" alt="Retrato de Chainsaw Sam" hidden /><small
+          id="role"
+        ></small
+        ><strong id="name"></strong><span id="skill"></span>
+      </aside>
+    </main>
+    <section id="hud" hidden>
+      <div class="objective"><small id="chapter"></small><b id="target"></b><span id="distance"></span></div>
+      <button id="pauseBtn" aria-label="Pausar">Ⅱ</button>
+      <div id="cross">＋</div>
+      <div id="notice" role="status"></div>
+      <div class="vitals"><strong id="health"></strong><span id="ability"></span></div>
+      <div id="cameraLabel"></div>
+      <div id="touch">
+        <div id="stick"><i></i></div>
+        <div class="actions">
+          <button data-action="camera">Câmera</button><button data-action="skill">Poder</button
+          ><button data-action="use">Usar</button><button data-action="fire">Atirar</button>
+        </div>
+      </div>
+    </section>
+    <dialog id="panel">
+      <small>OPERAÇÃO ÚLTIMO TAKE</small>
+      <h2></h2>
+      <p></p>
+      <button id="resume">Continuar</button><button id="back">Seleção da partida</button>
+    </dialog>
+    <script type="module" src="main.js"></script>
+  </body>
+</html>
