@@ -765,6 +765,8 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 lobby();
+$('start').textContent = 'INICIAR MISSÃO  →';
+$('start').disabled = false;
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000);
   last = now;
