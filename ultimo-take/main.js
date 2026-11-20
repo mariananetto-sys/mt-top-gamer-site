@@ -1,11 +1,9 @@
 import { THREE as T, v } from './geometry.js';
 import { cast, guns, missions, progress, weaponLimit, complete } from './campaign.js';
 import { studio, station, person, drone, weapon, obstacles } from './art.js';
+import { createDisplay } from './display.js';
 const $ = (id) => document.getElementById(id);
-const canvas = $('world'),
-  renderer = new T.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 1.6));
-renderer.outputColorSpace = T.SRGBColorSpace;
+const { canvas, renderer } = createDisplay($('world'));
 const scene = new T.Scene(),
   cam = new T.PerspectiveCamera(62, 1, 0.06, 105);
 scene.background = new T.Color(0xc5b9a9);
